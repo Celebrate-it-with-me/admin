@@ -18,23 +18,24 @@ const openAddEditDialog = () => {
 }
 
 const handleReloadMG = () => {
+  editGuest.value = {};
   showAddEditDialog.value = false;
   deleteModal.value = false;
   reloadMG.value = true;
 }
 
 const handleEditItem = (item) => {
-  editGuest.value = item
-  showAddEditDialog.value = true
+  editGuest.value = item;
+  showAddEditDialog.value = true;
 }
 
 const handleDeleteItem = (item) => {
-  deleteModal.value = true
-  selectedItem.value = item
+  deleteModal.value = true;
+  selectedItem.value = item;
 }
 
 const closeDeleteModal = () => {
-  deleteModal.value = false
+  deleteModal.value = false;
 }
 
 const resetReloadMG = () => {
@@ -61,7 +62,7 @@ const resetReloadMG = () => {
   <v-col
     cols="3"
   >
-    <the-search-input @newInput="(val) => (searchInput.value = val)"></the-search-input>
+    <the-search-input @newInput="(val) => (searchInput = val)"></the-search-input>
   </v-col>
   <the-main-guest-table
     :search="searchInput"

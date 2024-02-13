@@ -93,13 +93,6 @@ const handleDeleteItem = (item) => {
     :items-per-page-options="dataTableItemsPerPage"
     @update:options="(n) => (params = n)"
   >
-    <template v-slot:item.partySize="{ item }">
-      <div>
-        {{ item.partySize }}
-        <a class="text-decoration-underline pointer indigo--text text--darken-1">See Members</a>
-      </div>
-    </template>
-
     <template v-slot:item.actions="{ item }">
       <v-icon
         icon="mdi-square-edit-outline"

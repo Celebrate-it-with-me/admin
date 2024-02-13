@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
+    "prod": "vite build --mode prod",
     "preview": "vite preview",
     "lint": "eslint . --fix --ignore-path .gitignore"
   },
