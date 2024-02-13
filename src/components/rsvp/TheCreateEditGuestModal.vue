@@ -143,6 +143,7 @@ const resetForm = () => {
   actionType.value = 'Add'
   alertType.value = 'warning'
   alertMessage.value = ''
+  emit('reloadMainGuest')
 }
 
 watch(() => props.openModal, (value) => {
@@ -156,12 +157,12 @@ watch(() => form.value.numberOfMembers, (value) =>  {
     if (actionType.value === 'Add') {
       partyMembers.value = []
       for(let i = 0; i < value; i ++) {
-        partyMembers.value[i] =  { name: ''}
+        partyMembers.value[i] =  { name: '', confirmed: 1}
       }
     } else {
       if (value > partyMembers.value.length) {
         for (let i = partyMembers.value.length; i < value; i++) {
-          partyMembers.value[i] =  { name: ''}
+          partyMembers.value[i] =  { name: '', confirmed: 1}
         }
       }
 
