@@ -1,6 +1,6 @@
 <script setup>
 
-import {ref} from "vue";
+import {ref, watch} from "vue";
 import TheCreateEditGuestModal from "@/components/rsvp/TheCreateEditGuestModal.vue";
 import TheSearchInput from "@/components/TheSearchInput.vue";
 import TheMainGuestTable from "@/components/rsvp/TheMainGuestTable.vue";
@@ -12,6 +12,31 @@ const searchInput = ref('')
 const reloadMG = ref(false)
 const selectedItem = ref({})
 const deleteModal = ref(false)
+
+const statusItems = ref([
+  {
+    text: 'Select',
+    value: 'select'
+  },
+  {
+    text: 'Yes',
+    value: 'yes'
+  },
+  {
+    text: 'No',
+    value: 'no'
+  },
+  {
+    text: 'not yet',
+    value: 'ny'
+  },
+])
+
+const statusSelected = ref('select')
+
+watch(statusSelected, () => {
+  reloadMG.value = true;
+})
 
 const openAddEditDialog = () => {
   showAddEditDialog.value = true;
@@ -62,11 +87,23 @@ const resetReloadMG = () => {
   <v-col
     cols="3"
   >
+    <v-select
+      v-model="statusSelected"
+      label="Select Status"
+      :items="statusItems"
+      item-title="text"
+      item-value="value"
+    />
+  </v-col>
+  <v-col
+    cols="3"
+  >
     <the-search-input @newInput="(val) => (searchInput = val)"></the-search-input>
   </v-col>
   <the-main-guest-table
     :search="searchInput"
     :refresh-table="reloadMG"
+    :status-selected="statusSelected"
     @resetReload="resetReloadMG"
     @editingItem="handleEditItem"
     @deletingItem="handleDeleteItem"
