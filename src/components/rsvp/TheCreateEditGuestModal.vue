@@ -40,9 +40,7 @@ const partyMembers = ref([]);
 const formValidation = ref({
   firstName: [(v) => !!v || "First Name is required"],
   lastName: [(v) => !!v || "Last Name is required"],
-  email: [(v) => !!v || "Email is required"],
   phoneNumber: [(v) => !!v || "Phone Number is required"],
-  numberOfMembers: [(v) => !!v || 'Number of Members is required']
 });
 
 // Computed property 'modalTitle'
@@ -242,7 +240,7 @@ const validPartyMembers = () => {
                 hint="First Name"
                 required
                 v-model="form.firstName"
-                :rules="formValidation.name"
+                :rules="formValidation.firstName"
               >
               </v-text-field>
             </v-col>
@@ -256,7 +254,7 @@ const validPartyMembers = () => {
                 hint="Last Name"
                 required
                 v-model="form.lastName"
-                :rules="formValidation.name"
+                :rules="formValidation.lastName"
               >
               </v-text-field>
             </v-col>
