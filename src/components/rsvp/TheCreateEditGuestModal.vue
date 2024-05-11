@@ -141,6 +141,7 @@ const resetForm = () => {
   actionType.value = 'Add'
   alertType.value = 'warning'
   alertMessage.value = ''
+  partyMembers.value = [];
   emit('reloadMainGuest')
 }
 
