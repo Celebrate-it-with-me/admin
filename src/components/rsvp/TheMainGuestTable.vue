@@ -148,8 +148,14 @@ const confirmedText = (value) => {
   </v-data-table-server>
 </template>
 
-<style scoped>
+<style>
 .pointer {
   cursor: pointer;
+}
+
+@media (min-width: 1280px) {
+  .v-container {
+    max-width: 1400px;
+  }
 }
 </style>
