@@ -6,6 +6,7 @@ import TheSearchInput from "@/components/TheSearchInput.vue";
 import TheMainGuestTable from "@/components/rsvp/TheMainGuestTable.vue";
 import TheDeleteMainGuestModal from "@/components/rsvp/TheDeleteMainGuestModal.vue";
 import TheResetMainGuestCodeModal from "@/components/rsvp/TheResetMainGuestCodeModal.vue";
+import TheTotalsTable from "@/components/rsvp/TheTotalsTable.vue";
 
 const showAddEditDialog = ref(false)
 const editGuest = ref({})
@@ -141,6 +142,11 @@ const handleResetCode = (item) => {
     @closeModal="showResetAccessCode = false"
     @reloadMainGuest="handleReloadMG"
   />
+</v-row>
+<v-row class="mt-16">
+  <v-col>
+    <the-totals-table />
+  </v-col>
 </v-row>
 </template>
 
