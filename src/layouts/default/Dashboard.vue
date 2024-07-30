@@ -42,6 +42,20 @@ const logout = () => {
         :to="{name: 'RSVP'}"
       >
       </v-list-item>
+      <v-list-item
+        prepend-icon="mdi-account-group"
+        title="SMS Reminder"
+        value="sms"
+        :to="{name: 'SMSReminder'}"
+      >
+      </v-list-item>
+      <v-list-item
+        prepend-icon="mdi-account-group"
+        title="Images Manager"
+        value="images"
+        :to="{name: 'ImagesManager'}"
+      >
+      </v-list-item>
     </v-list>
     <template v-slot:append>
       <div class="px-3 pb-2 text-caption">{{ store.appVersion }}</div>
