@@ -154,7 +154,7 @@ const confirmedText = (value) => {
 }
 
 @media (min-width: 1280px) {
-  .v-container {
+  .content-background .v-container {
     max-width: 1400px;
   }
 }
