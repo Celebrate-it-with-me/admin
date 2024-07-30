@@ -87,7 +87,7 @@ const downloadFile = async (item) => {
     if (response.status === 200) {
       let fileUrl = response.data.fileUrl;
 
-      window.error(fileUrl, '_blank');
+      window.open(fileUrl, '_blank');
     } else {
       console.error(respose);
     }
