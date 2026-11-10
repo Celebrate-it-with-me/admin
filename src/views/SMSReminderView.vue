@@ -39,7 +39,7 @@ const minimumDate = computed(() => {
 });
 
 const smsHint = computed(() => {
-  let currentLength = 160 - message.value.length;
+  const currentLength = 160 - message.value.length;
 
   if (currentLength < 30) {
     activeHintClass.value = 'hint-warning';

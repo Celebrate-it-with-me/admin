@@ -26,7 +26,7 @@ watch(details, (newValue) => {
 })
 
 const handleGuests = (details) => {
-  let allGuests = [];
+  const allGuests = [];
   if (details.length) {
     details.forEach(guest => {
       allGuests.push({
