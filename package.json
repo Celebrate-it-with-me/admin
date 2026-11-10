@@ -14,7 +14,7 @@
     "@vuepic/vue-datepicker": "^8.6.0",
     "axios": "^1.6.2",
     "detect-browser": "^5.3.0",
-    "pinia": "^2.0.23",
+    "pinia": "^4.1.0",
     "roboto-fontface": "*",
     "vue": "^3.2.0",
     "vue-router": "^4.0.0",
