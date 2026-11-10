@@ -1,6 +1,6 @@
 <script setup>
 import {computed, onMounted, ref, watch} from 'vue';
-import VueDatePicker from '@vuepic/vue-datepicker';
+import { VueDatePicker } from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css'
 import {API} from "@/services/axios";
 import TheRecipientsModal from "@/components/sms_reminder/TheRecipientsModal.vue";
@@ -39,7 +39,7 @@ const minimumDate = computed(() => {
 });
 
 const smsHint = computed(() => {
-  let currentLength = 160 - message.value.length;
+  const currentLength = 160 - message.value.length;
 
   if (currentLength < 30) {
     activeHintClass.value = 'hint-warning';

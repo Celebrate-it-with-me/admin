@@ -37,6 +37,8 @@ export default defineConfig({
   },
   server: {
     host: true,
+    // Vite 6+ blocks unknown Host headers; the dev domain is served via nginx-proxy
+    allowedHosts: ['dev.admin.cwm.com'],
     port: 8080,
     strictPort: true,
     hmr: { overlay: false }

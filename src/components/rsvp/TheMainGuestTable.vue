@@ -23,7 +23,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['resetReload', 'editingItem', 'deletingItem', 'resetCode'])
-const mainGuests = ref()
+const mainGuests = ref<any[]>()
 const loading = ref(false)
 const total = ref(0)
 const params = ref({})
@@ -77,25 +77,25 @@ const getMainGuest = async () => {
     emit('resetReload')
 
   } catch (err) {
-    console.log(e)
+    console.log(err)
   } finally {
     loading.value = false
   }
 }
 
-const handleEditItem = (item) => {
+const handleEditItem = (item: any) => {
   emit('editingItem', item)
 }
 
-const handleDeleteItem = (item) => {
+const handleDeleteItem = (item: any) => {
   emit('deletingItem', item)
 }
 
-const handleResetCode = (item) => {
+const handleResetCode = (item: any) => {
   emit('resetCode', item)
 }
 
-const confirmedText = (value) => {
+const confirmedText = (value: string) => {
   if (value === 'yes') {
     return 'Confirmed';
   }

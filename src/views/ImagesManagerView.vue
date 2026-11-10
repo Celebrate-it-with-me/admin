@@ -53,7 +53,7 @@ const loadObjects = async () => {
       objectsByFolder.value = response.data?.result ?? {};
 
       if (Object.keys(objectsByFolder.value).length) {
-        for (let key in objectsByFolder.value) {
+        for (const key in objectsByFolder.value) {
           if (objectsByFolder.value.hasOwnProperty(key)) {
             console.log(key);
             objectsKey.value.push(key);
@@ -85,7 +85,7 @@ const downloadFile = async (item) => {
     const response = await API.get(`download-file/${folderSelected.value}/${item}`);
 
     if (response.status === 200) {
-      let fileUrl = response.data.fileUrl;
+      const fileUrl = response.data.fileUrl;
 
       window.open(fileUrl, '_blank');
     } else {

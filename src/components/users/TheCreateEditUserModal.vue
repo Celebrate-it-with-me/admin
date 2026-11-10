@@ -22,10 +22,10 @@ const props = defineProps({
 const emit = defineEmits(['closeModal', 'reloadUser'])
 const sendingRequest = ref(false)
 const valid = ref(false)
-const userForm = ref(null)
+const userForm = ref<{ validate: () => Promise<{ valid: boolean }> } | null>(null)
 const showAlert = ref(false)
 const actionType = ref('Add')
-const alertType = ref('warning')
+const alertType = ref<'success' | 'warning' | 'error' | 'info'>('warning')
 const alertMessage = ref('')
 const modalTitle = computed(() => {
   return `${actionType.value} User`
@@ -37,9 +37,9 @@ const form = ref({
   password: '',
 })
 
-const formValidation = ref({
-  name: [(v) => !!v || "Name is required"],
-  email: [(v) => !!v || "Email is required"],
+const formValidation = ref<Record<string, Array<(v: string) => boolean | string>>>({
+  name: [(v: string) => !!v || "Name is required"],
+  email: [(v: string) => !!v || "Email is required"],
 })
 
 const handleClose = () => {
@@ -50,7 +50,7 @@ const handleClose = () => {
 const submitForm = async () => {
   sendingRequest.value = true
   try {
-    const { valid } = await userForm.value.validate()
+    const { valid } = await userForm.value!.validate()
 
     if (valid) {
       showAlert.value = false
@@ -71,7 +71,7 @@ const submitForm = async () => {
 }
 
 const createUser = async () => {
-  const { status, response } = await API.post('users', {
+  const { status, response }: { status: number; response?: any } = await API.post('users', {
     name: form.value.name,
     email: form.value.email,
     password: form.value.password
@@ -80,7 +80,7 @@ const createUser = async () => {
 }
 
 const updateUser = async () => {
-  const { status, response } = await API.patch(`users/${props.editItem.id}`, {
+  const { status, response }: { status: number; response?: any } = await API.patch(`users/${props.editItem.id}`, {
     name: form.value.name,
     email: form.value.email,
     password: form.value.password
@@ -88,7 +88,7 @@ const updateUser = async () => {
   processRequest(status, response)
 }
 
-const processRequest = (status, response) => {
+const processRequest = (status: number, response: any) => {
   if (status >= 200 && status < 300) {
     sendingRequest.value = false
     resetForm()
@@ -122,7 +122,7 @@ watch(() => props.editItem, (value) => {
   initForm(value)
 })
 
-const initForm = (item) => {
+const initForm = (item: any) => {
   if (Object.keys(item).length) {
     actionType.value = 'Edit'
     form.value.name = item.name
@@ -134,7 +134,7 @@ const initForm = (item) => {
     form.value.name = ''
     form.value.email = ''
     form.value.password = ''
-    formValidation.value.password = [(v) => !!v || "Password is required"]
+    formValidation.value.password = [(v: string) => !!v || "Password is required"]
   }
 }
 
