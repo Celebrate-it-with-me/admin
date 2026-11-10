@@ -1,11 +1,12 @@
 // User Utilities
 import { defineStore } from 'pinia'
 import { API } from '@/services/axios'
+import type { CurrentUser } from '@/types'
 
 export const useCurrentUserStore = defineStore('currentUser', {
   state: () => ({
-    user: {} as Record<string, any>,
-    userPermissions: [] as any[]
+    user: {} as CurrentUser,
+    userPermissions: [] as string[] | undefined
   }),
   actions: {
     async login(email: string, password: string, device: string) {
@@ -36,7 +37,7 @@ export const useCurrentUserStore = defineStore('currentUser', {
         this.user = res.data
         await this.setUserPermissions()
 
-      } catch(err) {
+      } catch {
         this.$reset()
       }
     },
@@ -45,6 +46,7 @@ export const useCurrentUserStore = defineStore('currentUser', {
       this.userPermissions = this.user.permissions
     },
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     hasPermissionTo(permissionName: string) {
       // todo check permissions
     },

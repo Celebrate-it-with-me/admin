@@ -49,7 +49,7 @@ const loadTotals = async () => {
     if (response.status >= 200 && response.status < 300) {
       details.value = response.data?.totals ?? [];
     }
-  } catch(e) {
+  } catch {
     errorMessage.value = 'Ups, Something went wrong, please try again later!';
   }
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { UserItem } from "@/types"
 import { ref } from "vue";
 import TheSearchInput from "@/components/TheSearchInput.vue";
 import TheUserTable from "@/components/users/TheUserTable.vue";
@@ -28,12 +29,12 @@ const toggleReloadUser = () => {
   reloadUser.value = !reloadUser.value
 }
 
-const handleEditItem = (item: any) => {
+const handleEditItem = (item: UserItem) => {
   editItem.value = item
   addEditDialog.value = true
 }
 
-const handleDeleteItem = (item: any) => {
+const handleDeleteItem = (item: UserItem) => {
   deleteModal.value = true
   selectedItem.value = item
 }
