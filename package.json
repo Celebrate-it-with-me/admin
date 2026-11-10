@@ -17,7 +17,7 @@
     "pinia": "^4.1.0",
     "roboto-fontface": "*",
     "vue": "^3.2.0",
-    "vue-router": "^4.0.0",
+    "vue-router": "^5.5.0",
     "vuetify": "^3.13.7"
   },
   "devDependencies": {

@@ -37,9 +37,8 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from, next) => {
-  document.title = `CWM - ${to.meta?.title}` || 'CWM'
-  next();
+router.beforeEach((to) => {
+  document.title = to.meta?.title ? `CWM - ${to.meta.title}` : 'CWM'
 });
 
 export default router
