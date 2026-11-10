@@ -36,5 +36,8 @@
     "vue-tsc": "^3.3.14",
     "@eslint/js": "^10.0.1",
     "vue-eslint-parser": "^10.3.0"
+  },
+  "overrides": {
+    "minimatch": "^11.0.1"
   }
 }
