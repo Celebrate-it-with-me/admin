@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { UserItem } from "@/types"
 import {ref, watch} from 'vue'
 import { API } from '@/services/axios'
 
@@ -17,7 +18,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['resetReload', 'editingItem', 'deletingItem'])
-const users = ref()
+const users = ref<UserItem[]>()
 const loading = ref(false)
 const total = ref(0)
 const params = ref({})
@@ -70,11 +71,11 @@ const getUsers = async () => {
   }
 }
 
-const handleEditItem = (item: any) => {
+const handleEditItem = (item: UserItem) => {
   emit('editingItem', item)
 }
 
-const handleDeleteItem = (item: any) => {
+const handleDeleteItem = (item: UserItem) => {
   emit('deletingItem', item)
 }
 

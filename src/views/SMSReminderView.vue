@@ -21,7 +21,6 @@ const openRecipientsModal = ref(false);
 const openDeleteModal = ref(false);
 const selectedItem = ref({});
 
-const activeHintClass = ref('');
 
 const headers = [
   { key: 'recipients', title: 'Recipients', value: 'recipients', sortable: false },
@@ -38,19 +37,16 @@ const minimumDate = computed(() => {
   return new Date(tomorrow.setDate(today.getDate() + 1));
 });
 
-const smsHint = computed(() => {
-  const currentLength = 160 - message.value.length;
+const smsRemaining = computed(() => 160 - message.value.length);
 
-  if (currentLength < 30) {
-    activeHintClass.value = 'hint-warning';
-  }
-
-  if (currentLength < 10) {
-    activeHintClass.value = 'hint-danger'
-  }
-
-  return `${currentLength} remaining characters`;
+// Hint colour is derived from the remaining characters (it resets when text is removed).
+const activeHintClass = computed(() => {
+  if (smsRemaining.value < 10) return 'hint-danger';
+  if (smsRemaining.value < 30) return 'hint-warning';
+  return '';
 });
+
+const smsHint = computed(() => `${smsRemaining.value} remaining characters`);
 
 const ableToAdd = computed(() => {
   return !(!recipientSelected.value.length || !selectedDate.value || !message.value);

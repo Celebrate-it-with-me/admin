@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { MainGuestItem } from "@/types"
 import {ref, watch} from 'vue'
 import { API } from '@/services/axios'
 
@@ -23,7 +24,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['resetReload', 'editingItem', 'deletingItem', 'resetCode'])
-const mainGuests = ref<any[]>()
+const mainGuests = ref<MainGuestItem[]>()
 const loading = ref(false)
 const total = ref(0)
 const params = ref({})
@@ -83,15 +84,15 @@ const getMainGuest = async () => {
   }
 }
 
-const handleEditItem = (item: any) => {
+const handleEditItem = (item: MainGuestItem) => {
   emit('editingItem', item)
 }
 
-const handleDeleteItem = (item: any) => {
+const handleDeleteItem = (item: MainGuestItem) => {
   emit('deletingItem', item)
 }
 
-const handleResetCode = (item: any) => {
+const handleResetCode = (item: MainGuestItem) => {
   emit('resetCode', item)
 }
 

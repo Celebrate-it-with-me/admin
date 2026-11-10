@@ -2,6 +2,7 @@
 import TheModal from "@/components/TheModal.vue"
 import { ref, computed, watch } from "vue"
 import { API } from "@/services/axios"
+import type { ApiErrorResponse, UserItem } from "@/types"
 
 const props = defineProps({
   openModal: {
@@ -71,24 +72,24 @@ const submitForm = async () => {
 }
 
 const createUser = async () => {
-  const { status, response }: { status: number; response?: any } = await API.post('users', {
+  const { status, response }: { status: number; response?: ApiErrorResponse } = await API.post('users', {
     name: form.value.name,
     email: form.value.email,
     password: form.value.password
   })
-  processRequest(status, response)
+  processRequest(status, response as ApiErrorResponse)
 }
 
 const updateUser = async () => {
-  const { status, response }: { status: number; response?: any } = await API.patch(`users/${props.editItem.id}`, {
+  const { status, response }: { status: number; response?: ApiErrorResponse } = await API.patch(`users/${props.editItem.id}`, {
     name: form.value.name,
     email: form.value.email,
     password: form.value.password
   })
-  processRequest(status, response)
+  processRequest(status, response as ApiErrorResponse)
 }
 
-const processRequest = (status: number, response: any) => {
+const processRequest = (status: number, response: ApiErrorResponse) => {
   if (status >= 200 && status < 300) {
     sendingRequest.value = false
     resetForm()
@@ -119,10 +120,10 @@ const resetForm = () => {
 }
 
 watch(() => props.editItem, (value) => {
-  initForm(value)
+  initForm(value as UserItem)
 })
 
-const initForm = (item: any) => {
+const initForm = (item: UserItem) => {
   if (Object.keys(item).length) {
     actionType.value = 'Edit'
     form.value.name = item.name

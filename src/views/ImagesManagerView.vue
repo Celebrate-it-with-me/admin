@@ -54,7 +54,7 @@ const loadObjects = async () => {
 
       if (Object.keys(objectsByFolder.value).length) {
         for (const key in objectsByFolder.value) {
-          if (objectsByFolder.value.hasOwnProperty(key)) {
+          if (Object.hasOwn(objectsByFolder.value, key)) {
             console.log(key);
             objectsKey.value.push(key);
           }

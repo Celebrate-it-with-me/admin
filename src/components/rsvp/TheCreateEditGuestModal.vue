@@ -2,6 +2,7 @@
 import TheModal from "@/components/TheModal.vue"
 import {ref, computed, watch} from "vue"
 import { API } from "@/services/axios"
+import type { ApiErrorResponse } from "@/types"
 
 const props = defineProps({
   openModal: {
@@ -44,19 +45,9 @@ const formValidation = ref<Record<string, Array<(v: string) => boolean | string>
 });
 
 // Computed property 'modalTitle'
-const modalTitle = computed(() => {
-  // Check if 'editGuest' prop has any keys
-  if (Object.keys(props.editGuest).length) {
-    // If it does, set 'actionType' to 'Edit'
-    actionType.value = 'Edit';
-    // And return the title "Edit Main Guest"
-    return "Edit Main Guest";
-  }
-  // If 'editGuest' prop doesn't have any keys, set 'actionType' to 'Add'
-  actionType.value = 'Add';
-  // And return the title "Add Main Guest"
-  return "Add Main Guest";
-});
+const modalTitle = computed(() =>
+  Object.keys(props.editGuest).length ? "Edit Main Guest" : "Add Main Guest"
+);
 
 const handleClose = () => {
   resetForm()
@@ -81,7 +72,7 @@ const submitForm = async () => {
       alertMessage.value = 'There is some errors in the form, please fix and try again'
       sendingRequest.value = false
     }
-  } catch (err) {
+  } catch {
     showAlert.value = true
     alertMessage.value = 'There is some fails sending this request'
     sendingRequest.value = false
@@ -89,18 +80,18 @@ const submitForm = async () => {
 }
 
 const createMainGuest = async () => {
-  const { status, response }: { status: number; response?: any } = await API.post('/main-guest', {
+  const { status, response }: { status: number; response?: ApiErrorResponse } = await API.post('/main-guest', {
     firstName: form.value.firstName,
     lastName: form.value.lastName,
     email: form.value.email,
     phoneNumber: form.value.phoneNumber,
     partyMembers: JSON.stringify(partyMembers.value)
   })
-  processRequest(status, response)
+  processRequest(status, response as ApiErrorResponse)
 }
 
 const updateMainGuest = async () => {
-  const { status, response }: { status: number; response?: any } = await API.patch(`main-guest/${props.editGuest.id}`, {
+  const { status, response }: { status: number; response?: ApiErrorResponse } = await API.patch(`main-guest/${props.editGuest.id}`, {
     firstName: form.value.firstName,
     lastName: form.value.lastName,
     email: form.value.email,
@@ -108,10 +99,10 @@ const updateMainGuest = async () => {
     partyMembers: JSON.stringify(partyMembers.value)
   })
 
-  processRequest(status, response)
+  processRequest(status, response as ApiErrorResponse)
 }
 
-const processRequest = (status: number, response: any) => {
+const processRequest = (status: number, response: ApiErrorResponse) => {
   if (status >= 200 && status < 300) {
     sendingRequest.value = false
     resetForm()
@@ -317,6 +308,7 @@ const validPartyMembers = () => {
             </v-col>
             <v-col
               v-for="(member, index) in partyMembers"
+              :key="index"
               cols="12"
               sm="6"
               md="6"

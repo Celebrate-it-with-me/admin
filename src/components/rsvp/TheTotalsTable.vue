@@ -13,7 +13,6 @@ const partyMembers = ref(0);
 const totalConfirmed = ref(0);
 const totalUnConfirmed = ref(0);
 const loadingDetails = ref(false);
-const details = ref([]);
 const totalType = ref('');
 
 

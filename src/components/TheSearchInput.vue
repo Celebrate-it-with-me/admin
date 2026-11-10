@@ -15,7 +15,7 @@ const updateSearch = () => {
   emit('newInput', search.value)
 }
 
-watch(search, (newSearch, oldSearch) => {
+watch(search, () => {
   // Making a delay for typing
   clearTimeout(timeOut.value)
   timeOut.value = setTimeout(updateSearch, 800)

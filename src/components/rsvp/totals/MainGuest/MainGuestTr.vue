@@ -1,7 +1,7 @@
 <script setup >
 import {ref} from "vue";
 
-const props = defineProps({
+defineProps({
   guest: {
     type: Object,
     required: true

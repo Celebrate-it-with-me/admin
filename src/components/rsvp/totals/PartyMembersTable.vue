@@ -2,7 +2,6 @@
 
 import {onMounted, ref, watch} from "vue";
 import {API} from "@/services/axios";
-import MainGuestTr from "@/components/rsvp/totals/MainGuest/MainGuestTr.vue";
 import ExportButton from "@/components/export_button/ExportButton.vue";
 
 const props = defineProps({
@@ -47,7 +46,7 @@ const loadTotals = async () => {
     if (response.status >= 200 && response.status < 300) {
       details.value = response.data?.totals ?? [];
     }
-  } catch(e) {
+  } catch {
     errorMessage.value = 'Ups, Something went wrong, please try again later!';
   }
 }
