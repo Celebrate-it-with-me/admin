@@ -28,17 +28,17 @@ const toggleReloadUser = () => {
   reloadUser.value = !reloadUser.value
 }
 
-const handleEditItem = (item) => {
+const handleEditItem = (item: any) => {
   editItem.value = item
   addEditDialog.value = true
 }
 
-const handleDeleteItem = (item) => {
+const handleDeleteItem = (item: any) => {
   deleteModal.value = true
   selectedItem.value = item
 }
 
-const closeDeleteModal = (item) => {
+const closeDeleteModal = () => {
   deleteModal.value = false
 }
 </script>

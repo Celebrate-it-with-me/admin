@@ -64,17 +64,17 @@ const getUsers = async () => {
     emit('resetReload')
 
   } catch (err) {
-    console.log(e)
+    console.log(err)
   } finally {
     loading.value = false
   }
 }
 
-const handleEditItem = (item) => {
+const handleEditItem = (item: any) => {
   emit('editingItem', item)
 }
 
-const handleDeleteItem = (item) => {
+const handleDeleteItem = (item: any) => {
   emit('deletingItem', item)
 }
 

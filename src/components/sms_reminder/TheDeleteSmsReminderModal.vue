@@ -19,10 +19,10 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['closeModal', 'reloadSmsReminder'])
+const emit = defineEmits(['closeModal', 'reloadReminders'])
 const sendingRequest = ref(false)
 const showAlert = ref(true)
-const alertType = ref('error')
+const alertType = ref<'success' | 'warning' | 'error' | 'info'>('error')
 const alertMessage = ref('Are you sure you want to delete this SMS Reminder!')
 const modalTitle = 'Delete Sms Reminder'
 

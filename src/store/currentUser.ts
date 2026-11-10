@@ -4,11 +4,11 @@ import { API } from '@/services/axios'
 
 export const useCurrentUserStore = defineStore('currentUser', {
   state: () => ({
-    user: {},
-    userPermissions: []
+    user: {} as Record<string, any>,
+    userPermissions: [] as any[]
   }),
   actions: {
-    async login(email, password, device) {
+    async login(email: string, password: string, device: string) {
       try {
         const res = await API.post('login', {
           email,
@@ -45,7 +45,7 @@ export const useCurrentUserStore = defineStore('currentUser', {
       this.userPermissions = this.user.permissions
     },
 
-    hasPermissionTo(permissionName) {
+    hasPermissionTo(permissionName: string) {
       // todo check permissions
     },
 

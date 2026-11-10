@@ -8,7 +8,7 @@ const props = defineProps({
     default: 'Search'
   }
 })
-const timeOut = ref(0)
+const timeOut = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
 const search = ref('')
 
 const updateSearch = () => {
@@ -17,8 +17,8 @@ const updateSearch = () => {
 
 watch(search, (newSearch, oldSearch) => {
   // Making a delay for typing
-  clearTimeout(timeOut)
-  setTimeout(updateSearch, 800)
+  clearTimeout(timeOut.value)
+  timeOut.value = setTimeout(updateSearch, 800)
 })
 
 </script>

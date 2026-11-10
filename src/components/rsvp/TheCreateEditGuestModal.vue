@@ -22,10 +22,10 @@ const props = defineProps({
 const emit = defineEmits(['closeModal', 'reloadMainGuest'])
 const sendingRequest = ref(false)
 const valid = ref(false)
-const mgForm = ref(null)
+const mgForm = ref<{ validate: () => Promise<{ valid: boolean }> } | null>(null)
 const showAlert = ref(false)
 const actionType = ref('Add')
-const alertType = ref('warning')
+const alertType = ref<'success' | 'warning' | 'error' | 'info'>('warning')
 const alertMessage = ref('')
 const form = ref({
   firstName: '',
@@ -34,13 +34,13 @@ const form = ref({
   phoneNumber: '',
   numberOfMembers: 0,
 });
-const partyMembers = ref([]);
+const partyMembers = ref<{ name: string; confirmed: number }[]>([]);
 
 // Form Validation.
-const formValidation = ref({
-  firstName: [(v) => !!v || "First Name is required"],
-  lastName: [(v) => !!v || "Last Name is required"],
-  phoneNumber: [(v) => !!v || "Phone Number is required"],
+const formValidation = ref<Record<string, Array<(v: string) => boolean | string>>>({
+  firstName: [(v: string) => !!v || "First Name is required"],
+  lastName: [(v: string) => !!v || "Last Name is required"],
+  phoneNumber: [(v: string) => !!v || "Phone Number is required"],
 });
 
 // Computed property 'modalTitle'
@@ -66,7 +66,7 @@ const handleClose = () => {
 const submitForm = async () => {
   sendingRequest.value = true
   try {
-    const { valid } = await mgForm.value.validate()
+    const { valid } = await mgForm.value!.validate()
 
     if (valid && validPartyMembers()) {
       showAlert.value = false
@@ -89,7 +89,7 @@ const submitForm = async () => {
 }
 
 const createMainGuest = async () => {
-  const { status, response } = await API.post('/main-guest', {
+  const { status, response }: { status: number; response?: any } = await API.post('/main-guest', {
     firstName: form.value.firstName,
     lastName: form.value.lastName,
     email: form.value.email,
@@ -100,7 +100,7 @@ const createMainGuest = async () => {
 }
 
 const updateMainGuest = async () => {
-  const { status, response } = await API.patch(`main-guest/${props.editGuest.id}`, {
+  const { status, response }: { status: number; response?: any } = await API.patch(`main-guest/${props.editGuest.id}`, {
     firstName: form.value.firstName,
     lastName: form.value.lastName,
     email: form.value.email,
@@ -111,7 +111,7 @@ const updateMainGuest = async () => {
   processRequest(status, response)
 }
 
-const processRequest = (status, response) => {
+const processRequest = (status: number, response: any) => {
   if (status >= 200 && status < 300) {
     sendingRequest.value = false
     resetForm()

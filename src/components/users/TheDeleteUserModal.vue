@@ -22,7 +22,7 @@ const props = defineProps({
 const emit = defineEmits(['closeModal', 'reloadUser'])
 const sendingRequest = ref(false)
 const showAlert = ref(true)
-const alertType = ref('error')
+const alertType = ref<'success' | 'warning' | 'error' | 'info'>('error')
 const alertMessage = ref('Are you sure you want to delete this user!')
 const modalTitle = 'Delete User'
 
