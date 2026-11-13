@@ -19,6 +19,8 @@ export interface NavItem {
 export interface NavGroup {
   key: string
   title: string
+  /** Icon of the group header (groups with a title fold). */
+  icon?: string
   items: NavItem[]
 }
 
@@ -32,6 +34,7 @@ export const NAV: NavGroup[] = [
   },
   {
     key: 'operation',
+    icon: 'mdi-briefcase-outline',
     title: 'Operación',
     items: [
       { key: 'Events', title: 'Eventos', icon: 'mdi-calendar-heart', path: 'events', soon: true, brief: 'A2',
@@ -45,6 +48,7 @@ export const NAV: NavGroup[] = [
   },
   {
     key: 'revenue',
+    icon: 'mdi-cash-multiple',
     title: 'Ingresos',
     items: [
       { key: 'Purchases', title: 'Compras', icon: 'mdi-credit-card-outline', path: 'purchases', soon: true, brief: 'A8',
@@ -55,6 +59,7 @@ export const NAV: NavGroup[] = [
   },
   {
     key: 'product',
+    icon: 'mdi-shape-outline',
     title: 'Producto',
     items: [
       { key: 'Plans', title: 'Módulos y planes', icon: 'mdi-puzzle-outline', path: 'plans', soon: true, brief: 'A4',
@@ -65,6 +70,7 @@ export const NAV: NavGroup[] = [
   },
   {
     key: 'comms',
+    icon: 'mdi-message-processing-outline',
     title: 'Comunicación',
     items: [
       { key: 'WhatsApp', title: 'WhatsApp', icon: 'mdi-whatsapp', path: 'whatsapp', soon: true, brief: 'A9',
@@ -75,6 +81,7 @@ export const NAV: NavGroup[] = [
   },
   {
     key: 'system',
+    icon: 'mdi-cog-outline',
     title: 'Sistema',
     items: [
       { key: 'Team', title: 'Equipo y roles', icon: 'mdi-account-key-outline', path: 'team', soon: true, brief: 'A1',
