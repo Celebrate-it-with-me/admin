@@ -77,6 +77,7 @@ const STEP_COLOR = { created: 'secondary', paid: 'success', refunded: 'warning' 
     :model-value="open"
     location="right"
     temporary
+    tag="aside"
     :width="drawerWidth"
     aria-label="Detalle de la compra"
     @update:model-value="(v: boolean) => { if (!v) emit('close') }"
@@ -181,6 +182,10 @@ const STEP_COLOR = { created: 'secondary', paid: 'success', refunded: 'warning' 
 .notes { font-weight: 400 !important; white-space: pre-wrap; }
 .detail__h { font-size: 0.75rem; font-weight: 700; color: var(--ink-500); text-transform: uppercase; letter-spacing: 0.04em; }
 .timeline { margin-left: -16px; }
-.step__title { font-weight: 600; }
+.step__title { font-weight: 600; margin: 0; }
+.timeline :deep(.v-timeline-item) { min-height: 0; padding-bottom: 12px; }
+.timeline :deep(.v-timeline-item__body) { padding-block: 0; }
+.kv a { color: var(--rose-700); text-underline-offset: 2px; }
+.kv a:hover { color: var(--wine-800); }
 .touch { min-height: 44px; }
 </style>
