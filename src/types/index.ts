@@ -8,6 +8,8 @@ export interface CurrentUser {
   email?: string
   roles?: StaffRole[]
   permissions?: string[]
+  /** Two-factor flags from userInfo; `twoFactorSetupRequired`: the server forces her to enrol and has locked the rest. */
+  security?: { twoFactorEnabled: boolean; twoFactorSetupRequired: boolean }
   [key: string]: unknown
 }
 
