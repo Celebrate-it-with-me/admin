@@ -1,13 +1,20 @@
 import type { RouteRecordRaw } from 'vue-router'
-import UsersView from '@/views/UsersView.vue'
+import UsersListView from './views/UsersListView.vue'
+import UserDetailView from './views/UserDetailView.vue'
 
-/** Routes of Usuarios (A5). Child routes of the dashboard layout; give every route a `meta.permission`. */
+/** Routes of Usuarios (A5). Child routes of the dashboard layout. */
 const routes: RouteRecordRaw[] = [
   {
-    path: '/users',
+    path: 'users',
     name: 'Users',
-    component: UsersView,
-    meta: { title: 'Usuarios', pageTitle: 'Usuarios' },
+    component: UsersListView,
+    meta: { title: 'Usuarios', pageTitle: 'Usuarios', permission: 'admin.users.view' },
+  },
+  {
+    path: 'users/:id(\\d+)',
+    name: 'UserDetail',
+    component: UserDetailView,
+    meta: { title: 'Usuario', pageTitle: 'Usuario', permission: 'admin.users.view' },
   },
 ]
 
