@@ -51,7 +51,7 @@ export interface DashboardData {
   days: number
   includeInternal: boolean
   generatedAt: string
-  kpis: Record<'signups' | 'eventsCreated' | 'published' | 'paid' | 'revenueCents' | 'refundedCents', MetricPair>
+  kpis: Record<'signups' | 'eventsCreated' | 'published' | 'paid', MetricPair> & Partial<Record<'revenueCents' | 'refundedCents', MetricPair>>
   series: DashboardCharts['series']
   mix: DashboardCharts['mix']
   upcomingWeeks: DashboardCharts['upcomingWeeks']
@@ -63,7 +63,7 @@ export interface DashboardData {
 export type SeriesKey = 'signups' | 'eventsCreated' | 'published' | 'paid' | 'revenueCents'
 
 export interface DashboardCharts {
-  series: { dates: string[]; metrics: Record<SeriesKey, { current: number[]; previous: number[] }> }
+  series: { dates: string[]; metrics: Partial<Record<SeriesKey, { current: number[]; previous: number[] }>> }
   mix: { type: { key: string; count: number }[]; plan: { key: string; count: number }[]; stage: { key: string; count: number }[] }
   upcomingWeeks: { weekStart: string; published: number; draft: number }[]
 }
