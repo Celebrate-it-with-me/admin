@@ -7,6 +7,9 @@ import type { DashboardData } from "@/types";
 import KpiCard from "@/components/dashboard/KpiCard.vue";
 import FunnelCard from "@/components/dashboard/FunnelCard.vue";
 import AttentionCard from "@/components/dashboard/AttentionCard.vue";
+import ActivityChart from "@/components/dashboard/ActivityChart.vue";
+import MixCard from "@/components/dashboard/MixCard.vue";
+import UpcomingWeeks from "@/components/dashboard/UpcomingWeeks.vue";
 
 const currentUser = useCurrentUserStore()
 
@@ -94,8 +97,17 @@ const shortcuts = [
         </v-row>
 
         <v-row class="mt-2">
+          <v-col cols="12"><activity-chart :series="data.series" :days="data.days" /></v-col>
+        </v-row>
+
+        <v-row class="mt-2">
           <v-col cols="12" lg="7"><funnel-card :funnel="data.funnel" :days="data.days" /></v-col>
           <v-col cols="12" lg="5"><attention-card :items="data.attention" /></v-col>
+        </v-row>
+
+        <v-row class="mt-2">
+          <v-col cols="12" md="6"><upcoming-weeks :weeks="data.upcomingWeeks" /></v-col>
+          <v-col cols="12" md="6"><mix-card :mix="data.mix" /></v-col>
         </v-row>
 
         <v-row class="mt-2">
