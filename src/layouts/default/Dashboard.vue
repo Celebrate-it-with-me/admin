@@ -5,6 +5,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useCurrentUserStore } from "@/store/currentUser";
 import { useDisplay } from "vuetify";
 import { watch } from "vue";
+import { NAV } from "@/config/navigation";
 
 const store = useAppStore()
 const route = useRoute()
@@ -16,13 +17,8 @@ const { mdAndUp } = useDisplay()
 store.navigationDrawer = mdAndUp.value
 watch(() => route.path, () => { if (!mdAndUp.value) store.navigationDrawer = false })
 
-const sections = [
-  { title: 'Inicio', icon: 'mdi-view-dashboard-outline', to: { name: 'MainDashboard' } },
-  { title: 'Usuarios', icon: 'mdi-account-multiple-outline', to: { name: 'Users' } },
-  { title: 'Confirmaciones', icon: 'mdi-email-check-outline', to: { name: 'RSVP' } },
-  { title: 'Recordatorios SMS', icon: 'mdi-message-text-outline', to: { name: 'SMSReminder' } },
-  { title: 'Imágenes', icon: 'mdi-image-multiple-outline', to: { name: 'ImagesManager' } },
-]
+// Menu groups; items not built yet are marked and open the "en construcción" page.
+const groups = NAV.map(g => ({ ...g, items: g.items.map(i => ({ ...i, to: { name: i.key } })) }))
 
 const logout = () => {
   currentUser.logout()
@@ -36,17 +32,24 @@ const logout = () => {
       <the-logo />
     </div>
 
-    <v-list nav class="px-3" aria-label="Secciones">
-      <v-list-item
-        v-for="item in sections"
-        :key="item.title"
-        :prepend-icon="item.icon"
-        :title="item.title"
-        :to="item.to"
-        color="primary"
-        rounded="lg"
-      />
-    </v-list>
+    <nav class="menu" aria-label="Secciones">
+      <v-list v-for="g in groups" :key="g.key" nav density="compact" class="px-3 group" :aria-label="g.title || 'Principal'">
+        <v-list-subheader v-if="g.title" class="group__title">{{ g.title }}</v-list-subheader>
+        <v-list-item
+          v-for="item in g.items"
+          :key="item.key"
+          :prepend-icon="item.icon"
+          :to="item.to"
+          color="primary"
+          rounded="lg"
+        >
+          <v-list-item-title>{{ item.title }}</v-list-item-title>
+          <template v-if="item.soon" #append>
+            <span class="soon-tag" title="En construcción">Pronto</span>
+          </template>
+        </v-list-item>
+      </v-list>
+    </nav>
 
     <template #append>
       <div class="px-5 pb-4 text-caption text-medium-emphasis">{{ store.appVersion }}</div>
@@ -82,6 +85,10 @@ const logout = () => {
 </template>
 
 <style scoped>
+.menu { padding-bottom: 16px; }
+.group + .group { margin-top: 4px; }
+.group__title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-500); min-height: 32px; }
+.soon-tag { font-size: 0.6875rem; font-weight: 700; color: #7a5c1e; background: #f6ecd4; border-radius: 6px; padding: 1px 6px; }
 .page-title { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 500; margin-left: 16px; }
 .content { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
 @media (min-width: 960px) { .content { padding: 32px 32px 64px; } }

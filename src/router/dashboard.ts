@@ -4,6 +4,8 @@ import UsersView from "@/views/UsersView.vue";
 import RSVPView from "@/views/RSVPView.vue";
 import SMSReminderView from "@/views/SMSReminderView.vue";
 import ImagesManagerView from "@/views/ImagesManagerView.vue";
+import ComingSoonView from "@/views/ComingSoonView.vue";
+import { PLACEHOLDERS } from "@/config/navigation";
 
 export default [
   {
@@ -54,7 +56,14 @@ export default [
           title: 'Images Manager',
           pageTitle: 'Imágenes'
         }
-      }
+      },
+      // Pages that are on the menu but not built yet.
+      ...PLACEHOLDERS.map(item => ({
+        path: item.path,
+        name: item.key,
+        component: ComingSoonView,
+        meta: { title: item.title, pageTitle: item.title }
+      }))
     ]
   }
 ]
