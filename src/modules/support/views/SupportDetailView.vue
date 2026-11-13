@@ -5,6 +5,7 @@ import { API } from '@/services/axios'
 import { useCurrentUserStore } from '@/store/currentUser'
 import type { TeamMember } from '@/types'
 import { supportService } from '../services/supportService'
+import ImpersonateButton from '@/modules/impersonation/components/ImpersonateButton.vue'
 import type { SupportDetail, SupportStatus } from '../types'
 import { NOTE_MAX, STATUSES, contextRows, fullDate, noteValid, statusInfo, ageLabel } from '../utils'
 
@@ -164,6 +165,7 @@ const addNote = async () => {
               <dd v-if="item.user">
                 <router-link :to="`/dashboard${item.user.adminPath}`">{{ item.user.name }}</router-link>
                 <br><span class="text-body-2 text-medium-emphasis">{{ item.user.email }}</span>
+                <ImpersonateButton :user="item.user" :support-request-id="item.id" size="compact" class="mt-3" />
               </dd>
               <dd v-else class="text-medium-emphasis">Cuenta eliminada</dd>
               <dt>Evento</dt>

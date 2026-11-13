@@ -8,6 +8,7 @@ import { formatMoney } from '@/composables/useMoney'
 import ReasonDialog from '@/components/ReasonDialog.vue'
 import UserFormDialog from '../components/UserFormDialog.vue'
 import DeleteUserDialog from '../components/DeleteUserDialog.vue'
+import ImpersonateButton from '@/modules/impersonation/components/ImpersonateButton.vue'
 import { EVENT_STATUS, ROLE_IN_EVENT, dateLabel, explainError, filenameFrom, initials } from '../helpers'
 import type { UserProfile } from '../types'
 
@@ -183,6 +184,7 @@ const onSaved = async () => { editOpen.value = false; await load() }
           <v-card class="pa-4">
             <h3 class="h3">Acciones</h3>
             <div class="actions">
+              <ImpersonateButton v-if="!deleted && !isStaff && !user.suspension" :user="user" />
               <v-btn v-if="me.can('admin.users.reset_password')" variant="outlined" prepend-icon="mdi-lock-reset" :loading="resetting" :disabled="deleted" @click="reset">Restablecer contraseña</v-btn>
               <template v-if="!deleted">
                 <v-btn v-if="me.can('admin.users.suspend') && !user.suspension && !isStaff" variant="outlined" color="warning" prepend-icon="mdi-cancel" @click="askSuspend('suspend')">Suspender</v-btn>
