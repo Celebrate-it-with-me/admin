@@ -33,7 +33,7 @@ const example = (type: AttentionItem['type'], e: AttentionItem['examples'][numbe
           <p class="font-weight-bold">{{ COPY[item.type].title(item.count) }}</p>
           <p class="text-body-2 text-medium-emphasis">{{ COPY[item.type].hint }}</p>
           <p class="text-body-2 mt-1">
-            <span v-for="(e, i) in item.examples" :key="i">{{ i ? ' · ' : '' }}{{ example(item.type, e) }}</span>
+            <span v-for="(e, i) in item.examples" :key="i">{{ i ? ' · ' : '' }}<router-link v-if="e.eventId" :to="`/dashboard/events/${e.eventId}`" class="ex-link">{{ example(item.type, e) }}</router-link><template v-else>{{ example(item.type, e) }}</template></span>
             <span v-if="item.count > item.examples.length" class="text-medium-emphasis"> · y {{ item.count - item.examples.length }} más</span>
           </p>
         </div>
@@ -48,5 +48,8 @@ const example = (type: AttentionItem['type'], e: AttentionItem['examples'][numbe
 .list__body { min-width: 0; }
 .list__body p { margin: 0; line-height: 1.5; }
 .list__body p + p { margin-top: 2px; }
+
+.ex-link { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.ex-link:hover, .ex-link:focus-visible { color: var(--rose-700); }
 .ok { text-align: center; padding: 24px 0; }
 </style>
