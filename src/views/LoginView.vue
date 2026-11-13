@@ -27,7 +27,11 @@ import TheLogo from "@/components/TheLogo.vue";
 
 <style scoped>
 .login { min-height: 100vh; display: grid; grid-template-columns: 1fr; background: var(--cream-100); }
-.login__brand { display: none; background: var(--wine-900); color: #fff; padding: 64px; align-items: flex-end; }
+.login__brand {
+  display: none; color: #fff; padding: 64px; align-items: flex-end;
+  /* The photo fades into this colour at the bottom, where the text sits. */
+  background: #2f020d url('/login-bg.webp') top center / 100% auto no-repeat;
+}
 .login__brand-inner { max-width: 440px; }
 .login__kicker { font-size: 0.875rem; font-weight: 600; color: var(--gold-300); margin-bottom: 16px; }
 .login__claim { font-size: 2.5rem; line-height: 1.15; text-wrap: balance; margin-bottom: 16px; }
