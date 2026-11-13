@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { formatMoney } from '@/composables/useMoney'
 import { activityLabel, attendingPercent, dateLabel, moduleLabel, purchaseTone, roleLabel, STATUS, typeName } from '../labels'
 import type { EventDetail } from '../types'
+import ImpersonateButton from '@/modules/impersonation/components/ImpersonateButton.vue'
 
 const props = defineProps<{ detail: EventDetail }>()
 defineEmits<{ reload: [] }>()
@@ -38,6 +39,7 @@ const copy = async () => {
             <v-chip size="small" variant="tonal">{{ roleLabel(c.role) }}</v-chip>
           </li>
         </ul>
+        <ImpersonateButton v-if="d.owner" :user="d.owner" size="compact" class="mt-4" />
         <p v-if="!d.owner && !d.collaborators.length" class="text-medium-emphasis">Este evento no tiene dueña asignada.</p>
       </v-card>
     </v-col>
