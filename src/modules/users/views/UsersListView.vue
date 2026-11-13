@@ -22,6 +22,9 @@ const failed = ref(false)
 const filters = ref<UserFilters>({ search: '', kind: null, status: null, internal: false })
 const hasFilters = computed(() => !!(filters.value.search || filters.value.kind || filters.value.status || filters.value.internal))
 
+// Internal accounts (demo and staff) are left out by default: how many, so the screen can say so.
+const hiddenInternal = ref(0)
+
 let latest = 0
 const load = async () => {
   const request = ++latest
@@ -32,6 +35,7 @@ const load = async () => {
     if (request !== latest) return
     rows.value = res.data.data
     total.value = res.data.meta.total
+    hiddenInternal.value = res.data.meta.hiddenInternal ?? 0
   } catch {
     if (request === latest) failed.value = true
   } finally {
@@ -90,6 +94,11 @@ const onSaved = () => { createOpen.value = false; load() }
         </v-col>
       </v-row>
     </v-card>
+
+    <v-alert v-if="hiddenInternal > 0 && !filters.internal && !failed" type="info" variant="tonal" density="compact" class="mb-4">
+      {{ hiddenInternal }} {{ hiddenInternal === 1 ? 'cuenta interna está oculta' : 'cuentas internas (demo y personal) están ocultas' }}.
+      <template #append><v-btn variant="text" @click="filters = { ...filters, internal: true }">Mostrarlos</v-btn></template>
+    </v-alert>
 
     <v-alert v-if="failed" type="error" variant="tonal" class="mb-4" text="No pudimos cargar los usuarios.">
       <template #append><v-btn variant="text" @click="load">Reintentar</v-btn></template>
