@@ -108,23 +108,28 @@ const saveCreate = async (reason: string) => {
 // ---- Edit limits / activate
 const editing = ref<Coupon | null>(null)
 const editOpen = ref(false)
-const edit = reactive({ maxUses: '', expiresAt: '' })
+const edit = reactive({ maxUses: '', expiresAt: '', noCap: false, noExpiry: false })
 const editBusy = ref(false)
 const editError = ref('')
-const editMaxError = computed(() => (edit.maxUses.trim() && !/^[1-9]\d*$/.test(edit.maxUses.trim()) ? 'Un número entero mayor que 0.' : ''))
+const editMaxError = computed(() => (!edit.noCap && edit.maxUses.trim() && !/^[1-9]\d*$/.test(edit.maxUses.trim()) ? 'Un número entero mayor que 0.' : ''))
 const openEdit = (c: Coupon) => {
   editing.value = c
   edit.maxUses = c.max_uses === null ? '' : String(c.max_uses)
   edit.expiresAt = c.expires_at ? c.expires_at.slice(0, 10) : ''
+  edit.noCap = false
+  edit.noExpiry = false
   editError.value = ''
   editOpen.value = true
 }
 const saveEdit = async (reason: string) => {
   if (!editing.value || editMaxError.value) return
-  const changes: { maxUses?: number; expiresAt?: string } = {}
-  if (edit.maxUses.trim()) changes.maxUses = Number(edit.maxUses)
-  if (edit.expiresAt) changes.expiresAt = `${edit.expiresAt} 23:59:59`
-  if (!Object.keys(changes).length) { editError.value = 'Indica un tope de usos o un vencimiento nuevo.'; return }
+  // Absent = unchanged; null = remove the cap / the expiry.
+  const changes: { maxUses?: number | null; expiresAt?: string | null } = {}
+  if (edit.noCap) { if (editing.value.max_uses !== null) changes.maxUses = null }
+  else if (edit.maxUses.trim() && Number(edit.maxUses) !== editing.value.max_uses) changes.maxUses = Number(edit.maxUses)
+  if (edit.noExpiry) { if (editing.value.expires_at !== null) changes.expiresAt = null }
+  else if (edit.expiresAt && edit.expiresAt !== editing.value.expires_at?.slice(0, 10)) changes.expiresAt = `${edit.expiresAt} 23:59:59`
+  if (!Object.keys(changes).length) { editError.value = 'No hay cambios: modifica el tope o el vencimiento, o márcalos como "Sin tope" / "Sin vencimiento".'; return }
   editBusy.value = true
   editError.value = ''
   try {
@@ -302,14 +307,16 @@ const headers = [
     <ReasonDialog
       v-model="editOpen"
       :title="`Editar ${editing?.code ?? ''}`"
-      message="Cambia el tope de usos o el vencimiento. Para quitar un tope o un vencimiento, crea un código nuevo."
+      message="Cambia el tope de usos o el vencimiento, o quítalos con «Sin tope» y «Sin vencimiento»."
       confirm-label="Guardar cambios"
       :loading="editBusy"
       :error="editError"
       @confirm="saveEdit"
     >
-      <v-text-field v-model="edit.maxUses" label="Tope de usos" inputmode="numeric" :error-messages="editMaxError" />
-      <v-text-field v-model="edit.expiresAt" label="Vence el" type="date" />
+      <v-text-field v-model="edit.maxUses" label="Tope de usos" inputmode="numeric" :disabled="edit.noCap" :error-messages="editMaxError" />
+      <v-switch v-model="edit.noCap" label="Sin tope (usos ilimitados)" color="primary" hide-details density="compact" class="mb-3" />
+      <v-text-field v-model="edit.expiresAt" label="Vence el" type="date" :disabled="edit.noExpiry" />
+      <v-switch v-model="edit.noExpiry" label="Sin vencimiento" color="primary" hide-details density="compact" />
     </ReasonDialog>
 
     <ReasonDialog
