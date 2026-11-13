@@ -37,6 +37,7 @@ export const ACTION_LABELS: Record<string, { label: string; icon: string; tone: 
   'support.update': { label: 'Actualizó una solicitud de soporte', icon: 'mdi-lifebuoy', tone: 'primary' },
   'support.note': { label: 'Anotó en una solicitud de soporte', icon: 'mdi-note-text-outline', tone: 'info' },
   'impersonation.start': { label: 'Entró como una usuaria', icon: 'mdi-account-eye-outline', tone: 'warning' },
+  'impersonation.action': { label: 'Hizo un cambio durante una sesión de soporte', icon: 'mdi-pencil-outline', tone: 'warning' },
   'impersonation.end': { label: 'Terminó de ver como una usuaria', icon: 'mdi-account-eye-off-outline', tone: 'info' },
 }
 
