@@ -85,15 +85,6 @@ export const NAV: NavGroup[] = [
         about: 'Trabajos fallidos, colas, errores recientes, banderas de funciones y modo mantenimiento.' },
     ],
   },
-  {
-    key: 'legacy',
-    title: 'Heredado',
-    items: [
-      { key: 'RSVP', title: 'Confirmaciones', icon: 'mdi-email-check-outline', path: 'rsvp' },
-      { key: 'SMSReminder', title: 'Recordatorios SMS', icon: 'mdi-message-text-outline', path: 'sms-reminder' },
-      { key: 'ImagesManager', title: 'Imágenes', icon: 'mdi-image-multiple-outline', path: 'images-manager' },
-    ],
-  },
 ]
 
 export const PLACEHOLDERS: NavItem[] = NAV.flatMap(g => g.items).filter(i => i.soon)

@@ -5,21 +5,6 @@ export interface ApiErrorResponse {
   data: { message: string }
 }
 
-export interface PartyMember {
-  name: string
-  confirmed: number
-}
-
-export interface MainGuestItem {
-  id: number
-  firstName: string
-  lastName: string
-  email: string
-  phoneNumber: string
-  confirmed: string
-  partyMembers: PartyMember[]
-}
-
 export interface UserItem {
   id?: number
   name: string
