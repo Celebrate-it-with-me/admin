@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { eventsLabel, limitLabel, moduleLabel, sectionLabel } from '../logic'
+import { eventsLabel, limitLabel, moduleLabel, priceLabel, sectionLabel } from '../logic'
 import type { CatalogModule, CatalogPlan } from '../types'
 
 // Matrix of modules by plan. It only reports what the person asked for; the parent confirms and saves.
@@ -10,7 +10,6 @@ defineProps<{
 }>()
 const emit = defineEmits<{ togglePlan: [CatalogModule, CatalogPlan, boolean]; toggleEnabled: [CatalogModule, boolean] }>()
 
-const priceLabel = (p: CatalogPlan) => (p.priceCents ? `$${(p.priceCents / 100).toFixed(p.priceCents % 100 ? 2 : 0)}` : 'Gratis')
 const exceptions = (m: CatalogModule) => m.overrides.active + m.overrides.locked
 const exceptionsText = (m: CatalogModule) => {
   const parts: string[] = []

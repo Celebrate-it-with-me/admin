@@ -42,7 +42,7 @@ const loadImpact = async () => {
   impactLoading.value = true
   impactError.value = ''
   impact.value = null
-  try { impact.value = await fetchImpact(c.module.key, c.planSlugs, props.plans.map(p => p.slug), c.module.planSlugs) } catch (e) { impactError.value = explainError(e) } finally { impactLoading.value = false }
+  try { impact.value = await fetchImpact(c.module.key, c.planSlugs) } catch (e) { impactError.value = explainError(e) } finally { impactLoading.value = false }
 }
 
 watch(() => props.change, c => {
