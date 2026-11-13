@@ -48,19 +48,14 @@ const closeDeleteModal = () => {
   <v-row>
     <v-col>
       <v-btn
-        variant="tonal"
-        size="x-large"
-        :flat="true"
+        color="primary"
         prepend-icon="mdi-account-plus"
         @click="openAddEditDialog()"
       >
-        <template v-slot:prepend>
-          <v-icon color="success"></v-icon>
-        </template>
-        AddUser
+        Nuevo usuario
       </v-btn>
     </v-col>
-    <v-col cols="3">
+    <v-col cols="12" sm="6" md="4">
       <the-search-input @newInput="(val) => (searchInput = val)"></the-search-input>
     </v-col>
     <the-user-table

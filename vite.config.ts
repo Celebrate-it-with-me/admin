@@ -20,10 +20,8 @@ export default defineConfig({
     ViteFonts({
       google: {
         families: [
-          {
-            name: 'Roboto',
-            styles: 'wght@100;300;400;500;700;900',
-          },
+          { name: 'Figtree', styles: 'wght@300..900' },
+          { name: 'Fraunces', styles: 'opsz,wght@9..144,300..700' },
         ],
       },
     }),

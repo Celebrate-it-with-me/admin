@@ -64,7 +64,7 @@ const loadDetails = async (type) => {
                 :disabled="loadingDetails"
                 :loading="loadingDetails"
                 class="text-none"
-                color="indigo-darken-3"
+                color="primary"
                 size="x-small"
                 @click="loadDetails('totalGuest')"
               >
@@ -80,7 +80,7 @@ const loadDetails = async (type) => {
                 :disabled="loadingDetails"
                 :loading="loadingDetails"
                 class="text-none"
-                color="indigo-darken-3"
+                color="primary"
                 size="x-small"
                 @click="loadDetails('mainGuests')"
               >
@@ -96,7 +96,7 @@ const loadDetails = async (type) => {
                 :disabled="loadingDetails"
                 :loading="loadingDetails"
                 class="text-none"
-                color="indigo-darken-3"
+                color="primary"
                 size="x-small"
                 @click="loadDetails('partyMembers')"
               >
@@ -112,7 +112,7 @@ const loadDetails = async (type) => {
                 :disabled="loadingDetails"
                 :loading="loadingDetails"
                 class="text-none"
-                color="indigo-darken-3"
+                color="primary"
                 size="x-small"
                 @click="loadDetails('totalConfirmed')"
               >
@@ -128,7 +128,7 @@ const loadDetails = async (type) => {
                 :disabled="loadingDetails"
                 :loading="loadingDetails"
                 class="text-none"
-                color="indigo-darken-3"
+                color="primary"
                 size="x-small"
                 @click="loadDetails('totalUnConfirmed')"
               >

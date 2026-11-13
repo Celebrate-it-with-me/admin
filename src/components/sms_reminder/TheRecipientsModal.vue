@@ -51,7 +51,7 @@ const handleClose = () => {
       </template>
       <template v-slot:dialogFooter>
         <v-btn
-          color="blue-darken-1"
+          color="primary"
           variant="text"
           @click="handleClose()"
         >

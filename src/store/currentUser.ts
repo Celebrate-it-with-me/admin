@@ -34,7 +34,8 @@ export const useCurrentUserStore = defineStore('currentUser', {
       try {
         const res = await API.get('userInfo')
 
-        this.user = res.data
+        // The API wraps the resource in `data`.
+        this.user = res.data?.data ?? res.data
         await this.setUserPermissions()
 
       } catch {

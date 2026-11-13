@@ -38,7 +38,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  document.title = to.meta?.title ? `CWM - ${to.meta.title}` : 'CWM'
+  document.title = to.meta?.title ? `Quinvite Admin - ${to.meta.title}` : 'Quinvite Admin'
 });
 
 export default router
