@@ -50,8 +50,9 @@ const kpis = computed(() => {
     { key: 'eventsCreated', label: 'Eventos creados', metric: k.eventsCreated },
     { key: 'published', label: 'Publicados', metric: k.published },
     { key: 'paid', label: 'Pagados', metric: k.paid },
-    { key: 'revenueCents', label: 'Ingresos', metric: k.revenueCents, format: formatMoney },
-    { key: 'refundedCents', label: 'Reembolsos', metric: k.refundedCents, format: formatMoney, inverse: true },
+    // The money numbers only come for roles that manage purchases (not for support).
+    ...(k.revenueCents ? [{ key: 'revenueCents', label: 'Ingresos', metric: k.revenueCents, format: formatMoney }] : []),
+    ...(k.refundedCents ? [{ key: 'refundedCents', label: 'Reembolsos', metric: k.refundedCents, format: formatMoney, inverse: true }] : []),
   ]
 })
 

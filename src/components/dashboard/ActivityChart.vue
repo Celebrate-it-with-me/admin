@@ -6,7 +6,7 @@ import { formatMoney } from '@/composables/useMoney'
 
 const props = defineProps<{ series: DashboardCharts['series']; days: number }>()
 
-const METRICS: { key: SeriesKey; label: string }[] = [
+const ALL_METRICS: { key: SeriesKey; label: string }[] = [
   { key: 'signups', label: 'Cuentas nuevas' },
   { key: 'eventsCreated', label: 'Eventos creados' },
   { key: 'published', label: 'Publicados' },
@@ -14,6 +14,8 @@ const METRICS: { key: SeriesKey; label: string }[] = [
   { key: 'revenueCents', label: 'Ingresos' },
 ]
 
+// Only the metrics the API sent (support gets no revenue).
+const METRICS = computed(() => ALL_METRICS.filter(m => props.series.metrics[m.key]))
 const metric = ref<SeriesKey>('signups')
 const view = ref<'chart' | 'table'>('chart')
 const hover = ref<number | null>(null)
@@ -35,7 +37,7 @@ const money = computed(() => metric.value === 'revenueCents')
 const fmt = (n: number) => (money.value ? formatMoney(n) : new Intl.NumberFormat('es-US').format(n))
 const axisFmt = (n: number) => (money.value ? '$' + compact(n / 100) : compact(n))
 
-const data = computed(() => props.series.metrics[metric.value])
+const data = computed(() => props.series.metrics[metric.value] ?? { current: [], previous: [] })
 const dates = computed(() => props.series.dates)
 const scale = computed(() => niceScale(Math.max(0, ...data.value.current, ...data.value.previous)))
 const inner = computed(() => ({ w: Math.max(80, width.value - M.left - M.right), h: HEIGHT - M.top - M.bottom }))
@@ -80,7 +82,7 @@ function prevDate(i: number) {
   const d = new Date(yy, mm - 1, dd - props.days)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
-const label = computed(() => METRICS.find(m => m.key === metric.value)!.label)
+const label = computed(() => ALL_METRICS.find(m => m.key === metric.value)!.label)
 </script>
 
 <template>
