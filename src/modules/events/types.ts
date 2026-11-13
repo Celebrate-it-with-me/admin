@@ -16,7 +16,7 @@ export interface EventRow {
   createdAt: string
 }
 
-export interface EventListMeta { page: number; perPage: number; total: number; lastPage: number }
+export interface EventListMeta { page: number; perPage: number; total: number; lastPage: number; hiddenInternal?: number }
 
 export interface EventFilters {
   search: string

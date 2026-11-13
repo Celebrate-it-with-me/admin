@@ -16,6 +16,8 @@ const page = ref(1)
 const perPage = ref(25)
 const loading = ref(true)
 const failed = ref(false)
+// Events of internal accounts (demo and staff) are left out by default: how many, so the screen can say so.
+const hiddenInternal = ref(0)
 const showFilters = ref(false)
 
 const filters = ref<EventFilters>(emptyFilters())
@@ -39,6 +41,7 @@ const load = async () => {
     if (request !== latest) return
     rows.value = res.data
     total.value = res.meta.total
+    hiddenInternal.value = res.meta.hiddenInternal ?? 0
   } catch {
     if (request === latest) failed.value = true
   } finally {
@@ -105,6 +108,11 @@ const headers = [
       </div>
     </v-card>
 
+    <v-alert v-if="hiddenInternal > 0 && !filters.internal && !failed" type="info" variant="tonal" density="compact" class="mb-4">
+      {{ hiddenInternal }} {{ hiddenInternal === 1 ? 'evento de una cuenta interna está oculto' : 'eventos de cuentas internas (demo y personal) están ocultos' }}.
+      <template #append><v-btn variant="text" @click="filters = { ...filters, internal: true }">Mostrarlos</v-btn></template>
+    </v-alert>
+
     <v-alert v-if="failed" type="error" variant="tonal" class="mb-4" text="No pudimos cargar los eventos.">
       <template #append><v-btn variant="text" @click="load">Reintentar</v-btn></template>
     </v-alert>
@@ -121,7 +129,7 @@ const headers = [
         item-value="id"
         :items-per-page-options="[10, 25, 50]"
         items-per-page-text="Por página"
-        :no-data-text="active ? 'Ningún evento coincide con estos filtros.' : 'Todavía no hay eventos.'"
+        :no-data-text="active ? 'Ningún evento coincide con estos filtros.' : hiddenInternal > 0 ? 'No hay eventos de clientas todavía; abajo del buscador puedes mostrar los de cuentas internas.' : 'Todavía no hay eventos.'"
         loading-text="Cargando…"
         hover
         @click:row="(_: Event, { item }: { item: EventRow }) => open(item.id)"
