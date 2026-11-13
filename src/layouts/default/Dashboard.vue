@@ -6,6 +6,7 @@ import { useCurrentUserStore } from "@/store/currentUser";
 import { useDisplay } from "vuetify";
 import { computed, ref, watch } from "vue";
 import { visibleNav } from "@/config/navigation";
+import { builtKeys } from "@/modules";
 
 const store = useAppStore()
 const route = useRoute()
@@ -66,7 +67,7 @@ const logout = () => {
               rounded="lg"
             >
               <v-list-item-title>{{ item.title }}</v-list-item-title>
-              <template v-if="item.soon" #append>
+              <template v-if="item.soon && !builtKeys.has(item.key)" #append>
                 <span class="soon-tag" title="En construcción">Pronto</span>
               </template>
             </v-list-item>
