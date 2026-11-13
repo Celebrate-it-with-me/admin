@@ -2,6 +2,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from "@/views/LoginView.vue";
 import dashboard from "@/router/dashboard";
+import { PERMISSION_BY_ROUTE } from "@/config/navigation";
+import { useCurrentUserStore } from "@/store/currentUser";
 
 const routes = [
   {
@@ -37,7 +39,14 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
+  // A page that needs a permission the person does not have goes back to the start.
+  const needed = typeof to.name === 'string' ? PERMISSION_BY_ROUTE[to.name] : undefined
+  if (needed) {
+    const user = useCurrentUserStore()
+    await user.ensureLoaded()
+    if (!user.can(needed)) return { name: 'MainDashboard' }
+  }
   document.title = to.meta?.title ? `Quinvite Admin - ${to.meta.title}` : 'Quinvite Admin'
 });
 
