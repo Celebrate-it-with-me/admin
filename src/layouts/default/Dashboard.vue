@@ -4,7 +4,8 @@ import { useAppStore } from "@/store/app";
 import { useRoute, useRouter } from "vue-router";
 import { useCurrentUserStore } from "@/store/currentUser";
 import { useDisplay } from "vuetify";
-import { watch } from "vue";
+import { computed, ref, watch } from "vue";
+import { NAV } from "@/config/navigation";
 
 const store = useAppStore()
 const route = useRoute()
@@ -16,13 +17,14 @@ const { mdAndUp } = useDisplay()
 store.navigationDrawer = mdAndUp.value
 watch(() => route.path, () => { if (!mdAndUp.value) store.navigationDrawer = false })
 
-const sections = [
-  { title: 'Inicio', icon: 'mdi-view-dashboard-outline', to: { name: 'MainDashboard' } },
-  { title: 'Usuarios', icon: 'mdi-account-multiple-outline', to: { name: 'Users' } },
-  { title: 'Confirmaciones', icon: 'mdi-email-check-outline', to: { name: 'RSVP' } },
-  { title: 'Recordatorios SMS', icon: 'mdi-message-text-outline', to: { name: 'SMSReminder' } },
-  { title: 'Imágenes', icon: 'mdi-image-multiple-outline', to: { name: 'ImagesManager' } },
-]
+// Menu groups; items not built yet are marked and open the "en construcción" page.
+const groups = NAV.map(g => ({ ...g, items: g.items.map(i => ({ ...i, to: { name: i.key } })) }))
+
+// Only the group of the page you are on is open (it opens by itself when you navigate); you can open another, which folds this one.
+const groupOf = (name: unknown) => groups.find(g => g.title && g.items.some(i => i.key === name))?.key
+const activeGroup = computed(() => groupOf(route.name))
+const opened = ref<string[]>(activeGroup.value ? [activeGroup.value] : [])
+watch(activeGroup, key => { opened.value = key ? [key] : [] })
 
 const logout = () => {
   currentUser.logout()
@@ -36,17 +38,41 @@ const logout = () => {
       <the-logo />
     </div>
 
-    <v-list nav class="px-3" aria-label="Secciones">
-      <v-list-item
-        v-for="item in sections"
-        :key="item.title"
-        :prepend-icon="item.icon"
-        :title="item.title"
-        :to="item.to"
-        color="primary"
-        rounded="lg"
-      />
-    </v-list>
+    <nav class="menu" aria-label="Secciones">
+      <v-list v-model:opened="opened" nav density="compact" class="px-3" open-strategy="single">
+        <template v-for="g in groups" :key="g.key">
+          <!-- A group without a title (Inicio) is just an item. -->
+          <v-list-item
+            v-for="item in g.title ? [] : g.items"
+            :key="item.key"
+            :prepend-icon="item.icon"
+            :title="item.title"
+            :to="item.to"
+            color="primary"
+            rounded="lg"
+          />
+
+          <v-list-group v-if="g.title" :value="g.key">
+            <template #activator="{ props }">
+              <v-list-item v-bind="props" :prepend-icon="g.icon" :title="g.title" rounded="lg" class="group-head" :class="{ 'group-head--active': g.key === activeGroup }" />
+            </template>
+            <v-list-item
+              v-for="item in g.items"
+              :key="item.key"
+              :prepend-icon="item.icon"
+              :to="item.to"
+              color="primary"
+              rounded="lg"
+            >
+              <v-list-item-title>{{ item.title }}</v-list-item-title>
+              <template v-if="item.soon" #append>
+                <span class="soon-tag" title="En construcción">Pronto</span>
+              </template>
+            </v-list-item>
+          </v-list-group>
+        </template>
+      </v-list>
+    </nav>
 
     <template #append>
       <div class="px-5 pb-4 text-caption text-medium-emphasis">{{ store.appVersion }}</div>
@@ -82,6 +108,14 @@ const logout = () => {
 </template>
 
 <style scoped>
+.menu { padding-bottom: 16px; }
+.group-head { font-weight: 600; }
+/* Sub-items: a small step in, so long names and the "Pronto" tag still fit. */
+:deep(.v-list-group) { --list-indent-size: 8px; }
+:deep(.v-list-group__items .v-list-item) { padding-inline-start: 16px !important; }
+:deep(.v-list-item__spacer) { width: 12px; }
+.group-head--active :deep(.v-list-item-title), .group-head--active :deep(.v-icon) { color: var(--rose-700); }
+.soon-tag { font-size: 0.6875rem; font-weight: 700; color: #7a5c1e; background: #f6ecd4; border-radius: 6px; padding: 1px 6px; }
 .page-title { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 500; margin-left: 16px; }
 .content { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
 @media (min-width: 960px) { .content { padding: 32px 32px 64px; } }

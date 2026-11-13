@@ -55,12 +55,6 @@ const kpis = computed(() => {
   ]
 })
 
-const shortcuts = [
-  { title: 'Usuarios', icon: 'mdi-account-multiple-outline', to: { name: 'Users' } },
-  { title: 'Confirmaciones', icon: 'mdi-email-check-outline', to: { name: 'RSVP' } },
-  { title: 'Recordatorios SMS', icon: 'mdi-message-text-outline', to: { name: 'SMSReminder' } },
-  { title: 'Imágenes', icon: 'mdi-image-multiple-outline', to: { name: 'ImagesManager' } },
-]
 </script>
 
 <template>
@@ -126,9 +120,6 @@ const shortcuts = [
       </template>
     </div>
 
-    <nav aria-label="Accesos rápidos" class="shortcuts">
-      <v-btn v-for="s in shortcuts" :key="s.title" :to="s.to" :prepend-icon="s.icon" variant="outlined" color="primary">{{ s.title }}</v-btn>
-    </nav>
   </section>
 </template>
 
@@ -139,5 +130,4 @@ const shortcuts = [
 .is-loading { opacity: 0.55; transition: opacity 0.15s ease-out; pointer-events: none; }
 .stat__value { font-family: var(--font-heading); font-size: 2rem; line-height: 1.1; margin: 0; }
 .stat__label { font-size: 0.875rem; line-height: 1.45; color: var(--ink-500); margin: 4px 0 0; }
-.shortcuts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; }
 </style>
