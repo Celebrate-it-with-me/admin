@@ -1,10 +1,14 @@
 import type { RouteRecordRaw } from 'vue-router'
+import ModerationView from './views/ModerationView.vue'
 
-/**
- * Routes of Moderación (A6). Child routes of the dashboard layout.
- * Until a route named like the menu item exists here, the menu shows the "en construcción" page; adding it replaces that
- * page and removes the "Pronto" tag by itself (see src/modules/index.ts). Give every route a `meta.permission`.
- */
-const routes: RouteRecordRaw[] = []
+/** Routes of Moderación (A6). Child routes of the dashboard layout; every route carries its `meta.permission`. */
+const routes: RouteRecordRaw[] = [
+  {
+    path: 'moderation',
+    name: 'Moderation',
+    component: ModerationView,
+    meta: { title: 'Moderación', pageTitle: 'Moderación', permission: 'admin.content.moderate' },
+  },
+]
 
 export default routes
