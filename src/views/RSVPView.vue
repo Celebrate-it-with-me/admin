@@ -83,15 +83,10 @@ const handleResetCode = (item) => {
 <v-row>
   <v-col>
     <v-btn
-      variant="tonal"
-      size="x-large"
-      :flat="true"
+      color="primary"
       prepend-icon="mdi-account-plus"
       @click="openAddEditDialog()"
     >
-      <template v-slot:prepend>
-        <v-icon color="success"></v-icon>
-      </template>
       Add Main Guest
     </v-btn>
   </v-col>

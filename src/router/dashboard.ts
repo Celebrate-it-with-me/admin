@@ -15,8 +15,8 @@ export default [
         name: 'MainDashboard',
         component: MainDashboardView,
         meta: {
-          title: 'Dashboard',
-          pageTitle: 'Dashboard'
+          title: 'Inicio',
+          pageTitle: 'Inicio'
         }
       },
       {
@@ -24,8 +24,8 @@ export default [
         name: 'Users',
         component: UsersView,
         meta: {
-          title: 'User',
-          pageTitle: 'User'
+          title: 'Usuarios',
+          pageTitle: 'Usuarios'
         }
       },
       {
@@ -34,7 +34,7 @@ export default [
         component: RSVPView,
         meta: {
           title: 'Rsvp',
-          pageTitle: 'RSVP'
+          pageTitle: 'Confirmaciones'
         }
       },
       {
@@ -43,7 +43,7 @@ export default [
         component: SMSReminderView,
         meta: {
           title: 'SMS Reminder',
-          pageTitle: 'SMS Reminder'
+          pageTitle: 'Recordatorios SMS'
         }
       },
       {
@@ -52,7 +52,7 @@ export default [
         component: ImagesManagerView,
         meta: {
           title: 'Images Manager',
-          pageTitle: 'Images Manager'
+          pageTitle: 'Imágenes'
         }
       }
     ]

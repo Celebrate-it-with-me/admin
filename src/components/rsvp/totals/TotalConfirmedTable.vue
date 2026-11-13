@@ -104,7 +104,7 @@ const loadTotals = async () => {
 
 <style scoped>
 .is-main {
-  background-color: #1c9177;
+  background-color: #3e7d5a;
   color: white;
 }
 </style>

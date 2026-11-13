@@ -27,6 +27,8 @@ export interface UserItem {
 }
 
 export interface CurrentUser {
+  name?: string
+  email?: string
   permissions?: string[]
   [key: string]: unknown
 }

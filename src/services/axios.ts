@@ -14,16 +14,23 @@ API.interceptors.response.use(
     return response
   },
   (error) => {
-    if (error.response.status === 401) {
+    const status = error.response?.status
+    // The login form explains its own errors (wrong password, no access): do not redirect from there.
+    const isLogin = error.config?.url === 'login'
+
+    if (status === 401 && !isLogin) {
       const currentUser = useCurrentUserStore()
 
       currentUser.$reset()
       router.push({ name: 'Home' })
     }
 
-    if (error.response.status === 403) {
+    if (status === 403 && !isLogin && router.hasRoute('Unauthorized')) {
       router.push({ name: 'Unauthorized' })
     }
+
+    // Callers need the error (the login shows it); swallowing it left them with `undefined`.
+    return Promise.reject(error)
   }
 )
 

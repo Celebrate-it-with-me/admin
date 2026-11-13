@@ -58,14 +58,14 @@ const deleteMainGuest = async () => {
     </template>
     <template v-slot:dialogFooter>
       <v-btn
-        color="blue-darken-1"
+        color="primary"
         variant="text"
         @click="handleClose()"
       >
         Close
       </v-btn>
       <v-btn
-        color="blue-darken-1"
+        color="primary"
         variant="text"
         form="create-form"
         :loading="sendingRequest"

@@ -1,4 +1,4 @@
-<script setup >
+<script setup lang="ts">
 import { ref } from "vue"
 import { useCurrentUserStore } from "@/store/currentUser"
 import { detect } from 'detect-browser'
@@ -7,61 +7,72 @@ import { useRouter } from 'vue-router'
 const currentUser = useCurrentUserStore()
 const email = ref('')
 const password = ref('')
+const showPassword = ref(false)
+const loading = ref(false)
 const router = useRouter()
-const showMessage = ref(false)
 const alertMessage = ref('')
 
 const login = async () => {
-  const browser = detect()
-  const device = browser ? `${browser.name} ${browser.version}` : 'unknown'
-  const response = await currentUser.login(email.value, password.value, device);
+  if (loading.value) return
+  if (!email.value.trim() || !password.value) {
+    alertMessage.value = 'Escribe tu correo y tu contraseña.'
+    return
+  }
+  loading.value = true
+  alertMessage.value = ''
+  try {
+    const browser = detect()
+    const device = browser ? `${browser.name} ${browser.version}` : 'unknown'
+    const response = (await currentUser.login(email.value.trim(), password.value, device)) as { status?: number }
 
-  switch (response.status) {
-    case 200:
-      router.push({ name: 'MainDashboard' })
-      break
-    case 422:
-      showMessage.value = true
-      alertMessage.value = response.response?.data?.message ?? 'Invalid Credentials'
-      break
-    case 403:
-      showMessage.value = true
-      alertMessage.value = 'Access Denied'
-      break
-    default:
-      showMessage.value = true
-      alertMessage.value = 'Invalid Response'
+    switch (response.status) {
+      case 200:
+        router.push({ name: 'MainDashboard' })
+        break
+      case 422:
+        alertMessage.value = 'El correo o la contraseña no coinciden.'
+        break
+      case 403:
+        alertMessage.value = 'Esta cuenta no tiene acceso al panel.'
+        break
+      case 429:
+        alertMessage.value = 'Demasiados intentos. Espera un momento e inténtalo de nuevo.'
+        break
+      default:
+        alertMessage.value = 'No pudimos entrar. Inténtalo de nuevo.'
+    }
+  } finally {
+    loading.value = false
   }
 }
 </script>
 
 <template>
-  <v-card class="mx-auto" width="85%" max-width="350">
-    <v-card-text>
-      <v-text-field v-model="email" label="Email" />
-      <v-text-field v-model="password" label="Password" type="password" @keyup.enter="login()"/>
+  <form novalidate @submit.prevent="login">
+    <v-text-field
+      v-model="email"
+      label="Correo"
+      type="email"
+      autocomplete="username"
+      inputmode="email"
+      prepend-inner-icon="mdi-email-outline"
+      @update:model-value="alertMessage = ''"
+    />
+    <v-text-field
+      v-model="password"
+      label="Contraseña"
+      :type="showPassword ? 'text' : 'password'"
+      autocomplete="current-password"
+      prepend-inner-icon="mdi-lock-outline"
+      :append-inner-icon="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+      @click:append-inner="showPassword = !showPassword"
+      @update:model-value="alertMessage = ''"
+    />
 
-      <transition name="bounce">
-        <v-alert
-          v-model="showMessage"
-          density="compact"
-          type="warning"
-          :text="alertMessage"
-          closeable
-        />
-      </transition>
-    </v-card-text>
+    <div aria-live="polite">
+      <v-alert v-if="alertMessage" type="error" variant="tonal" density="compact" class="mb-4" :text="alertMessage" />
+    </div>
 
-    <v-card-actions>
-      <v-btn variant="text" class="primary-color">Forgot Password</v-btn>
-      <v-spacer />
-      <v-btn variant="tonal" @click="login()">Login</v-btn>
-    </v-card-actions>
-  </v-card>
+    <v-btn type="submit" color="primary" size="large" block :loading="loading">Entrar</v-btn>
+  </form>
 </template>
-
-<style scoped>
-.primary-color {
-  color: #09203f;
-}
-</style>

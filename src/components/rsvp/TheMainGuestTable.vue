@@ -122,7 +122,7 @@ const confirmedText = (value: string) => {
   >
     <template v-slot:item.confirmed="{ item }">
       <v-chip
-        :color="item.confirmed === 'yes' ? 'green' : 'red'"
+        :color="item.confirmed === 'yes' ? 'success' : 'error'"
         :text="confirmedText(item.confirmed)"
         class="text-uppercase"
         label

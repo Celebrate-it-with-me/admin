@@ -1,0 +1,44 @@
+/* Quinvite brand for the admin: same tokens as cwm_app/src/style.css (cream, ink, rose, gold). */
+:root {
+  --font-heading: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --cream-50: #fdfbf8;
+  --cream-100: #fbf7f2;
+  --cream-200: #f5eee6;
+  --ink-900: #2b2420;
+  --ink-700: #4a413c;
+  --ink-500: #6f6460;
+  --line: #e9dfd5;
+  --rose-600: #b04a62;
+  --rose-700: #933a50;
+  --rose-50: #fcf2f4;
+  --rose-100: #f8e3e8;
+  --gold-300: #e6cf93;
+  --wine-800: #5c2433;
+  --wine-900: #461a26;
+}
+
+body,
+.v-application {
+  font-family: var(--font-body) !important;
+  background: var(--cream-100);
+  color: var(--ink-900);
+}
+
+h1, h2, h3, .font-heading {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.v-card--variant-elevated,
+.v-card--variant-flat {
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 3px rgba(43, 36, 32, 0.05), 0 12px 32px -16px rgba(43, 36, 32, 0.16);
+}
+
+.v-btn { text-transform: none; letter-spacing: 0; font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
