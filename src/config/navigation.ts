@@ -42,7 +42,7 @@ export const NAV: NavGroup[] = [
       { key: 'Events', title: 'Eventos', icon: 'mdi-calendar-heart', path: 'events', permission: 'admin.events.view', soon: true, brief: 'A2',
         about: 'Listado con búsqueda y filtros, y la ficha de cada evento: resumen, funciones, plan y pago, contenido, acciones y registro.' },
       { key: 'Users', title: 'Usuarios', icon: 'mdi-account-multiple-outline', path: 'users', permission: 'admin.users.view' },
-      { key: 'Support', title: 'Soporte', icon: 'mdi-lifebuoy', path: 'support', permission: 'admin.events.view', soon: true, brief: 'A13',
+      { key: 'Support', title: 'Soporte', icon: 'mdi-lifebuoy', path: 'support', permission: 'admin.support.manage', soon: true, brief: 'A13',
         about: 'Bandeja de solicitudes de ayuda que llegan desde la app, con el contexto del evento ya adjunto, estado y notas internas.' },
       { key: 'Moderation', title: 'Moderación', icon: 'mdi-shield-check-outline', path: 'moderation', permission: 'admin.content.moderate', soon: true, brief: 'A6',
         about: 'Cola de comentarios, fotos y contenido reportado, con acciones rápidas y masivas.' },

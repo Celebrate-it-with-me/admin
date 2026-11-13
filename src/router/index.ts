@@ -41,7 +41,7 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   // A page that needs a permission the person does not have goes back to the start.
-  const needed = typeof to.name === 'string' ? PERMISSION_BY_ROUTE[to.name] : undefined
+  const needed = (to.meta?.permission as string | undefined) ?? (typeof to.name === 'string' ? PERMISSION_BY_ROUTE[to.name] : undefined)
   if (needed) {
     const user = useCurrentUserStore()
     await user.ensureLoaded()
