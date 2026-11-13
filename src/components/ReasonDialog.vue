@@ -14,7 +14,9 @@ const props = withDefaults(defineProps<{
   error?: string
   /** The confirm button is red (deleting, removing access). */
   danger?: boolean
-}>(), { confirmLabel: 'Confirmar', loading: false, error: '', danger: false, message: '' })
+  /** The confirm button stays off until the extra fields in the slot are ready. */
+  confirmDisabled?: boolean
+}>(), { confirmLabel: 'Confirmar', loading: false, error: '', danger: false, message: '', confirmDisabled: false })
 
 const emit = defineEmits<{ 'update:modelValue': [boolean]; confirm: [string] }>()
 
@@ -60,7 +62,7 @@ const submit = () => {
       <v-card-actions>
         <v-spacer />
         <v-btn variant="text" :disabled="loading" @click="close">Cancelar</v-btn>
-        <v-btn :color="danger ? 'error' : 'primary'" variant="flat" :loading="loading" @click="submit">{{ confirmLabel }}</v-btn>
+        <v-btn :color="danger ? 'error' : 'primary'" variant="flat" :loading="loading" :disabled="confirmDisabled" @click="submit">{{ confirmLabel }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
