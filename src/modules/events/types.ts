@@ -59,7 +59,8 @@ export interface EventDetail {
   owner: { id: number; name: string; email: string } | null
   collaborators: { id: number; name: string; email: string; role: string }[]
   plan: { id: number; slug: string; name: string; guestLimit: number | null; priceCents: number | null } | null
-  payment: { lastPurchase: Purchase | null; purchases: Purchase[] }
+  /** null for roles that cannot see payments (support). */
+  payment: { lastPurchase: Purchase | null; purchases: Purchase[] } | null
   publicLink: { isLive: boolean; url: string | null; pattern: string | null }
   counts: { guests: number; attending: number; notAttending: number; pending: number; expenses: EventExpenses | null }
   modules: { key: string; section: string; state: 'active' | 'locked' }[]

@@ -9,7 +9,7 @@ defineEmits<{ reload: [] }>()
 
 const d = computed(() => props.detail)
 const percent = computed(() => attendingPercent(d.value.counts.attending, d.value.counts.guests))
-const last = computed(() => d.value.payment.lastPurchase)
+const last = computed(() => d.value.payment?.lastPurchase ?? null)
 const lastTone = computed(() => purchaseTone(last.value?.status ?? null))
 const active = computed(() => d.value.modules.filter(m => m.state === 'active'))
 const locked = computed(() => d.value.modules.filter(m => m.state === 'locked'))
@@ -49,7 +49,7 @@ const copy = async () => {
           <p><strong>{{ d.plan.name }}</strong> · hasta {{ d.plan.guestLimit ?? 'sin límite de' }} invitados<span v-if="d.plan.priceCents != null"> · {{ formatMoney(d.plan.priceCents) }}</span></p>
         </template>
         <p v-else class="text-medium-emphasis">Sin plan asignado.</p>
-        <div class="mt-3">
+        <div v-if="d.payment" class="mt-3">
           <p class="label">Última compra</p>
           <template v-if="last">
             <v-chip v-if="lastTone" :color="lastTone.color" variant="tonal" size="small" :prepend-icon="lastTone.icon">{{ lastTone.label }}</v-chip>
