@@ -3,6 +3,23 @@ import { formatMoney } from '@/composables/useMoney'
 /** What each logged action is called, in the words staff read. */
 export const ACTION_LABELS: Record<string, { label: string; icon: string; tone: string }> = {
   'auth.login': { label: 'Inició sesión', icon: 'mdi-login', tone: 'info' },
+  'auth.login_failed': { label: 'Intento fallido de inicio de sesión', icon: 'mdi-alert-outline', tone: 'warning' },
+  'account.profile_updated': { label: 'Actualizó su perfil', icon: 'mdi-account-edit-outline', tone: 'primary' },
+  'account.email_change_requested': { label: 'Pidió cambiar su correo', icon: 'mdi-email-edit-outline', tone: 'primary' },
+  'account.email_change_cancelled': { label: 'Canceló el cambio de correo', icon: 'mdi-email-remove-outline', tone: 'info' },
+  'account.email_changed': { label: 'Cambió su correo de acceso', icon: 'mdi-email-check-outline', tone: 'warning' },
+  'account.password_changed': { label: 'Cambió su contraseña', icon: 'mdi-lock-reset', tone: 'warning' },
+  'account.two_factor_setup_started': { label: 'Empezó a activar los dos pasos', icon: 'mdi-shield-key-outline', tone: 'info' },
+  'account.two_factor_enabled': { label: 'Activó la verificación en dos pasos', icon: 'mdi-shield-check-outline', tone: 'success' },
+  'account.two_factor_disabled': { label: 'Desactivó la verificación en dos pasos', icon: 'mdi-shield-off-outline', tone: 'warning' },
+  'account.two_factor_failed': { label: 'Código de dos pasos incorrecto', icon: 'mdi-shield-alert-outline', tone: 'warning' },
+  'account.two_factor_reset_cli': { label: 'Reinicio de los dos pasos (consola)', icon: 'mdi-shield-refresh-outline', tone: 'warning' },
+  'account.recovery_codes_regenerated': { label: 'Generó códigos de recuperación', icon: 'mdi-key-chain-variant', tone: 'primary' },
+  'account.recovery_code_used': { label: 'Usó un código de recuperación', icon: 'mdi-key-variant', tone: 'warning' },
+  'account.session_revoked': { label: 'Cerró una sesión', icon: 'mdi-logout-variant', tone: 'info' },
+  'account.sessions_revoked': { label: 'Cerró las demás sesiones', icon: 'mdi-logout-variant', tone: 'info' },
+  'account.logout': { label: 'Cerró sesión', icon: 'mdi-logout', tone: 'info' },
+  'account.logout_all': { label: 'Cerró sesión en todos lados', icon: 'mdi-logout', tone: 'warning' },
   'payment.manual': { label: 'Registró un pago manual', icon: 'mdi-cash-plus', tone: 'success' },
   'payment.refund': { label: 'Hizo un reembolso', icon: 'mdi-cash-refund', tone: 'warning' },
   'pricing.update': { label: 'Cambió el precio', icon: 'mdi-tag-outline', tone: 'primary' },
@@ -53,6 +70,7 @@ export const ACTION_FILTERS = [
   { value: 'impersonation', title: 'Impersonación' },
   { value: 'team', title: 'Equipo' },
   { value: 'auth', title: 'Inicios de sesión' },
+  { value: 'account', title: 'Cuenta del personal' },
 ]
 
 export const ROLE_LABELS: Record<string, string> = { superadmin: 'Superadmin', support: 'Soporte' }
