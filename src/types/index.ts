@@ -1,16 +1,5 @@
 // Shared types for the admin app.
 
-/** Shape of the error body returned by the API (e.g. `{ data: { message } }`). */
-export interface ApiErrorResponse {
-  data: { message: string }
-}
-
-export interface UserItem {
-  id?: number
-  name: string
-  email: string
-}
-
 export type StaffRole = 'superadmin' | 'support'
 
 export interface CurrentUser {
