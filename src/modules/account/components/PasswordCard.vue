@@ -62,7 +62,7 @@ const submit = async () => {
           <v-progress-linear :model-value="score * 25" :color="barColor" height="6" rounded aria-hidden="true" />
           <span class="text-caption">{{ SCORE_LABELS[score] }}</span>
         </div>
-        <ul class="rules" aria-label="Requisitos de la contraseña nueva">
+        <ul class="rules" aria-label="Requisitos de seguridad">
           <li :class="{ ok: check.longEnough }"><v-icon size="16" :icon="check.longEnough ? 'mdi-check-circle' : 'mdi-circle-outline'" /> Al menos {{ MIN_PASSWORD }} caracteres</li>
           <li :class="{ ok: check.differentFromCurrent }"><v-icon size="16" :icon="check.differentFromCurrent ? 'mdi-check-circle' : 'mdi-circle-outline'" /> Distinta de la actual</li>
           <li :class="{ ok: check.matches }"><v-icon size="16" :icon="check.matches ? 'mdi-check-circle' : 'mdi-circle-outline'" /> Las dos contraseñas coinciden</li>

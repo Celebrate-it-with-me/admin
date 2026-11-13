@@ -50,7 +50,7 @@ const download = () => {
 <style scoped>
 .codes { list-style: none; padding: 0; margin: 0 0 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .codes li { background: var(--cream-200); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; text-align: center; }
-.codes code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1rem; letter-spacing: 0.06em; user-select: all; }
+.codes code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9375rem; letter-spacing: 0.02em; white-space: nowrap; user-select: all; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .touch { min-height: 44px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
