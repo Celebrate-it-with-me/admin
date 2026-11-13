@@ -1,12 +1,6 @@
-import type { PlanOption, PlanWarning } from './types'
+import type { PlanWarning } from './types'
 
 /** Pure helpers of the Plan and payment tab. */
-
-export const PLAN_OPTIONS: PlanOption[] = [
-  { slug: 'basic', name: 'Basic', limit: 30 },
-  { slug: 'premium', name: 'Premium', limit: 300 },
-  { slug: 'lux', name: 'Lux', limit: null },
-]
 
 /** "79", "79.50" or "79,50" to cents; null when it is not a valid non-negative amount. */
 export function dollarsToCents(input: string): number | null {
