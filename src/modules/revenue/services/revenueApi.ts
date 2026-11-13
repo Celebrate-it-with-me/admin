@@ -18,5 +18,6 @@ export const fetchCoupons = async (): Promise<Coupon[]> => (await API.get('payme
 export const createCoupon = async (c: NewCoupon, reason: string): Promise<Coupon> =>
   (await API.post('payments/coupons', { ...c, reason })).data.data
 
-export const updateCoupon = async (id: number, changes: { isActive?: boolean; maxUses?: number; expiresAt?: string }, reason: string): Promise<Coupon> =>
+/** An absent key leaves the field alone; an explicit null removes the cap or the expiry. */
+export const updateCoupon = async (id: number, changes: { isActive?: boolean; maxUses?: number | null; expiresAt?: string | null }, reason: string): Promise<Coupon> =>
   (await API.patch(`payments/coupons/${id}`, { ...changes, reason })).data.data
