@@ -2,6 +2,9 @@
 import type { UserItem } from "@/types"
 import {ref, watch} from 'vue'
 import { API } from '@/services/axios'
+import { useCurrentUserStore } from '@/store/currentUser'
+
+const currentUser = useCurrentUserStore()
 
 const props = defineProps({
   searchInput: {
@@ -93,11 +96,15 @@ const handleDeleteItem = (item: UserItem) => {
   >
     <template v-slot:item.actions="{ item }">
       <v-icon
+        v-if="currentUser.can('admin.users.manage')"
         icon="mdi-square-edit-outline"
+        aria-label="Editar"
         @click="handleEditItem(item)"
       ></v-icon>
       <v-icon
+        v-if="currentUser.can('admin.users.delete')"
         icon="mdi-delete-outline"
+        aria-label="Borrar"
         @click="handleDeleteItem(item)"
       ></v-icon>
     </template>

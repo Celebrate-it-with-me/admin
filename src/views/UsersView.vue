@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import type { UserItem } from "@/types"
 import { ref } from "vue";
+import { useCurrentUserStore } from "@/store/currentUser";
 import TheSearchInput from "@/components/TheSearchInput.vue";
 import TheUserTable from "@/components/users/TheUserTable.vue";
 import TheCreateEditUserModal from "@/components/users/TheCreateEditUserModal.vue";
 import TheDeleteUserModal from "@/components/users/TheDeleteUserModal.vue";
 
+const currentUser = useCurrentUserStore()
 const addEditDialog = ref(false)
 const searchInput = ref('')
 const reloadUser = ref(false)
@@ -48,6 +50,7 @@ const closeDeleteModal = () => {
   <v-row>
     <v-col>
       <v-btn
+        v-if="currentUser.can('admin.users.manage')"
         color="primary"
         prepend-icon="mdi-account-plus"
         @click="openAddEditDialog()"

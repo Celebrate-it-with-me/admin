@@ -11,11 +11,39 @@ export interface UserItem {
   email: string
 }
 
+export type StaffRole = 'superadmin' | 'support'
+
 export interface CurrentUser {
+  id?: number
   name?: string
   email?: string
+  roles?: StaffRole[]
   permissions?: string[]
   [key: string]: unknown
+}
+
+export interface TeamMember {
+  id: number
+  name: string
+  email: string
+  role: StaffRole | null
+  createdAt: string | null
+}
+
+export interface AuditEntry {
+  id: number
+  action: string
+  createdAt: string
+  actor: { id: number; name: string; email: string } | null
+  subjectType: string | null
+  subjectId: number | null
+  event: { id: number; name: string | null } | null
+  user: { id: number; name: string | null; email: string | null } | null
+  reason: string | null
+  before: Record<string, unknown> | null
+  after: Record<string, unknown> | null
+  impersonatedBy: number | null
+  ip: string | null
 }
 
 export interface MetricPair {

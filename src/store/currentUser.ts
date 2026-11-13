@@ -8,6 +8,11 @@ export const useCurrentUserStore = defineStore('currentUser', {
     user: {} as CurrentUser,
     userPermissions: [] as string[] | undefined
   }),
+  getters: {
+    isLoaded: (state) => Boolean(state.user?.email),
+    /** Whether the logged-in staff member may do this (the API checks it again on every call). */
+    can: (state) => (permission?: string): boolean => !permission || (state.user?.permissions ?? []).includes(permission),
+  },
   actions: {
     async login(email: string, password: string, device: string) {
       try {
@@ -47,9 +52,13 @@ export const useCurrentUserStore = defineStore('currentUser', {
       this.userPermissions = this.user.permissions
     },
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     hasPermissionTo(permissionName: string) {
-      // todo check permissions
+      return this.can(permissionName)
+    },
+
+    /** Before the first screen: with a saved token, wait for who the user is. */
+    async ensureLoaded() {
+      if (!this.isLoaded && localStorage.getItem('token')) await this.getUser()
     },
 
     logout() {

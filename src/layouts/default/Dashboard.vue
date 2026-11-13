@@ -5,7 +5,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useCurrentUserStore } from "@/store/currentUser";
 import { useDisplay } from "vuetify";
 import { computed, ref, watch } from "vue";
-import { NAV } from "@/config/navigation";
+import { visibleNav } from "@/config/navigation";
 
 const store = useAppStore()
 const route = useRoute()
@@ -18,10 +18,10 @@ store.navigationDrawer = mdAndUp.value
 watch(() => route.path, () => { if (!mdAndUp.value) store.navigationDrawer = false })
 
 // Menu groups; items not built yet are marked and open the "en construcción" page.
-const groups = NAV.map(g => ({ ...g, items: g.items.map(i => ({ ...i, to: { name: i.key } })) }))
+const groups = computed(() => visibleNav(currentUser.can).map(g => ({ ...g, items: g.items.map(i => ({ ...i, to: { name: i.key } })) })))
 
 // Only the group of the page you are on is open (it opens by itself when you navigate); you can open another, which folds this one.
-const groupOf = (name: unknown) => groups.find(g => g.title && g.items.some(i => i.key === name))?.key
+const groupOf = (name: unknown) => groups.value.find(g => g.title && g.items.some(i => i.key === name))?.key
 const activeGroup = computed(() => groupOf(route.name))
 const opened = ref<string[]>(activeGroup.value ? [activeGroup.value] : [])
 watch(activeGroup, key => { opened.value = key ? [key] : [] })
@@ -48,6 +48,7 @@ const logout = () => {
             :prepend-icon="item.icon"
             :title="item.title"
             :to="item.to"
+            exact
             color="primary"
             rounded="lg"
           />

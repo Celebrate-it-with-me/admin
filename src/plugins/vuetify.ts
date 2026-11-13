@@ -11,8 +11,10 @@ import '@/styles/brand.css'
 
 // Composable
 import { createVuetify } from 'vuetify'
+import { es } from 'vuetify/locale'
 
 export default createVuetify({
+  locale: { locale: 'es', fallback: 'es', messages: { es } },
   theme: {
     defaultTheme: 'quinvite',
     themes: {
