@@ -64,7 +64,7 @@ export const NAV: NavGroup[] = [
     icon: 'mdi-shape-outline',
     title: 'Producto',
     items: [
-      { key: 'Plans', title: 'Módulos y planes', icon: 'mdi-puzzle-outline', path: 'plans', permission: 'admin.catalog.manage', soon: true, brief: 'A4',
+      { key: 'Plans', title: 'Módulos y planes', icon: 'mdi-puzzle-outline', path: 'plans', permission: 'admin.catalog.view', brief: 'A4',
         about: 'Qué módulos incluye cada plan, con interruptores y sin desplegar, y funciones regaladas a un solo evento.' },
       { key: 'Templates', title: 'Plantillas', icon: 'mdi-palette-outline', path: 'templates', permission: 'admin.templates.manage', soon: true, brief: 'A7',
         about: 'Constructor de plantillas de invitación con vista previa en vivo, versiones y reglas por plan.' },
