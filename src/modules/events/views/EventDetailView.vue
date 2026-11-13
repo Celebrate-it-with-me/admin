@@ -13,14 +13,14 @@ import type { EventDetail } from '../types'
 
 const props = defineProps<{ id: string }>()
 
-// `ready: false` tabs are shown disabled with "Pronto"; the next wave sets them to true and fills their file.
+// `ready: true` tabs are shown disabled with "Pronto"; the next wave sets them to true and fills their file.
 const TABS: { key: string; title: string; component: Component; ready: boolean }[] = [
   { key: 'summary', title: 'Resumen', component: Summary, ready: true },
-  { key: 'features', title: 'Funciones', component: Features, ready: false },
-  { key: 'plan', title: 'Plan y pago', component: PlanPayment, ready: false },
-  { key: 'content', title: 'Contenido', component: Content, ready: false },
-  { key: 'actions', title: 'Acciones', component: Actions, ready: false },
-  { key: 'log', title: 'Registro', component: Log, ready: false },
+  { key: 'features', title: 'Funciones', component: Features, ready: true },
+  { key: 'plan', title: 'Plan y pago', component: PlanPayment, ready: true },
+  { key: 'content', title: 'Contenido', component: Content, ready: true },
+  { key: 'actions', title: 'Acciones', component: Actions, ready: true },
+  { key: 'log', title: 'Registro', component: Log, ready: true },
 ]
 
 const detail = ref<EventDetail | null>(null)
