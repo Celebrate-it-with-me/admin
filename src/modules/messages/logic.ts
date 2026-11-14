@@ -42,7 +42,7 @@ export const unknownVariables = (text: string, required: string[]): string[] => 
 // ── format ──
 
 const HTML = /<\/?[a-z!][^>]*>/i
-const LINK = /https?:\/\/|www\.|\]\(|mailto:/i
+const LINK = /https?:\/\/|www\.|\]\(|mailto:|[^\s@]+@[^\s@]+\.[a-z]{2,}/i
 export const hasHtml = (text: string): boolean => HTML.test(text)
 export const hasLink = (text: string): boolean => LINK.test(text)
 

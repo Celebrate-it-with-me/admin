@@ -26,6 +26,7 @@ describe('format', () => {
     expect(hasLink('Visita www.quinvite.com')).toBe(true)
     expect(hasLink('[aquí](/x)')).toBe(true)
     expect(hasLink('Escríbenos a mailto:a@b.c')).toBe(true)
+    expect(hasLink('Escríbenos a soporte@quinvite.com')).toBe(true)
     expect(hasLink('Hola, sin enlaces')).toBe(false)
   })
 })
