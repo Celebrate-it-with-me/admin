@@ -88,7 +88,8 @@ const act = async (reason: string) => {
   try {
     if (mode.value === 'twofactor') {
       const res = await API.post(`team/${target.value.id}/two-factor/reset`, { reason })
-      resetDone.value = `Reiniciamos los dos pasos de ${target.value.name}, cerramos sus ${res.data.data.sessionsClosed} sesiones y le avisamos por correo.`
+      const n: number = res.data.data.sessionsClosed
+      resetDone.value = `Reiniciamos los dos pasos de ${target.value.name}, ${n ? `cerramos ${n === 1 ? 'su sesión' : `sus ${n} sesiones`}` : 'no tenía sesiones abiertas'} y le avisamos por correo.`
     } else if (mode.value === 'role') await API.patch(`team/${target.value.id}`, { role: newRole.value, reason })
     else await API.delete(`team/${target.value.id}`, { data: { reason } })
     mode.value = null
