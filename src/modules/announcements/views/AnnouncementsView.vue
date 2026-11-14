@@ -104,7 +104,7 @@ const headers = ['Anuncio', 'Estado', 'Cuándo', 'Audiencia', 'Lo cerraron']
     </v-alert>
 
     <v-card class="pa-3 mb-4">
-      <v-chip-group v-model="status" mandatory selected-class="text-primary" aria-label="Filtrar por estado" class="filters">
+      <v-chip-group v-model="status" mandatory column selected-class="text-primary" aria-label="Filtrar por estado" class="filters">
         <v-chip v-for="f in FILTERS" :key="f.value" :value="f.value" filter variant="outlined" class="touch-chip" :data-filter="f.value">{{ f.title }}</v-chip>
       </v-chip-group>
     </v-card>
