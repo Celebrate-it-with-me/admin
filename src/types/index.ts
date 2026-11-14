@@ -18,6 +18,7 @@ export interface TeamMember {
   name: string
   email: string
   role: StaffRole | null
+  twoFactorEnabled: boolean
   createdAt: string | null
 }
 

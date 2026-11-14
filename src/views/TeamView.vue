@@ -29,8 +29,16 @@ const ERRORS: Record<string, string> = {
   cannot_change_self: 'No puedes cambiar ni quitar tu propio acceso.',
   last_superadmin: 'Es el último superadmin: no se puede quitar.',
   reason: 'Escribe un motivo de al menos 5 caracteres.',
+  user: 'No puedes hacerlo sobre tu propia cuenta.',
+}
+const CODES: Record<string, string> = {
+  two_factor_not_enabled: 'Esa persona no tiene la verificación en dos pasos activa.',
+  two_factor_required_to_reset: 'Para reiniciar los dos pasos de otra persona superadmin, activa primero los tuyos en Mi cuenta.',
 }
 const explain = (e: unknown): string => {
+  if ((e as { reauthCancelled?: boolean })?.reauthCancelled) return 'No se hizo ningún cambio: cancelaste la confirmación de identidad.'
+  const code = (e as { response?: { data?: { code?: string } } })?.response?.data?.code
+  if (code && CODES[code]) return CODES[code]
   const errors = (e as { response?: { data?: { errors?: Record<string, string[]> } } })?.response?.data?.errors ?? {}
   const first = Object.entries(errors)[0]
   return first ? (ERRORS[first[1][0]] ?? ERRORS[first[0]] ?? first[1][0]) : 'No pudimos hacerlo. Inténtalo de nuevo.'
@@ -63,20 +71,25 @@ const copy = async () => {
 
 // ── change role / remove ──
 const target = ref<TeamMember | null>(null)
-const mode = ref<'role' | 'remove' | null>(null)
+const mode = ref<'role' | 'remove' | 'twofactor' | null>(null)
 const newRole = ref<StaffRole>('support')
 const actError = ref('')
 const actLoading = ref(false)
 
 const openRole = (m: TeamMember) => { target.value = m; mode.value = 'role'; newRole.value = m.role === 'superadmin' ? 'support' : 'superadmin'; actError.value = '' }
 const openRemove = (m: TeamMember) => { target.value = m; mode.value = 'remove'; actError.value = '' }
+const openReset = (m: TeamMember) => { target.value = m; mode.value = 'twofactor'; actError.value = '' }
+const resetDone = ref('')
 const close = () => { mode.value = null }
 const act = async (reason: string) => {
   if (!target.value) return
   actLoading.value = true
   actError.value = ''
   try {
-    if (mode.value === 'role') await API.patch(`team/${target.value.id}`, { role: newRole.value, reason })
+    if (mode.value === 'twofactor') {
+      const res = await API.post(`team/${target.value.id}/two-factor/reset`, { reason })
+      resetDone.value = `Reiniciamos los dos pasos de ${target.value.name}, cerramos sus ${res.data.data.sessionsClosed} sesiones y le avisamos por correo.`
+    } else if (mode.value === 'role') await API.patch(`team/${target.value.id}`, { role: newRole.value, reason })
     else await API.delete(`team/${target.value.id}`, { data: { reason } })
     mode.value = null
     await load()
@@ -94,6 +107,7 @@ const act = async (reason: string) => {
       <v-btn color="primary" prepend-icon="mdi-account-plus-outline" @click="openAdd">Agregar al equipo</v-btn>
     </header>
 
+    <v-alert v-if="resetDone" type="success" variant="tonal" closable class="mb-4" role="status" :text="resetDone" @click:close="resetDone = ''" />
     <v-alert v-if="failed" type="error" variant="tonal" class="mb-4" text="No pudimos cargar el equipo.">
       <template #append><v-btn variant="text" @click="load">Reintentar</v-btn></template>
     </v-alert>
@@ -115,9 +129,13 @@ const act = async (reason: string) => {
           <tr v-for="m in members" :key="m.id">
             <td><strong>{{ m.name }}</strong><v-chip v-if="m.id === me.user.id" size="x-small" class="ml-2" variant="outlined">Tú</v-chip></td>
             <td>{{ m.email }}</td>
-            <td><v-chip :color="m.role === 'superadmin' ? 'primary' : 'secondary'" variant="tonal" size="small">{{ m.role ? ROLE_LABELS[m.role] : '—' }}</v-chip></td>
+            <td>
+              <v-chip :color="m.role === 'superadmin' ? 'primary' : 'secondary'" variant="tonal" size="small">{{ m.role ? ROLE_LABELS[m.role] : '—' }}</v-chip>
+              <v-chip v-if="m.twoFactorEnabled" size="small" variant="outlined" class="ml-2" prepend-icon="mdi-shield-check-outline">Dos pasos</v-chip>
+            </td>
             <td class="text-right nowrap">
               <v-btn variant="text" size="small" :disabled="m.id === me.user.id" prepend-icon="mdi-swap-horizontal" @click="openRole(m)">Cambiar rol</v-btn>
+              <v-btn v-if="m.twoFactorEnabled" variant="text" size="small" :disabled="m.id === me.user.id" prepend-icon="mdi-shield-refresh-outline" @click="openReset(m)">Reiniciar dos pasos</v-btn>
               <v-btn variant="text" size="small" color="error" :disabled="m.id === me.user.id" prepend-icon="mdi-account-cancel-outline" @click="openRemove(m)">Quitar acceso</v-btn>
             </td>
           </tr>
@@ -137,9 +155,9 @@ const act = async (reason: string) => {
 
     <!-- Change role / remove -->
     <ReasonDialog
-      :model-value="mode !== null" :title="mode === 'role' ? 'Cambiar el rol' : 'Quitar el acceso'"
-      :message="mode === 'remove' ? `${target?.name} ya no podrá entrar al panel. La cuenta sigue existiendo.` : `Cambiar el rol de ${target?.name}.`"
-      :confirm-label="mode === 'role' ? 'Cambiar rol' : 'Quitar acceso'" :danger="mode === 'remove'"
+      :model-value="mode !== null" :title="mode === 'role' ? 'Cambiar el rol' : mode === 'twofactor' ? 'Reiniciar los dos pasos' : 'Quitar el acceso'"
+      :message="mode === 'remove' ? `${target?.name} ya no podrá entrar al panel. La cuenta sigue existiendo.` : mode === 'twofactor' ? `Apagamos la verificación en dos pasos de ${target?.name}, cerramos todas sus sesiones y le avisamos por correo. Tendrá que volver a activarla.` : `Cambiar el rol de ${target?.name}.`"
+      :confirm-label="mode === 'role' ? 'Cambiar rol' : mode === 'twofactor' ? 'Reiniciar dos pasos' : 'Quitar acceso'" :danger="mode === 'remove' || mode === 'twofactor'"
       :loading="actLoading" :error="actError" @update:model-value="close" @confirm="act"
     >
       <v-radio-group v-if="mode === 'role'" v-model="newRole" label="Nuevo rol" class="mb-2">

@@ -12,6 +12,8 @@ const loading = ref(false)
 const router = useRouter()
 const route = useRoute()
 const alertMessage = ref('')
+// The server closed the session (idle too long, or older than the maximum): the interceptor sends her here with ?expired=1.
+const expiredNotice = route.query.expired ? 'Tu sesión venció por seguridad. Entra de nuevo para continuar.' : ''
 
 // Second step (only when the account has two-factor on): the server hands back a challenge to answer with a code.
 const challenge = ref('')
@@ -127,6 +129,7 @@ const toggleRecovery = async () => {
 
 <template>
   <form v-if="!challenge" novalidate @submit.prevent="login">
+    <v-alert v-if="expiredNotice" type="info" variant="tonal" density="compact" class="mb-4" role="status" :text="expiredNotice" />
     <v-text-field
       v-model="email"
       label="Correo"
