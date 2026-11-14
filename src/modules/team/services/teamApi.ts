@@ -1,0 +1,73 @@
+import { API } from '@/services/axios'
+import type { StaffRole } from '@/types'
+import * as mock from './mock'
+import type { AcceptBody, AcceptResult, InvitationPreview, InviteBody, Member } from '../types'
+import { readAcceptResult } from '../logic'
+
+/**
+ * Client of admin/team and of the public admin/invitations (contract: docs/plans/admin-team-contract.md). While the API
+ * is not in place, VITE_TEAM_MOCK=true switches every call to an in-memory simulation (./mock.ts) with the contract's
+ * shapes and error responses. Writes need a recent re-authentication: the axios interceptor opens the dialog and repeats
+ * the request, so nothing here deals with it.
+ */
+export const useMock = import.meta.env.VITE_TEAM_MOCK === 'true'
+
+export async function listTeam(): Promise<Member[]> {
+  if (useMock) return mock.listTeam()
+  return (await API.get('team')).data.data
+}
+
+export async function inviteMember(body: InviteBody): Promise<Member> {
+  if (useMock) return mock.inviteMember(body)
+  return (await API.post('team', body)).data.data
+}
+
+export async function resendInvitation(id: number, reason?: string): Promise<Member> {
+  if (useMock) return mock.resendInvitation(id, reason)
+  return (await API.post(`team/${id}/invitation/resend`, reason ? { reason } : {})).data.data
+}
+
+export async function revokeInvitation(id: number, reason: string): Promise<void> {
+  if (useMock) return mock.revokeInvitation(id, reason)
+  await API.delete(`team/${id}/invitation`, { data: { reason } })
+}
+
+export async function suspendMember(id: number, reason: string): Promise<Member> {
+  if (useMock) return mock.suspendMember(id, reason)
+  return (await API.post(`team/${id}/suspend`, { reason })).data.data
+}
+
+export async function reactivateMember(id: number, reason: string): Promise<Member> {
+  if (useMock) return mock.reactivateMember(id, reason)
+  return (await API.post(`team/${id}/reactivate`, { reason })).data.data
+}
+
+export async function changeRole(id: number, role: StaffRole, reason: string): Promise<Member> {
+  if (useMock) return mock.changeRole(id, role, reason)
+  return (await API.patch(`team/${id}`, { role, reason })).data.data
+}
+
+export async function removeMember(id: number, reason: string): Promise<void> {
+  if (useMock) return mock.removeMember(id, reason)
+  await API.delete(`team/${id}`, { data: { reason } })
+}
+
+/** Resolves with how many sessions were closed. */
+export async function resetTwoFactor(id: number, reason: string): Promise<number> {
+  if (useMock) return mock.resetTwoFactor(id, reason)
+  return (await API.post(`team/${id}/two-factor/reset`, { reason })).data.data.sessionsClosed
+}
+
+// ── public (no session) ──
+
+export async function getInvitation(token: string): Promise<InvitationPreview> {
+  if (useMock) return mock.getInvitation(token)
+  return (await API.get(`invitations/${encodeURIComponent(token)}`)).data.data
+}
+
+export async function acceptInvitation(token: string, body: AcceptBody): Promise<AcceptResult> {
+  if (useMock) return mock.acceptInvitation(token, body)
+  const result = readAcceptResult((await API.post(`invitations/${encodeURIComponent(token)}/accept`, body)).data)
+  if (!result) throw new Error('unexpected accept response')
+  return result
+}
