@@ -32,7 +32,7 @@ const team = ref<TeamMember[]>([])
 const canPickTeam = computed(() => me.can('admin.team.manage'))
 onMounted(async () => {
   load()
-  if (canPickTeam.value) { try { team.value = (await API.get('team')).data.data } catch { /* falls back to "asignarme" */ } }
+  if (canPickTeam.value) { try { team.value = ((await API.get('team')).data.data as TeamMember[]).filter(m => m.status === 'active') } catch { /* falls back to "asignarme" */ } }
 })
 watch(() => route.params.id, id => { if (id) load() })
 
