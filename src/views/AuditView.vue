@@ -45,7 +45,7 @@ const load = async () => {
 }
 
 onMounted(async () => {
-  try { actors.value = (await API.get('team')).data.data } catch { /* the filter just has no names */ }
+  try { actors.value = ((await API.get('team')).data.data as TeamMember[]).filter(m => m.status === 'active') } catch { /* the filter just has no names */ }
   load()
 })
 

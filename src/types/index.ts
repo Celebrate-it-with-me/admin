@@ -1,4 +1,5 @@
 // Shared types for the admin app.
+import type { Member } from '@/modules/team/types'
 
 export type StaffRole = 'superadmin' | 'support'
 
@@ -13,14 +14,8 @@ export interface CurrentUser {
   [key: string]: unknown
 }
 
-export interface TeamMember {
-  id: number
-  name: string
-  email: string
-  role: StaffRole | null
-  twoFactorEnabled: boolean
-  createdAt: string | null
-}
+/** A row of `GET team`: the contract's `Member` (statuses active, invited, suspended). */
+export type TeamMember = Member
 
 export interface AuditEntry {
   id: number
