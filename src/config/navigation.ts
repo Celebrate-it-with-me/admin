@@ -55,6 +55,8 @@ export const NAV: NavGroup[] = [
     items: [
       { key: 'Purchases', title: 'Compras', icon: 'mdi-credit-card-outline', path: 'purchases', permission: 'admin.purchases.manage', soon: true, brief: 'A8',
         about: 'Compras de eventos, pago manual (Zelle), reembolsos y conciliación con Stripe.' },
+      { key: 'Invoices', title: 'Facturas', icon: 'mdi-receipt-text-outline', path: 'invoices', permission: 'admin.purchases.manage', brief: 'A14',
+        about: 'Facturas emitidas al confirmarse cada pago, con descarga en PDF, notas de crédito y reenvío por correo.' },
       { key: 'Coupons', title: 'Precio y códigos', icon: 'mdi-ticket-percent-outline', path: 'coupons', permission: 'admin.pricing.manage', soon: true, brief: 'A8',
         about: 'El precio del evento completo y los códigos de fundador y de descuento, con límite de usos y vencimiento.' },
     ],
