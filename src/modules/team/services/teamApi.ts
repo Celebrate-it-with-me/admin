@@ -1,7 +1,7 @@
 import { API } from '@/services/axios'
 import type { StaffRole } from '@/types'
 import * as mock from './mock'
-import type { AcceptBody, AcceptResult, InvitationPreview, InviteBody, Member } from '../types'
+import type { AcceptBody, AcceptResult, InvitationPreview, InviteBody, InviteResult, Member } from '../types'
 import { readAcceptResult } from '../logic'
 
 /**
@@ -17,14 +17,17 @@ export async function listTeam(): Promise<Member[]> {
   return (await API.get('team')).data.data
 }
 
-export async function inviteMember(body: InviteBody): Promise<Member> {
+/** `mailSent` is a root field next to `data`; a missing one counts as sent. */
+const withMail = (body: { data: Member; mailSent?: boolean }): InviteResult => ({ member: body.data, mailSent: body.mailSent !== false })
+
+export async function inviteMember(body: InviteBody): Promise<InviteResult> {
   if (useMock) return mock.inviteMember(body)
-  return (await API.post('team', body)).data.data
+  return withMail((await API.post('team', body)).data)
 }
 
-export async function resendInvitation(id: number, reason?: string): Promise<Member> {
+export async function resendInvitation(id: number, reason?: string): Promise<InviteResult> {
   if (useMock) return mock.resendInvitation(id, reason)
-  return (await API.post(`team/${id}/invitation/resend`, reason ? { reason } : {})).data.data
+  return withMail((await API.post(`team/${id}/invitation/resend`, reason ? { reason } : {})).data)
 }
 
 export async function revokeInvitation(id: number, reason: string): Promise<void> {

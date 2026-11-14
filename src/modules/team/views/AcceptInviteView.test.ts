@@ -101,7 +101,7 @@ describe('AcceptInviteView', () => {
     await typeInto(w, 'Repite la contraseña', 'una-clave-bien-larga')
     await w.find('form').trigger('submit')
     await flushPromises()
-    expect(api.acceptInvitation).toHaveBeenCalledWith('tok', { password: 'una-clave-bien-larga', password_confirmation: 'una-clave-bien-larga' })
+    expect(api.acceptInvitation).toHaveBeenCalledWith('tok', { password: 'una-clave-bien-larga', password_confirmation: 'una-clave-bien-larga', device: expect.any(String) })
     expect(store.startSession).toHaveBeenCalledWith('T0KEN')
     expect(w.text()).toContain('Tu cuenta está lista')
     expect(w.text()).toContain('Activar los dos pasos')
@@ -134,7 +134,7 @@ describe('AcceptInviteView', () => {
     await typeInto(w, 'Repite la contraseña', 'una-clave-bien-larga')
     await w.find('form').trigger('submit')
     await flushPromises()
-    expect(api.acceptInvitation).toHaveBeenCalledWith('tok', { name: 'Marisol', password: 'una-clave-bien-larga', password_confirmation: 'una-clave-bien-larga' })
+    expect(api.acceptInvitation).toHaveBeenCalledWith('tok', { name: 'Marisol', password: 'una-clave-bien-larga', password_confirmation: 'una-clave-bien-larga', device: expect.any(String) })
     w.unmount()
   })
 
@@ -154,7 +154,7 @@ describe('AcceptInviteView', () => {
     await typeInto(w, 'Tu contraseña actual de Quinvite', 'password')
     await w.find('form').trigger('submit')
     await flushPromises()
-    expect(api.acceptInvitation).toHaveBeenCalledWith('tok', { current_password: 'password' })
+    expect(api.acceptInvitation).toHaveBeenCalledWith('tok', { current_password: 'password', device: expect.any(String) })
     w.unmount()
   })
 

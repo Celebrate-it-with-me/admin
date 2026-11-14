@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars -- the mock keeps the real signatures */
 import { useCurrentUserStore } from '@/store/currentUser'
 import type { StaffRole } from '@/types'
-import type { AcceptBody, AcceptResult, InvitationPreview, InviteBody, Member } from '../types'
+import type { AcceptBody, AcceptResult, InvitationPreview, InviteBody, InviteResult, Member } from '../types'
 import { readAcceptResult } from '../logic'
 
 /**
@@ -63,7 +63,10 @@ export async function listTeam(): Promise<Member[]> {
   return clone(sorted())
 }
 
-export async function inviteMember(body: InviteBody): Promise<Member> {
+/** An address with `smtpfail` in it simulates the mail failing: the invitation exists but `mailSent` is false. */
+const mailSentTo = (email: string) => !email.toLowerCase().includes('smtpfail')
+
+export async function inviteMember(body: InviteBody): Promise<InviteResult> {
   await wait()
   const email = body.email.trim().toLowerCase()
   const existing = members.find(m => m.email.toLowerCase() === email)
@@ -72,15 +75,15 @@ export async function inviteMember(body: InviteBody): Promise<Member> {
   if (!body.name?.trim() && !knownAccounts.has(email)) failValidation('name', 'name_required')
   const created = member(nextId++, body.name?.trim() || 'Marisol Vega', email, body.role, 'invited', null, false, { sentAt: new Date().toISOString(), expiresAt: ahead(3 * DAY), resendCount: 0, expired: false })
   members.push(created)
-  return clone(created)
+  return { member: clone(created), mailSent: mailSentTo(email) }
 }
 
-export async function resendInvitation(id: number, _reason?: string): Promise<Member> {
+export async function resendInvitation(id: number, _reason?: string): Promise<InviteResult> {
   await wait()
   const m = findInvited(id)
   if (m.invitation!.resendCount >= 5) failValidation('user', 'resend_limit')
   m.invitation = { sentAt: new Date().toISOString(), expiresAt: ahead(3 * DAY), resendCount: m.invitation!.resendCount + 1, expired: false }
-  return clone(m)
+  return { member: clone(m), mailSent: mailSentTo(m.email) }
 }
 
 export async function revokeInvitation(id: number, _reason: string): Promise<void> {

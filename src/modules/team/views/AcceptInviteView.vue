@@ -79,9 +79,10 @@ const submit = async () => {
   if (loading.value || missing.value.name || missing.value.current || (!existing.value && !check.value.ok)) return
   loading.value = true
   try {
+    // `device` is sent as the login sends it.
     const result = await acceptInvitation(token, existing.value
-      ? { current_password: current.value }
-      : { ...(needsName.value ? { name: name.value.trim() } : {}), password: password.value, password_confirmation: confirmation.value })
+      ? { current_password: current.value, device: device() }
+      : { ...(needsName.value ? { name: name.value.trim() } : {}), password: password.value, password_confirmation: confirmation.value, device: device() })
     password.value = ''; confirmation.value = ''; current.value = ''
     if (result.kind === 'challenge') {
       // She already had admin two-factor: the login's second step finishes the sign-in.

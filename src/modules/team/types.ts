@@ -71,9 +71,16 @@ export interface InvitationPreview {
  * POST invitations/{token}/accept body (snake_case, as Laravel reads it): a new account sends name?, password and its
  * confirmation; an existing Quinvite account sends only `current_password` (its password does not change).
  */
-export type AcceptBody =
+export type AcceptBody = (
   | { name?: string; password: string; password_confirmation: string }
   | { current_password: string }
+) & { /** The browser, as the login sends it. */ device?: string }
+
+/** POST team and resend answer the member and whether the mail went out (false: SMTP failed, the invitation exists). */
+export interface InviteResult {
+  member: Member
+  mailSent: boolean
+}
 
 /**
  * What accepting gives back. Normal case: the session token, whether she must set up two-factor, and the user. Rare case

@@ -5,10 +5,10 @@ import ReasonDialog from '@/components/ReasonDialog.vue'
 import RoleField from './RoleField.vue'
 import { inviteMember } from '../services/teamApi'
 import { emailLooksValid, parseTeamError } from '../logic'
-import type { Member } from '../types'
+import type { InviteResult } from '../types'
 
 const props = defineProps<{ modelValue: boolean }>()
-const emit = defineEmits<{ 'update:modelValue': [boolean]; invited: [Member] }>()
+const emit = defineEmits<{ 'update:modelValue': [boolean]; invited: [InviteResult] }>()
 
 const form = ref({ email: '', name: '', role: 'support' as StaffRole })
 const error = ref('')
@@ -30,8 +30,8 @@ const confirm = async (reason: string) => {
   nameError.value = ''
   emailError.value = ''
   try {
-    const member = await inviteMember({ email: form.value.email.trim(), name: form.value.name.trim() || undefined, role: form.value.role, reason })
-    emit('invited', member)
+    const result = await inviteMember({ email: form.value.email.trim(), name: form.value.name.trim() || undefined, role: form.value.role, reason })
+    emit('invited', result)
     emit('update:modelValue', false)
   } catch (e) {
     const err = parseTeamError(e)

@@ -112,7 +112,7 @@ describe('TeamView', () => {
   })
 
   it('resends right away and says when the new link expires', async () => {
-    api.resendInvitation.mockResolvedValue({ ...team()[2], invitation: { sentAt: at(0), expiresAt: at(3 * D - 5000), resendCount: 1, expired: false } })
+    api.resendInvitation.mockResolvedValue({ mailSent: true, member: { ...team()[2], invitation: { sentAt: at(0), expiresAt: at(3 * D - 5000), resendCount: 1, expired: false } } })
     const w = await mountView()
     await openMenu('Carlos Ruiz')
     menuItem('Reenviar invitación')!.click()
@@ -211,7 +211,7 @@ describe('TeamView', () => {
   })
 
   it('invites a person: needs a valid email and a reason, and reports the result', async () => {
-    api.inviteMember.mockResolvedValue({ ...team()[2], email: 'nueva@cwm.test' })
+    api.inviteMember.mockResolvedValue({ mailSent: true, member: { ...team()[2], email: 'nueva@cwm.test' } })
     const w = await mountView()
     await w.findAll('button').find(b => b.text().includes('Invitar a una persona'))!.trigger('click')
     await flushPromises()
@@ -224,6 +224,31 @@ describe('TeamView', () => {
     await flushPromises()
     expect(api.inviteMember).toHaveBeenCalledWith({ email: 'nueva@cwm.test', name: undefined, role: 'support', reason: 'Entra al equipo de soporte' })
     expect(w.text()).toContain('Enviamos la invitación a nueva@cwm.test.')
+    w.unmount()
+  })
+
+  it('warns (not an error) when the invitation was created but the mail failed, and reloads the list', async () => {
+    api.inviteMember.mockResolvedValue({ mailSent: false, member: { ...team()[2], email: 'nueva@cwm.test' } })
+    const w = await mountView()
+    await w.findAll('button').find(b => b.text().includes('Invitar a una persona'))!.trigger('click')
+    await flushPromises()
+    await typeInto(document.body.querySelector('input[type="email"]')!, 'nueva@cwm.test')
+    await typeInto(document.body.querySelector('textarea')!, 'Entra al equipo de soporte')
+    dialogButton('Enviar invitación').click()
+    await flushPromises()
+    expect(w.text()).toContain('No pudimos enviar el correo; usa Reenviar.')
+    expect(w.find('.v-alert--variant-tonal.text-warning, .v-alert.text-warning').exists()).toBe(true)
+    expect(api.listTeam).toHaveBeenCalledTimes(2)
+    w.unmount()
+  })
+
+  it('warns too when a resend could not send the mail', async () => {
+    api.resendInvitation.mockResolvedValue({ mailSent: false, member: team()[2] })
+    const w = await mountView()
+    await openMenu('Carlos Ruiz')
+    menuItem('Reenviar invitación')!.click()
+    await flushPromises()
+    expect(w.text()).toContain('No pudimos enviar el correo; usa Reenviar.')
     w.unmount()
   })
 

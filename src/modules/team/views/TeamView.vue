@@ -11,7 +11,7 @@ import MemberStatus from '../components/MemberStatus.vue'
 import RoleField from '../components/RoleField.vue'
 import { changeRole, listTeam, reactivateMember, removeMember, resendInvitation, resetTwoFactor, revokeInvitation, suspendMember } from '../services/teamApi'
 import { actionsFor, countByStatus, expiryLabel, filterMembers, hasFilters, isSelf, lastLoginLabel, parseTeamError, STATUS_LABELS } from '../logic'
-import type { ActionKey, Member, TeamFilters } from '../types'
+import type { ActionKey, InviteResult, Member, TeamFilters } from '../types'
 
 const me = useCurrentUserStore()
 const { smAndDown } = useDisplay()
@@ -20,7 +20,7 @@ const members = ref<Member[]>([])
 const loading = ref(true)
 const failed = ref(false)
 const filters = ref<TeamFilters>({ search: '', status: null, role: null })
-const notice = ref<{ type: 'success' | 'error'; text: string } | null>(null)
+const notice = ref<{ type: 'success' | 'warning' | 'error'; text: string } | null>(null)
 
 let latest = 0
 const load = async () => {
@@ -52,8 +52,12 @@ const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1
 
 // ── invite ──
 const inviteOpen = ref(false)
-const onInvited = async (m: Member) => {
-  notice.value = { type: 'success', text: `Enviamos la invitación a ${m.email}. ${capitalize(expiryLabel(m.invitation?.expiresAt))}.` }
+/** The mail can fail (SMTP) while the invitation exists: a warning, not an error, and the list shows it. */
+const MAIL_FAILED = 'No pudimos enviar el correo; usa Reenviar.'
+const onInvited = async ({ member: m, mailSent }: InviteResult) => {
+  notice.value = mailSent
+    ? { type: 'success', text: `Enviamos la invitación a ${m.email}. ${capitalize(expiryLabel(m.invitation?.expiresAt))}.` }
+    : { type: 'warning', text: `Creamos la invitación para ${m.email}. ${MAIL_FAILED}` }
   await load()
 }
 
@@ -80,8 +84,10 @@ const pick = (m: Member, key: ActionKey) => {
 const doResend = async (m: Member) => {
   resendingId.value = m.id
   try {
-    const updated = await resendInvitation(m.id)
-    notice.value = { type: 'success', text: `Reenviamos la invitación a ${m.email}. ${capitalize(expiryLabel(updated.invitation?.expiresAt))}.` }
+    const { member: updated, mailSent } = await resendInvitation(m.id)
+    notice.value = mailSent
+      ? { type: 'success', text: `Reenviamos la invitación a ${m.email}. ${capitalize(expiryLabel(updated.invitation?.expiresAt))}.` }
+      : { type: 'warning', text: `${MAIL_FAILED} (${m.email})` }
   } catch (e) {
     const err = parseTeamError(e)
     notice.value = { type: 'error', text: err.message }
