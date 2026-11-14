@@ -22,6 +22,9 @@ export interface PurchaseRow {
 
 export interface TimelineStep { type: 'created' | 'paid' | 'refunded'; at: string | null; by: Person | null }
 
+export interface PurchaseCreditNote { id: number; number: string; amountCents: number; currency: string; issuedAt: string }
+export interface PurchaseInvoice { id: number; number: string; status: 'issued' | 'void'; creditNotes: PurchaseCreditNote[] }
+
 export interface PurchaseDetail extends PurchaseRow {
   plan: { slug: string; name: string } | null
   eventSlug: string | null
@@ -32,6 +35,7 @@ export interface PurchaseDetail extends PurchaseRow {
   receiptUrl: string | null
   gatewayRef: string | null
   timeline: TimelineStep[]
+  invoices: PurchaseInvoice[]
 }
 
 export interface Summary { count: number; paidCount: number; revenueCents: number; refundedCount: number; refundedCents: number }
