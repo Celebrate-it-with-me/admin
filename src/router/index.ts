@@ -4,6 +4,7 @@ import LoginView from "@/views/LoginView.vue";
 import dashboard from "@/router/dashboard";
 import { PERMISSION_BY_ROUTE } from "@/config/navigation";
 import { useCurrentUserStore } from "@/store/currentUser";
+import { publicRoutes } from "@/modules";
 
 const routes = [
   {
@@ -32,6 +33,8 @@ const routes = [
       ...dashboard
     ],
   },
+  // Public pages of the modules (outside the dashboard layout): the invitation link.
+  ...publicRoutes,
 ]
 
 const router = createRouter({
