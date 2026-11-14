@@ -5,6 +5,7 @@ import ReasonDialog from '@/components/ReasonDialog.vue'
 import { useCurrentUserStore } from '@/store/currentUser'
 import { fetchPurchase, refundPurchase } from '../services/revenueApi'
 import type { PurchaseDetail } from '../types'
+import { STATUS as INVOICE_STATUS } from '@/modules/invoices/logic'
 import { EVENT_STATUS, GATEWAY, STATUS, dateTimeLabel, firstError, money, refundBlockReason, refundError, validationCodes } from '../logic'
 
 const props = defineProps<{ purchaseId: number | null }>()
@@ -142,6 +143,27 @@ const STEP_COLOR = { created: 'secondary', paid: 'success', refunded: 'warning' 
           </v-timeline-item>
         </v-timeline>
 
+        <h4 class="detail__h mt-6">Facturas</h4>
+        <p v-if="!detail.invoices.length" class="text-body-2 text-medium-emphasis mt-2">Esta compra no tiene factura.</p>
+        <ul v-else class="docs mt-2" aria-label="Facturas y notas de crédito de la compra">
+          <li v-for="inv in detail.invoices" :key="inv.id">
+            <router-link class="docs__link touch" :to="{ name: 'Invoices', query: { invoice: inv.id } }">
+              <v-icon icon="mdi-file-document-outline" size="small" aria-hidden="true" />
+              <span class="docs__num">{{ inv.number }}</span>
+              <v-chip :color="INVOICE_STATUS[inv.status].color" variant="tonal" size="x-small">{{ INVOICE_STATUS[inv.status].label }}</v-chip>
+            </router-link>
+            <ul v-if="inv.creditNotes.length" class="docs__notes">
+              <li v-for="note in inv.creditNotes" :key="note.id">
+                <router-link class="docs__link touch" :to="{ name: 'Invoices', query: { invoice: inv.id } }">
+                  <v-icon icon="mdi-file-undo-outline" size="small" aria-hidden="true" />
+                  <span class="docs__num">{{ note.number }}</span>
+                  <span class="text-body-2 text-medium-emphasis">Nota de crédito · -{{ money(note.amountCents, note.currency) }}</span>
+                </router-link>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
         <v-alert v-if="blocked" type="info" variant="tonal" density="compact" class="mt-4" :text="blocked" />
         <v-btn
           v-if="canRefund"
@@ -187,5 +209,10 @@ const STEP_COLOR = { created: 'secondary', paid: 'success', refunded: 'warning' 
 .timeline :deep(.v-timeline-item__body) { padding-block: 0; }
 .kv a { color: var(--rose-700); text-underline-offset: 2px; }
 .kv a:hover { color: var(--wine-800); }
+.docs, .docs__notes { list-style: none; margin: 0; padding: 0; }
+.docs__notes { padding-left: 24px; }
+.docs__link { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--rose-700); text-underline-offset: 2px; }
+.docs__link:hover { color: var(--wine-800); }
+.docs__num { font-weight: 600; }
 .touch { min-height: 44px; }
 </style>

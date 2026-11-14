@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import InvoiceDetail from '../components/InvoiceDetail.vue'
 import { fetchInvoices } from '../services/invoicesApi'
@@ -7,6 +8,7 @@ import type { InvoiceFilters, InvoiceRow } from '../types'
 import { STATUS, dateLabel, emptyFilters, hasAnyFilter, money } from '../logic'
 
 const { smAndDown } = useDisplay()
+const route = useRoute()
 
 const filters = ref<InvoiceFilters>(emptyFilters())
 const rows = ref<InvoiceRow[]>([])
@@ -46,7 +48,12 @@ watch(() => filters.value.search, () => {
 })
 watch(() => [filters.value.status, filters.value.from, filters.value.to], () => { page.value = 1; load() })
 watch([page, perPage], load)
-onMounted(load)
+onMounted(() => {
+  // Deep link from the purchase detail in Ingresos: /dashboard/invoices?invoice=ID opens that invoice.
+  const wanted = Number(route.query.invoice)
+  if (Number.isInteger(wanted) && wanted > 0) selected.value = wanted
+  load()
+})
 onBeforeUnmount(() => clearTimeout(timer))
 
 const clear = () => { filters.value = emptyFilters() }
