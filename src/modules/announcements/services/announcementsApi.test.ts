@@ -4,13 +4,16 @@ const http = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), dele
 vi.mock('@/services/axios', () => ({ API: http }))
 vi.mock('./mock', () => ({}))
 
-import { createAnnouncement, deleteAnnouncement, listAnnouncements, previewAudience, updateAnnouncement } from './announcementsApi'
 import type { AnnouncementBody } from '../types'
 
 const body: AnnouncementBody = {
   level: 'news', title_es: 'a', title_en: 'b', body_es: 'c', body_en: 'd', cta_label_es: null, cta_label_en: null, cta_url: null,
   dismissible: true, audience: 'all', upcoming_days: null, starts_at: '2027-03-10T14:00:00.000Z', ends_at: null, is_active: true,
 }
+
+// A developer's .env.local may switch the mock on; these tests are about the real client.
+vi.stubEnv('VITE_ANNOUNCEMENTS_MOCK', 'false')
+const { createAnnouncement, deleteAnnouncement, listAnnouncements, previewAudience, updateAnnouncement } = await import('./announcementsApi')
 
 beforeEach(() => { Object.values(http).forEach(fn => fn.mockReset()) })
 
