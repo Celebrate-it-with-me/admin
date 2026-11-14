@@ -160,7 +160,7 @@ const lead = computed(() => {
 
       <!-- Success -->
       <template v-else-if="done">
-        <v-alert type="success" variant="tonal" class="mb-4" text="Creaste tu contraseña y ya estás dentro." />
+        <v-alert type="success" variant="tonal" class="mb-4" :text="existing ? 'Listo, tu invitación fue aceptada y ya estás dentro.' : 'Creaste tu contraseña y ya estás dentro.'" />
         <p v-if="setupTwoFactor" class="mb-4">Antes de empezar, activa la verificación en dos pasos: el panel la exige y solo toma un minuto.</p>
         <v-btn color="primary" variant="flat" size="large" block class="touch" @click="goNext">{{ setupTwoFactor ? 'Activar los dos pasos' : 'Entrar al panel' }}</v-btn>
       </template>
