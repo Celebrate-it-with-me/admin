@@ -7,7 +7,7 @@ import {
 import type { Catalog, CatalogModule, CatalogPlan, Impact, PendingChange } from './types'
 
 const plan = (over: Partial<CatalogPlan> = {}): CatalogPlan => ({
-  slug: 'basic', name: 'Gratis', maxGuests: 50, priceCents: 0, isFullPlan: false, eventsCount: 0, ...over,
+  slug: 'basic', name: 'Gratis', description: null, maxGuests: 50, priceCents: 0, isFullPlan: false, eventsCount: 0, ...over,
 })
 const mod = (over: Partial<CatalogModule> = {}): CatalogModule => ({
   key: 'guests', section: 'guests', order: 1, isEnabled: true, planSlugs: ['premium'], eventsByPlan: {}, overrides: { active: 0, locked: 0 }, ...over,

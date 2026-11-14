@@ -100,11 +100,13 @@ describe('currentUser store', () => {
     })
   })
 
-  it('logout clears the user and the token', () => {
+  it('logout clears the user and the token', async () => {
     localStorage.setItem('token', 't')
     const store = useCurrentUserStore()
     store.user = { email: 'a@b.c' }
-    store.logout()
+    api.post.mockResolvedValue({})
+    await store.logout()
+    expect(api.post).toHaveBeenCalledWith('account/logout')
     expect(store.isLoaded).toBe(false)
     expect(localStorage.getItem('token')).toBeNull()
   })
