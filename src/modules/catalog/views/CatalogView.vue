@@ -3,9 +3,11 @@ import { computed, onMounted, ref } from 'vue'
 import { useCurrentUserStore } from '@/store/currentUser'
 import CatalogMatrix from '../components/CatalogMatrix.vue'
 import ChangeDialog from '../components/ChangeDialog.vue'
+import PlanCards from '../components/PlanCards.vue'
+import PlanEditDialog from '../components/PlanEditDialog.vue'
 import { fetchCatalog } from '../services/catalogApi'
-import { exceptionsTotal, groupBySection, planSlugsAfter } from '../logic'
-import type { Catalog, CatalogModule, CatalogPlan, PendingChange } from '../types'
+import { exceptionsTotal, groupBySection, planResultText, planSlugsAfter } from '../logic'
+import type { Catalog, CatalogModule, CatalogPlan, PendingChange, PlanUpdateResult } from '../types'
 
 const me = useCurrentUserStore()
 const canEdit = computed(() => me.can('admin.catalog.manage'))
@@ -15,6 +17,7 @@ const loading = ref(true)
 const failed = ref(false)
 const notice = ref('')
 const pending = ref<PendingChange | null>(null)
+const editingPlan = ref<CatalogPlan | null>(null)
 
 const load = async () => {
   loading.value = true
@@ -39,6 +42,20 @@ const proposeToggle = (module: CatalogModule, isEnabled: boolean) => {
   if (!canEdit.value) return
   notice.value = ''
   pending.value = { kind: 'toggle', module, isEnabled }
+}
+
+const proposePlanEdit = (plan: CatalogPlan) => {
+  if (!canEdit.value) return
+  notice.value = ''
+  editingPlan.value = plan
+}
+
+// The API answers with the new plan row: the card and the matrix header update without reloading the whole catalog.
+const planSaved = (row: PlanUpdateResult) => {
+  editingPlan.value = null
+  const { eventsOverNewLimit, ...plan } = row
+  if (catalog.value) catalog.value = { ...catalog.value, plans: catalog.value.plans.map(p => (p.slug === plan.slug ? plan : p)) }
+  notice.value = planResultText(plan.name, eventsOverNewLimit)
 }
 
 const saved = async (text: string) => {
@@ -75,11 +92,12 @@ const saved = async (text: string) => {
       <v-alert v-if="notice" type="success" variant="tonal" density="compact" closable class="mb-3" aria-live="polite" @click:close="notice = ''">{{ notice }}</v-alert>
 
       <div class="counters mb-4">
-        <v-chip v-for="p in plans" :key="p.slug" variant="tonal" color="secondary" prepend-icon="mdi-calendar-heart">{{ p.name }}: {{ p.eventsCount }}</v-chip>
         <v-chip variant="tonal" color="success" prepend-icon="mdi-gift-outline">Excepciones activas: {{ totalExceptions }}</v-chip>
         <v-chip v-if="withoutPlan" variant="tonal" color="accent" prepend-icon="mdi-puzzle-outline">Sin plan: {{ withoutPlan }}</v-chip>
         <v-btn variant="text" size="small" prepend-icon="mdi-refresh" :loading="loading" @click="load">Actualizar</v-btn>
       </div>
+
+      <PlanCards :plans="plans" :can-edit="canEdit" @edit="proposePlanEdit" />
 
       <CatalogMatrix :groups="groups" :plans="plans" :can-edit="canEdit" @toggle-plan="proposePlan" @toggle-enabled="proposeToggle" />
 
@@ -88,6 +106,7 @@ const saved = async (text: string) => {
     </div>
 
     <ChangeDialog :change="pending" :plans="plans" @close="pending = null" @saved="saved" />
+    <PlanEditDialog :plan="editingPlan" @close="editingPlan = null" @saved="planSaved" />
   </div>
 </template>
 
