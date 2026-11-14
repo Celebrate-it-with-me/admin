@@ -4,7 +4,7 @@ import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import ViteFonts from 'unplugin-fonts/vite'
 
 // Utilities
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import { fileURLToPath, URL } from 'node:url'
 
 // https://vitejs.dev/config/
@@ -40,5 +40,15 @@ export default defineConfig({
     port: 8080,
     strictPort: true,
     hmr: { overlay: false }
+  },
+  // Unit tests: `npm run test:unit` (see README). No network: axios is mocked in each test.
+  test: {
+    environment: 'jsdom',
+    include: ['src/**/*.{test,spec}.ts'],
+    setupFiles: ['./src/test/setup.ts'],
+    css: false,
+    restoreMocks: true,
+    // Vuetify ships ESM that imports CSS; let Vite process it.
+    server: { deps: { inline: ['vuetify'] } },
   },
 })
