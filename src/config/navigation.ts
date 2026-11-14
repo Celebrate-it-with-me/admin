@@ -81,6 +81,8 @@ export const NAV: NavGroup[] = [
         about: 'Mensajes enviados, estado de entrega, errores por número y aprobación de plantillas de Meta.' },
       { key: 'Announcements', title: 'Anuncios', icon: 'mdi-bullhorn-outline', path: 'announcements', permission: 'admin.catalog.manage', brief: 'A12',
         about: 'Anuncios dentro de la app para las organizadoras, por audiencia y fechas, en español y en inglés.' },
+      { key: 'Messages', title: 'Textos de mensajes', icon: 'mdi-email-edit-outline', path: 'messages', permission: 'admin.events.view', brief: 'A12',
+        about: 'Editar el texto de los correos de Quinvite, en español y en inglés, con vista previa y restaurar el original.' },
     ],
   },
   {
