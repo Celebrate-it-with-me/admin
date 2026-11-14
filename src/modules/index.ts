@@ -14,11 +14,7 @@ import invoices from './invoices/routes'
  * The Operation modules, one folder each (src/modules/<name>/): routes.ts, views/, components/, services/.
  * A module owns its folder; shared things (layout, navigation, types) are edited only when the module really needs it.
  */
-<<<<<<< HEAD
-export const moduleRoutes: RouteRecordRaw[] = [...events, ...users, ...support, ...moderation, ...revenue, ...health, ...catalog, ...templates, ...account]
-=======
-export const moduleRoutes: RouteRecordRaw[] = [...events, ...users, ...support, ...moderation, ...revenue, ...health, ...catalog, ...invoices]
->>>>>>> feat/invoices-admin
+export const moduleRoutes: RouteRecordRaw[] = [...events, ...users, ...support, ...moderation, ...revenue, ...health, ...catalog, ...templates, ...account, ...invoices]
 
 /** Names of the routes that already have a real screen: the menu stops calling them "en construcción". */
 export const builtKeys = new Set(moduleRoutes.map(route => route.name).filter((name): name is string => typeof name === 'string'))
