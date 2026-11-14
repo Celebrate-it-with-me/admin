@@ -19,7 +19,7 @@ const status = (over: Partial<WaStatus> = {}): WaStatus => ({
   driver: 'fake', configured: true, phoneNumberId: null, businessAccountId: null, webhookUrl: 'https://api.test/api/v1/webhooks/whatsapp',
   verifyTokenSet: false, appSecretSet: false, lastWebhookAt: null, ...over,
 })
-const summary: WaSummary = { total: 10, queued: 1, sent: 2, delivered: 3, read: 3, failed: 1, deliveryRate: 85.7 }
+const summary: WaSummary = { total: 10, queued: 1, sent: 2, delivered: 3, read: 3, failed: 1, deliveryRate: 0.857 }
 const message = (over: Partial<WaMessage>): WaMessage => ({
   id: 1, eventId: 4, eventName: 'Los XV de Valentina', guestId: 9, guestName: 'Tía Rosa', templateKey: 'invitation', locale: 'es', to: '+1305***0123', status: 'read',
   errorCode: null, errorMessage: null, waMessageId: 'wamid.1', queuedAt: '2026-11-14T10:00:00Z', sentAt: '2026-11-14T10:00:05Z', deliveredAt: '2026-11-14T10:00:08Z', readAt: '2026-11-14T10:05:00Z', failedAt: null, ...over,
@@ -31,6 +31,7 @@ const tpl = (over: Partial<WaTemplate>): WaTemplate => ({
 const messages = () => [
   message({ id: 1 }),
   message({ id: 2, guestName: 'Carlos Pérez', status: 'failed', errorCode: '131026', errorMessage: 'Message undeliverable', readAt: null, deliveredAt: null, failedAt: '2026-11-14T10:00:06Z' }),
+  message({ id: 3, guestName: 'Lucía Fernández', status: 'failed', errorCode: 'unknown_delivery', errorMessage: 'timeout', readAt: null, deliveredAt: null, sentAt: null, failedAt: '2026-11-14T10:00:08Z' }),
 ]
 const templates = () => [
   tpl({ id: 1 }),
@@ -124,6 +125,19 @@ describe('WhatsAppView', () => {
     const detail = document.body.querySelector('[data-testid="message-detail"]')!
     expect(detail.querySelector('[data-testid="failure"]')!.textContent).toContain('no tiene WhatsApp')
     expect(detail.querySelector('[data-testid="failure"]')!.textContent).toContain('131026')
+    w.unmount()
+  })
+
+  it('tells an unconfirmed delivery apart from a plain failure', async () => {
+    const w = await mountView()
+    const chip = w.find('[data-status="failed"][data-unknown="true"]')
+    expect(chip.text()).toContain('Sin confirmar')
+    expect(w.find('[data-status="failed"]:not([data-unknown])').text()).toContain('Fallido')
+    Array.from(document.body.querySelectorAll<HTMLElement>('tbody tr')).find(r => r.textContent?.includes('Lucía Fernández'))!.dispatchEvent(new Event('click'))
+    await flushPromises()
+    const failure = document.body.querySelector('[data-testid="message-detail"] [data-testid="failure"]')!
+    expect(failure.textContent).toContain('Entrega sin confirmar')
+    expect(failure.textContent).toContain('No se reintenta solo')
     w.unmount()
   })
 

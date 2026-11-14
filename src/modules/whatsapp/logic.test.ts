@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  agoLabel, canSubmit, emptyMessageFilters, emptyPeriod, failureText, hasMessageFilters, isSendable, messageParams, messageTimeline,
+  agoLabel, canSubmit, emptyMessageFilters, emptyPeriod, failureText, hasMessageFilters, isSendable, isUnknownDelivery, messageChip, messageParams, messageTimeline,
   missingPlaceholders, parseWaError, placeholder, rateLabel, sortTemplates, summaryParams, variableNames,
 } from './logic'
 import type { WaMessage, WaTemplate } from './types'
@@ -23,11 +23,25 @@ describe('whatsapp logic', () => {
     expect(hasMessageFilters({ ...emptyMessageFilters(), q: ' ' }, emptyPeriod())).toBe(false)
   })
 
-  it('formats the delivery rate whether it is 0..1 or 0..100, and null as a dash', () => {
+  it('formats the delivery rate as a 0..1 ratio, and null as a dash', () => {
     expect(rateLabel(null)).toBe('—')
+    expect(rateLabel(0)).toBe('0 %')
     expect(rateLabel(0.9)).toBe('90 %')
-    expect(rateLabel(87.5)).toBe('87.5 %')
-    expect(rateLabel(100)).toBe('100 %')
+    expect(rateLabel(0.875)).toBe('87.5 %')
+    expect(rateLabel(1)).toBe('100 %')
+  })
+
+  it('gives unconfirmed deliveries their own chip and explanation', () => {
+    expect(isUnknownDelivery({ status: 'failed', errorCode: 'unknown_delivery' })).toBe(true)
+    expect(isUnknownDelivery({ status: 'failed', errorCode: '131026' })).toBe(false)
+    expect(messageChip({ status: 'failed', errorCode: 'unknown_delivery' }).label).toBe('Sin confirmar')
+    expect(messageChip({ status: 'failed', errorCode: null }).label).toBe('Fallido')
+    expect(failureText({ errorCode: 'unknown_delivery', errorMessage: 'timeout' })).toBe('No sabemos si llegó: Meta no confirmó el envío (timeout). No se reintenta solo.')
+  })
+
+  it('translates the daily and retry limits', () => {
+    expect(parseWaError({ response: { status: 429, data: { code: 'whatsapp_daily_limit' } } }).message).toContain('tope diario')
+    expect(parseWaError({ response: { status: 409, data: { code: 'retry_limit' } } }).message).toContain('3 veces')
   })
 
   it('sorts templates by key then locale and tells what can be submitted or sent', () => {

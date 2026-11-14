@@ -13,6 +13,14 @@ export const MESSAGE_STATUS: Record<MessageStatus, ViewChip> = {
   failed: { label: 'Fallido', color: 'error', icon: 'mdi-alert-circle-outline' },
 }
 
+/** A failure where Meta never confirmed (timeout or 5xx): the message may have arrived, so it is not a plain failure. */
+export const UNKNOWN_DELIVERY = 'unknown_delivery'
+export const UNKNOWN_DELIVERY_CHIP: ViewChip = { label: 'Sin confirmar', color: 'warning', icon: 'mdi-help-circle-outline' }
+export const isUnknownDelivery = (m: Pick<WaMessage, 'status' | 'errorCode'>): boolean => m.status === 'failed' && m.errorCode === UNKNOWN_DELIVERY
+/** The chip of a message: unconfirmed deliveries get their own, the rest follow the status. */
+export const messageChip = (m: Pick<WaMessage, 'status' | 'errorCode'>): ViewChip =>
+  isUnknownDelivery(m) ? UNKNOWN_DELIVERY_CHIP : MESSAGE_STATUS[m.status]
+
 export const TEMPLATE_STATUS: Record<TemplateStatus, ViewChip> = {
   draft: { label: 'Borrador', color: 'secondary', icon: 'mdi-pencil-outline' },
   submitted: { label: 'Enviada', color: 'info', icon: 'mdi-send-clock-outline' },
@@ -59,11 +67,11 @@ export function agoLabel(iso: string | null | undefined, now = Date.now()): stri
   return `hace ${days} ${days === 1 ? 'día' : 'días'}`
 }
 
-/** The API may send the rate as 0..1 or as 0..100; null means nothing was sent yet. */
+/** The contract sends the rate as a ratio between 0 and 1; null means nothing was sent yet. */
 export function rateLabel(rate: number | null | undefined): string {
   if (rate === null || rate === undefined || Number.isNaN(rate)) return '—'
-  const pct = rate <= 1 ? rate * 100 : rate
-  return `${Number.isInteger(pct) ? pct : pct.toFixed(1)} %`
+  const pct = Math.round(rate * 1000) / 10
+  return `${pct} %`
 }
 
 export const countLabel = (n: number): string => n.toLocaleString('es-US')
@@ -164,6 +172,7 @@ const FAILURE_TEXT: Record<string, string> = {
   '132012': 'Los datos del mensaje no coinciden con la plantilla aprobada.',
   '132015': 'Meta tiene la plantilla pausada por baja calidad.',
   '133010': 'El número de WhatsApp del negocio no está registrado.',
+  unknown_delivery: 'No sabemos si llegó: Meta no confirmó el envío (timeout). No se reintenta solo.',
   invalid_phone: 'El número no es válido. Debe tener código de país, por ejemplo +13055550123.',
   opted_out: 'La persona pidió no recibir más mensajes.',
   template_not_approved: 'La plantilla todavía no está aprobada por Meta.',
@@ -182,6 +191,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
   template_not_approved: 'Esa plantilla todavía no está aprobada por Meta, así que no se puede enviar. Envíala a aprobación primero.',
   variables_changed: 'No puedes quitar, repetir ni cambiar el orden de las variables. Vuelve a poner todas las variables en su orden.',
   invalid_phone: 'Ese teléfono no es válido. Escríbelo con código de país, por ejemplo +13055550123.',
+  whatsapp_daily_limit: 'Se alcanzó el tope diario de mensajes de WhatsApp. Inténtalo mañana.',
+  retry_limit: 'Este mensaje ya se reintentó 3 veces. No se puede reintentar más.',
   reauth_required: 'Confirma tu identidad para continuar.',
   reason: 'Escribe un motivo de al menos 5 caracteres.',
   not_found: 'Esa plantilla ya no existe. Actualiza la lista.',

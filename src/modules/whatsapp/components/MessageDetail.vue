@@ -3,12 +3,13 @@ import { computed } from 'vue'
 import { useDisplay } from 'vuetify'
 import MessageStatusChip from './MessageStatusChip.vue'
 import type { WaMessage } from '../types'
-import { dateTimeLabel, failureText, LOCALE_NAMES, messageTimeline, TEMPLATE_NAMES } from '../logic'
+import { dateTimeLabel, failureText, isUnknownDelivery, LOCALE_NAMES, messageTimeline, TEMPLATE_NAMES } from '../logic'
 
 const props = defineProps<{ message: WaMessage | null }>()
 const emit = defineEmits<{ close: [] }>()
 const { smAndDown } = useDisplay()
 const open = computed(() => props.message !== null)
+const unknown = computed(() => (props.message ? isUnknownDelivery(props.message) : false))
 const steps = computed(() => (props.message ? messageTimeline(props.message) : []))
 </script>
 
@@ -21,12 +22,12 @@ const steps = computed(() => (props.message ? messageTimeline(props.message) : [
       </v-card-title>
       <v-card-text>
         <div class="d-flex flex-wrap align-center ga-2 mb-4">
-          <MessageStatusChip kind="message" :status="message.status" />
+          <MessageStatusChip kind="message" :status="message.status" :error-code="message.errorCode" />
           <span class="text-body-2 text-medium-emphasis">{{ TEMPLATE_NAMES[message.templateKey] }} · {{ LOCALE_NAMES[message.locale] }}</span>
         </div>
 
-        <v-alert v-if="message.status === 'failed'" type="error" variant="tonal" class="mb-4" data-testid="failure">
-          <template #title>No se pudo entregar</template>
+        <v-alert v-if="message.status === 'failed'" :type="unknown ? 'warning' : 'error'" variant="tonal" class="mb-4" data-testid="failure">
+          <template #title>{{ unknown ? 'Entrega sin confirmar' : 'No se pudo entregar' }}</template>
           {{ failureText(message) }}
           <p v-if="message.errorCode" class="code">Código: {{ message.errorCode }}<template v-if="message.errorMessage"> · {{ message.errorMessage }}</template></p>
         </v-alert>
