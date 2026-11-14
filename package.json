@@ -10,7 +10,9 @@
     "build": "vue-tsc --noEmit && vite build",
     "prod": "vite build --mode prod",
     "preview": "vite preview",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest"
   },
   "dependencies": {
     "@mdi/font": "7.4.47",
