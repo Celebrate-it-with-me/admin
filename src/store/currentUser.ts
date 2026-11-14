@@ -14,6 +14,10 @@ export const useCurrentUserStore = defineStore('currentUser', {
     can: (state) => (permission?: string): boolean => !permission || (state.user?.permissions ?? []).includes(permission),
   },
   actions: {
+    /**
+     * Step one of the sign-in. With two-factor on the API answers a `challenge` instead of a token: the caller then asks
+     * for the code and calls `completeTwoFactor`. Returns the response (or the error, as before) for the form to read.
+     */
     async login(email: string, password: string, device: string) {
       try {
         const res = await API.post('login', {
@@ -22,17 +26,32 @@ export const useCurrentUserStore = defineStore('currentUser', {
           device
         })
 
-        if (res.data) {
-          API.defaults.headers.common = { Authorization: `Bearer ${res.data}` }
-          localStorage.setItem('token', res.data)
+        if (res.data?.twoFactorRequired) return res
 
-          await this.getUser()
-        }
-
+        await this.startSession(res.data)
         return res
       } catch(err) {
         return err;
       }
+    },
+
+    /** Step two: challenge + a 6-digit code or a recovery code for the token. */
+    async completeTwoFactor(challenge: string, secret: { code?: string; recoveryCode?: string }, device: string) {
+      try {
+        const res = await API.post('login/two-factor', { challenge, device, ...secret })
+        await this.startSession(res.data)
+        return res
+      } catch (err) {
+        return err
+      }
+    },
+
+    async startSession(token: unknown) {
+      if (!token || typeof token !== 'string') return
+      API.defaults.headers.common = { Authorization: `Bearer ${token}` }
+      localStorage.setItem('token', token)
+
+      await this.getUser()
     },
 
     async getUser() {
@@ -61,7 +80,10 @@ export const useCurrentUserStore = defineStore('currentUser', {
       if (!this.isLoaded && localStorage.getItem('token')) await this.getUser()
     },
 
-    logout() {
+    /** Closes this session on the server too (best effort: the token is dropped locally either way). */
+    async logout() {
+      try { await API.post('account/logout') } catch { /* already expired, or offline */ }
+      delete API.defaults.headers.common.Authorization
       this.$reset()
     },
 

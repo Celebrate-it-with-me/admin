@@ -16,13 +16,19 @@ API.interceptors.response.use(
   (error) => {
     const status = error.response?.status
     // The login form explains its own errors (wrong password, no access): do not redirect from there.
-    const isLogin = error.config?.url === 'login'
+    const isLogin = error.config?.url === 'login' || error.config?.url === 'login/two-factor'
 
     if (status === 401 && !isLogin) {
       const currentUser = useCurrentUserStore()
 
       currentUser.$reset()
       router.push({ name: 'Home' })
+    }
+
+    // The server requires two-factor for this role and she has not enrolled: only her account pages are open.
+    if (status === 403 && error.response?.data?.code === 'two_factor_required') {
+      if (router.currentRoute.value.name !== 'Account') router.push({ name: 'Account', query: { tab: 'security' } })
+      return Promise.reject(error)
     }
 
     if (status === 403 && !isLogin && router.hasRoute('Unauthorized')) {
