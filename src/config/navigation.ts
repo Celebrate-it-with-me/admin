@@ -79,8 +79,8 @@ export const NAV: NavGroup[] = [
     items: [
       { key: 'WhatsApp', title: 'WhatsApp', icon: 'mdi-whatsapp', path: 'whatsapp', permission: 'admin.events.view', brief: 'A9',
         about: 'Mensajes enviados, estado de entrega, errores por número y aprobación de plantillas de Meta.' },
-      { key: 'Announcements', title: 'Anuncios', icon: 'mdi-bullhorn-outline', path: 'announcements', permission: 'admin.catalog.manage', soon: true, brief: 'A12',
-        about: 'Anuncios y correos a usuarios por segmentos, y editor de los textos de correos y mensajes (es/en).' },
+      { key: 'Announcements', title: 'Anuncios', icon: 'mdi-bullhorn-outline', path: 'announcements', permission: 'admin.catalog.manage', brief: 'A12',
+        about: 'Anuncios dentro de la app para las organizadoras, por audiencia y fechas, en español y en inglés.' },
     ],
   },
   {
