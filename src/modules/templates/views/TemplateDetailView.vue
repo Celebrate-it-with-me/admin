@@ -98,7 +98,7 @@ const actionLabel = (v: VersionRow) => (v.status === 'draft' ? 'Abrir' : 'Ver')
 
       <h3 class="section mb-2">Historial de versiones</h3>
 
-      <v-card class="d-none d-md-block">
+      <v-card class="only-wide">
         <v-table>
           <caption class="visually-hidden">Versiones de {{ template.name }}</caption>
           <thead>
@@ -124,7 +124,7 @@ const actionLabel = (v: VersionRow) => (v.status === 'draft' ? 'Abrir' : 'Ver')
         </v-table>
       </v-card>
 
-      <ul class="cards d-md-none">
+      <ul class="cards only-narrow">
         <li v-for="v in template.versions" :key="v.id">
           <v-card class="pa-4">
             <div class="d-flex align-center ga-2 mb-2">
@@ -173,4 +173,10 @@ const actionLabel = (v: VersionRow) => (v.status === 'draft' ? 'Abrir' : 'Ver')
 .tap { min-height: 44px; }
 .actions { max-width: 100%; }
 @media (max-width: 599px) { .actions, .actions .v-btn { width: 100%; } }
+.only-narrow { display: grid; }
+.only-wide { display: none; }
+@media (min-width: 960px) {
+  .only-narrow { display: none; }
+  .only-wide { display: block; }
+}
 </style>

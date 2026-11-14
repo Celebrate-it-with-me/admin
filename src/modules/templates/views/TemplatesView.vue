@@ -45,7 +45,7 @@ const published = (t: TemplateSummary) => (t.currentVersion ? `Versión ${t.curr
         <template #append><v-btn size="small" variant="text" @click="load">Reintentar</v-btn></template>
       </v-alert>
 
-      <v-card class="d-none d-md-block">
+      <v-card class="only-wide">
         <v-table>
           <caption class="visually-hidden">Plantillas de invitación</caption>
           <thead>
@@ -74,7 +74,7 @@ const published = (t: TemplateSummary) => (t.currentVersion ? `Versión ${t.curr
         </v-table>
       </v-card>
 
-      <ul class="cards d-md-none">
+      <ul class="cards only-narrow">
         <li v-for="t in templates" :key="t.id">
           <v-card class="pa-4">
             <div class="d-flex align-start ga-2 mb-2">
@@ -107,4 +107,10 @@ a { color: var(--rose-700); }
 .facts dd { margin: 0; }
 .tap { min-height: 44px; }
 .flex-none { flex: none; }
+.only-narrow { display: grid; }
+.only-wide { display: none; }
+@media (min-width: 960px) {
+  .only-narrow { display: none; }
+  .only-wide { display: block; }
+}
 </style>

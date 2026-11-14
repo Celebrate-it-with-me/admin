@@ -147,12 +147,12 @@ const onDragEnd = () => { dragFrom.value = null; dragOver.value = null; armed.va
 
 <style scoped>
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rows { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .row { border: 1px solid var(--line); border-radius: 12px; background: #fff; transition: opacity 0.15s ease-out, border-color 0.15s ease-out; }
 .row.off { opacity: 0.7; }
 .row.dragging { opacity: 0.45; }
 .row.over { border-color: var(--rose-600); box-shadow: 0 -2px 0 var(--rose-600); }
-.head { display: flex; align-items: center; gap: 2px; padding: 4px 8px 4px 4px; min-height: 52px; }
+.head { display: flex; min-width: 0; align-items: center; gap: 2px; padding: 4px 8px 4px 4px; min-height: 52px; }
 .handle { display: none; cursor: grab; padding: 8px 4px; touch-action: none; color: var(--ink-500); }
 .arrows { display: flex; }
 .title {
