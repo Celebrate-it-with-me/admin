@@ -6,7 +6,6 @@ import { useCurrentUserStore } from '@/store/currentUser'
 import { ROLE_LABELS } from '@/composables/useAuditLabels'
 import { formatMoney } from '@/composables/useMoney'
 import ReasonDialog from '@/components/ReasonDialog.vue'
-import UserFormDialog from '../components/UserFormDialog.vue'
 import DeleteUserDialog from '../components/DeleteUserDialog.vue'
 import ImpersonateButton from '@/modules/impersonation/components/ImpersonateButton.vue'
 import { EVENT_STATUS, ROLE_IN_EVENT, dateLabel, explainError, filenameFrom, initials } from '../helpers'
@@ -80,15 +79,13 @@ const exportData = async () => {
   } catch (e) { notice.value = { type: 'error', text: explainError(e, 'No pudimos exportar los datos.') } } finally { exporting.value = false }
 }
 
-// ── edit / delete ──
-const editOpen = ref(false)
+// ── delete ──
 const deleteOpen = ref(false)
 const onDeleted = async (archived: number[]) => {
   deleteOpen.value = false
   notice.value = { type: 'success', text: archived.length ? `Cuenta anonimizada. ${archived.length} evento(s) pasaron a archivados.` : 'Cuenta anonimizada.' }
   await load()
 }
-const onSaved = async () => { editOpen.value = false; await load() }
 </script>
 
 <template>
@@ -191,7 +188,6 @@ const onSaved = async () => { editOpen.value = false; await load() }
                 <v-btn v-if="me.can('admin.users.suspend') && user.suspension" variant="outlined" color="success" prepend-icon="mdi-account-check-outline" @click="askSuspend('unsuspend')">Reactivar</v-btn>
               </template>
               <v-btn v-if="me.can('admin.users.export')" variant="outlined" prepend-icon="mdi-download-outline" :loading="exporting" @click="exportData">Exportar datos (JSON)</v-btn>
-              <v-btn v-if="me.can('admin.users.manage') && !deleted" variant="outlined" prepend-icon="mdi-pencil-outline" @click="editOpen = true">Editar datos</v-btn>
               <v-btn v-if="me.can('admin.users.delete') && !deleted && !isStaff" variant="flat" color="error" prepend-icon="mdi-account-remove-outline" @click="deleteOpen = true">Borrar cuenta</v-btn>
             </div>
             <p v-if="isStaff" class="text-caption text-medium-emphasis mt-3 mb-0">Es una cuenta del equipo: no se suspende ni se borra desde aquí. Quítale el acceso en "Equipo y roles".</p>
@@ -210,7 +206,6 @@ const onSaved = async () => { editOpen.value = false; await load() }
         :loading="suspendLoading" :error="suspendError"
         @update:model-value="suspendMode = null" @confirm="doSuspend"
       />
-      <UserFormDialog v-model="editOpen" :user="user" @saved="onSaved" />
       <DeleteUserDialog v-model="deleteOpen" :user="user" @deleted="onDeleted" />
     </template>
   </section>
