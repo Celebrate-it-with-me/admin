@@ -67,13 +67,13 @@ export interface InvitationPreview {
   requiresTwoFactor: boolean
 }
 
-/** POST invitations/{token}/accept body (snake_case, as Laravel reads it). */
-export interface AcceptBody {
-  name?: string
-  password: string
-  password_confirmation: string
-  current_password?: string
-}
+/**
+ * POST invitations/{token}/accept body (snake_case, as Laravel reads it): a new account sends name?, password and its
+ * confirmation; an existing Quinvite account sends only `current_password` (its password does not change).
+ */
+export type AcceptBody =
+  | { name?: string; password: string; password_confirmation: string }
+  | { current_password: string }
 
 /**
  * What accepting gives back. Normal case: the session token, whether she must set up two-factor, and the user. Rare case

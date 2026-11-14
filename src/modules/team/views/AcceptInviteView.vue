@@ -43,11 +43,13 @@ const errors = ref<Record<string, string>>({})
 const general = ref('')
 const showCurrent = ref(false)
 
-const needsName = computed(() => !!invite.value && !invite.value.name)
+const existing = computed(() => !!invite.value?.accountExists)
+// An account that already exists only confirms with its current password; a new one sets a name (if missing) and a password.
+const needsName = computed(() => !!invite.value && !invite.value.name && !existing.value)
 const check = computed(() => checkNewPassword(password.value, confirmation.value))
 const missing = computed(() => ({
   name: needsName.value && !name.value.trim() ? 'Escribe tu nombre.' : '',
-  current: invite.value?.accountExists && !current.value ? 'Escribe tu contraseña actual de Quinvite.' : '',
+  current: existing.value && !current.value ? 'Escribe tu contraseña actual de Quinvite.' : '',
 }))
 
 // ── after accepting ──
@@ -74,15 +76,12 @@ const submit = async () => {
   touched.value = true
   general.value = ''
   errors.value = {}
-  if (loading.value || missing.value.name || missing.value.current || !check.value.ok) return
+  if (loading.value || missing.value.name || missing.value.current || (!existing.value && !check.value.ok)) return
   loading.value = true
   try {
-    const result = await acceptInvitation(token, {
-      ...(needsName.value ? { name: name.value.trim() } : {}),
-      password: password.value,
-      password_confirmation: confirmation.value,
-      ...(invite.value?.accountExists ? { current_password: current.value } : {}),
-    })
+    const result = await acceptInvitation(token, existing.value
+      ? { current_password: current.value }
+      : { ...(needsName.value ? { name: name.value.trim() } : {}), password: password.value, password_confirmation: confirmation.value })
     password.value = ''; confirmation.value = ''; current.value = ''
     if (result.kind === 'challenge') {
       // She already had admin two-factor: the login's second step finishes the sign-in.
@@ -132,7 +131,7 @@ const title = computed(() => {
 const lead = computed(() => {
   if (done.value || state.value !== 'ready') return ''
   if (challenge.value) return 'Tu cuenta ya tiene la verificación en dos pasos. Escribe el código para entrar.'
-  return 'Crea tu contraseña para entrar al panel de Quinvite.'
+  return existing.value ? 'Confirma tu cuenta para entrar al panel de Quinvite.' : 'Crea tu contraseña para entrar al panel de Quinvite.'
 })
 </script>
 
@@ -190,8 +189,8 @@ const lead = computed(() => {
           v-if="needsName" v-model="name" label="Tu nombre" autocomplete="name" prepend-inner-icon="mdi-account-outline"
           :error-messages="errors.name || (touched ? missing.name : '')"
         />
-        <template v-if="invite.accountExists">
-          <v-alert type="info" variant="tonal" density="compact" class="mb-4" text="Ya tienes una cuenta en Quinvite con este correo. Confírmala con tu contraseña actual para unirte al equipo." />
+        <template v-if="existing">
+          <v-alert type="info" variant="tonal" density="compact" class="mb-4" text="Ya tienes una cuenta en Quinvite con este correo. Usarás la contraseña de tu cuenta de Quinvite; no la cambiaremos." />
           <v-text-field
             v-model="current" label="Tu contraseña actual de Quinvite" :type="showCurrent ? 'text' : 'password'" autocomplete="current-password"
             :append-inner-icon="showCurrent ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
@@ -199,13 +198,14 @@ const lead = computed(() => {
           />
         </template>
         <NewPasswordFields
+          v-else
           v-model:password="password" v-model:confirmation="confirmation"
           :password-error="errors.password" :confirmation-error="touched && password && !check.matches ? 'Las contraseñas no coinciden.' : ''"
         />
 
         <p v-if="invite.requiresTwoFactor" class="hint"><v-icon size="16" icon="mdi-shield-lock-outline" /> Después te pediremos activar la verificación en dos pasos.</p>
         <v-alert v-if="general" type="error" variant="tonal" density="compact" class="mb-4" :text="general" />
-        <v-btn type="submit" color="primary" size="large" block class="touch" :loading="loading">{{ invite.accountExists ? 'Unirme al equipo' : 'Crear mi contraseña y entrar' }}</v-btn>
+        <v-btn type="submit" color="primary" size="large" block class="touch" :loading="loading">{{ existing ? 'Unirme al equipo' : 'Crear mi contraseña y entrar' }}</v-btn>
       </form>
     </div>
   </InviteShell>

@@ -151,11 +151,18 @@ export async function acceptInvitation(token: string, body: AcceptBody): Promise
   if (token === 'expired') failCode(410, 'invitation_expired', 'Invitation expired.')
   const preview = previews[token]
   if (!preview) failCode(404, 'invitation_invalid', 'Invitation not found.')
-  if (!preview.name && !body.name?.trim()) failValidation('name', 'The name field is required.')
-  if (preview.accountExists && body.current_password !== 'password') failValidation('current_password', 'invalid_current_password')
-  if (body.password.length < 12) failValidation('password', 'La contraseña debe tener al menos 12 caracteres.')
-  if (body.password !== body.password_confirmation) failValidation('password', 'Las contraseñas no coinciden.')
+  let name = preview.name
+  if ('current_password' in body) {
+    // An existing account: only its current password, which does not change.
+    if (!preview.accountExists || body.current_password !== 'password') failValidation('current_password', 'invalid_current_password')
+  } else {
+    if (preview.accountExists) failValidation('current_password', 'invalid_current_password')
+    if (!name && !body.name?.trim()) failValidation('name', 'The name field is required.')
+    if (body.password.length < 12) failValidation('password', 'La contraseña debe tener al menos 12 caracteres.')
+    if (body.password !== body.password_confirmation) failValidation('password', 'Las contraseñas no coinciden.')
+    name = name || body.name!.trim()
+  }
   // A real session token when there is one (the screenshots sign in first), so the redirect lands on a working panel.
   const session = localStorage.getItem('token') ?? 'mock-token'
-  return readAcceptResult({ data: { token: session, twoFactorSetupRequired: preview.requiresTwoFactor, user: { id: 9, name: preview.name || body.name, email: preview.email, roles: [preview.role] } } }) as AcceptResult
+  return readAcceptResult({ data: { token: session, twoFactorSetupRequired: preview.requiresTwoFactor, user: { id: 9, name, email: preview.email, roles: [preview.role] } } }) as AcceptResult
 }
