@@ -94,8 +94,11 @@ const logout = () => {
           <span class="d-none d-sm-inline">{{ currentUser.user.email }}</span>
         </v-btn>
       </template>
-      <v-list>
+      <v-list min-width="220">
         <v-list-item class="text-medium-emphasis" :title="currentUser.user.email" />
+        <v-divider />
+        <v-list-item prepend-icon="mdi-account-circle-outline" title="Mi cuenta" :to="{ name: 'Account', query: { tab: 'profile' } }" />
+        <v-list-item prepend-icon="mdi-shield-lock-outline" title="Seguridad" :to="{ name: 'Account', query: { tab: 'security' } }" />
         <v-divider />
         <v-list-item prepend-icon="mdi-logout" title="Cerrar sesión" @click="logout()" />
       </v-list>
