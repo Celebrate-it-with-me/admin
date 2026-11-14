@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vista previa simulada</title>
+<style>
+  body { margin: 0; font-family: Figtree, system-ui, sans-serif; }
+  section { padding: 40px 24px; text-align: center; }
+  h2 { margin: 0 0 12px; font-size: 1.6rem; font-weight: 500; }
+  p { margin: 0 auto; max-width: 36ch; line-height: 1.5; }
+  .cover { padding: 96px 24px; }
+  .cover h2 { font-size: 2.4rem; }
+  .btn { display: inline-block; margin-top: 18px; padding: 10px 22px; border-radius: 999px; color: #fff; }
+  .wait { padding: 48px 24px; text-align: center; font: 14px system-ui; color: #6f6460; }
+</style>
+</head>
+<body>
+<div id="root" class="wait">Esperando datos…</div>
+<script>
+  // Stand-in for the app's /preview/invitation page (dev only, VITE_TEMPLATES_MOCK=true): same postMessage protocol.
+  var root = document.getElementById('root')
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] }) }
+  window.addEventListener('message', function (e) {
+    if (e.source !== window.parent || !e.data || e.data.type !== 'qv-preview') return
+    var p = e.data.payload, c = p.theme.colors, f = p.theme.fonts
+    document.body.style.background = c.surface
+    document.body.style.color = c.ink
+    root.className = ''
+    root.innerHTML = p.sections.map(function (s, i) {
+      var alt = i % 2 ? 'background:' + c.surfaceAlt + ';' : ''
+      var cover = s.type === 'cover'
+      return '<section class="' + (cover ? 'cover' : '') + '" style="' + alt + '">' +
+        (cover ? '<div style="font-family:\'' + esc(f.script) + '\',cursive;font-size:1.6rem;color:' + c.accent + '">Valentina</div>' : '') +
+        '<h2 style="font-family:\'' + esc(f.heading) + '\',serif;color:' + (cover ? c.primary : c.ink) + '">' + esc(s.title) + '</h2>' +
+        (s.text ? '<p style="font-family:\'' + esc(f.body) + '\',sans-serif;color:' + c.inkSoft + '">' + esc(s.text) + '</p>' : '') +
+        (s.type === 'rsvp' ? '<span class="btn" style="background:' + c.primary + '">' + (p.locale === 'en' ? 'Confirm' : 'Confirmar') + '</span>' : '') +
+        '</section>'
+    }).join('')
+  })
+  window.parent.postMessage({ type: 'qv-preview-ready' }, '*')
+</script>
+</body>
+</html>

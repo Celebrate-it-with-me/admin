@@ -1,4 +1,4 @@
-import type { Catalog, CatalogModule, CatalogPlan, Impact, PendingChange, PlansUpdateResult, ToggleResult } from './types'
+import type { Catalog, CatalogModule, CatalogPlan, Impact, PlanChanges, PendingChange, PlansUpdateResult, ToggleResult } from './types'
 
 /** Pure helpers of Módulos y planes: labels, grouping, the plan list a change produces and the confirmation rules. */
 
@@ -32,6 +32,15 @@ export const guestLimit = (plan: Pick<CatalogPlan, 'maxGuests'>): number | null 
 export const limitLabel = (plan: Pick<CatalogPlan, 'maxGuests'>) => {
   const limit = guestLimit(plan)
   return limit == null ? 'Sin límite de invitados' : `Hasta ${limit} invitados`
+}
+
+/** Lux has no price and no limit: it is arranged by hand, not sold from the app. */
+export const isNotForSale = (plan: CatalogPlan) => !plan.isFullPlan && !plan.priceCents && guestLimit(plan) == null
+
+export const priceLabel = (plan: CatalogPlan) => {
+  if (isNotForSale(plan)) return 'No a la venta'
+  if (!plan.priceCents) return 'Gratis'
+  return `$${(plan.priceCents / 100).toFixed(plan.priceCents % 100 ? 2 : 0)}`
 }
 
 export const eventsLabel = (n: number) => (n === 1 ? '1 evento' : `${n} eventos`)
@@ -84,6 +93,41 @@ export function toggleResultText(key: string, enabled: boolean, r: ToggleResult)
   if (enabled) return `${moduleLabel(key)}: encendido para todos.`
   const orphans = r.orphanOverrides > 0 ? ` Hay ${r.orphanOverrides} excepciones activas que no tendrán efecto mientras esté apagado.` : ''
   return `${moduleLabel(key)}: apagado para todos.${orphans}`
+}
+
+export const MAX_GUESTS_LIMIT = 100000
+
+/** Guest limit typed in the plan form: a whole number from 1 to 100000, or an error sentence. */
+export function parseGuestLimit(text: string): { value: number } | { error: string } {
+  const t = text.trim()
+  if (!/^\d+$/.test(t)) return { error: 'Escribe un número entero, por ejemplo 150.' }
+  const n = Number(t)
+  if (n < 1 || n > MAX_GUESTS_LIMIT) return { error: `El límite va de 1 a ${MAX_GUESTS_LIMIT.toLocaleString('es')}. Para quitarlo, marca «Ilimitado».` }
+  return { value: n }
+}
+
+/** What the plan form changes compared with the plan as it is: only the fields that differ (limit 0 = unlimited). */
+export function planChanges(plan: CatalogPlan, next: { maxGuests: number; name: string; description: string }): PlanChanges {
+  const out: PlanChanges = {}
+  if (next.maxGuests !== (plan.maxGuests ?? 0)) out.maxGuests = next.maxGuests
+  if (next.name.trim() !== plan.name) out.name = next.name.trim()
+  const desc = next.description.trim() === '' ? null : next.description.trim()
+  if (desc !== (plan.description?.trim() || null)) out.description = desc
+  return out
+}
+
+/** Sentence for the impact of a new guest limit. Nobody is blocked: events above it just cannot add or publish. */
+export function planImpactText(over: number, nowOver: number): string {
+  const now = nowOver > 0 ? ` Hoy ${nowOver === 1 ? 'hay 1 evento' : `hay ${nowOver} eventos`} por encima del límite actual.` : ''
+  if (over === 0) return `Ningún evento quedará por encima del nuevo límite.${now}`
+  const who = over === 1 ? '1 evento quedará' : `${over} eventos quedarán`
+  return `${who} por encima del nuevo límite; no se bloquea a nadie, solo se impide agregar o publicar.${now}`
+}
+
+export function planResultText(name: string, over: number): string {
+  return over > 0
+    ? `${name}: plan actualizado. ${over === 1 ? '1 evento está' : `${over} eventos están`} por encima del límite.`
+    : `${name}: plan actualizado.`
 }
 
 const ERROR_BY_CODE: Record<string, string> = {

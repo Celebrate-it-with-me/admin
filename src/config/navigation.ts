@@ -55,6 +55,8 @@ export const NAV: NavGroup[] = [
     items: [
       { key: 'Purchases', title: 'Compras', icon: 'mdi-credit-card-outline', path: 'purchases', permission: 'admin.purchases.manage', soon: true, brief: 'A8',
         about: 'Compras de eventos, pago manual (Zelle), reembolsos y conciliación con Stripe.' },
+      { key: 'Invoices', title: 'Facturas', icon: 'mdi-receipt-text-outline', path: 'invoices', permission: 'admin.purchases.manage', brief: 'A14',
+        about: 'Facturas emitidas al confirmarse cada pago, con descarga en PDF, notas de crédito y reenvío por correo.' },
       { key: 'Coupons', title: 'Precio y códigos', icon: 'mdi-ticket-percent-outline', path: 'coupons', permission: 'admin.pricing.manage', soon: true, brief: 'A8',
         about: 'El precio del evento completo y los códigos de fundador y de descuento, con límite de usos y vencimiento.' },
     ],
@@ -66,7 +68,7 @@ export const NAV: NavGroup[] = [
     items: [
       { key: 'Plans', title: 'Módulos y planes', icon: 'mdi-puzzle-outline', path: 'plans', permission: 'admin.catalog.view', brief: 'A4',
         about: 'Qué módulos incluye cada plan, con interruptores y sin desplegar, y funciones regaladas a un solo evento.' },
-      { key: 'Templates', title: 'Plantillas', icon: 'mdi-palette-outline', path: 'templates', permission: 'admin.templates.manage', soon: true, brief: 'A7',
+      { key: 'Templates', title: 'Plantillas', icon: 'mdi-palette-outline', path: 'templates', permission: 'admin.templates.manage', brief: 'A7',
         about: 'Constructor de plantillas de invitación con vista previa en vivo, versiones y reglas por plan.' },
     ],
   },
@@ -90,7 +92,7 @@ export const NAV: NavGroup[] = [
         about: 'Personal del panel con roles de soporte y superadministrador, y permisos por acción.' },
       { key: 'Audit', title: 'Auditoría', icon: 'mdi-history', path: 'audit', permission: 'admin.audit.view', brief: 'A1',
         about: 'Registro de todo lo que hace el personal: quién, a quién, cuándo y por qué.' },
-      { key: 'Health', title: 'Salud del sistema', icon: 'mdi-heart-pulse', path: 'health', permission: 'admin.catalog.manage', brief: 'A10',
+      { key: 'Health', title: 'Salud del sistema', icon: 'mdi-heart-pulse', path: 'health', permission: 'admin.system.health', brief: 'A10',
         about: 'Trabajos fallidos, colas, errores recientes, banderas de funciones y modo mantenimiento.' },
     ],
   },

@@ -14,12 +14,19 @@ export interface CatalogModule {
 export interface CatalogPlan {
   slug: string
   name: string
+  description: string | null
   /** 0 or null means no limit. */
   maxGuests: number | null
   priceCents: number | null
   isFullPlan: boolean
   eventsCount: number
 }
+
+/** GET catalog/plans/{slug}/impact?maxGuests=N */
+export interface PlanImpact { slug: string; maxGuests: number; eventsNowOver: number; eventsOverNewLimit: number }
+/** The plan row after PATCH catalog/plans/{slug}, plus how many of its events are above the new limit. */
+export interface PlanUpdateResult extends CatalogPlan { eventsOverNewLimit: number }
+export interface PlanChanges { maxGuests?: number; name?: string; description?: string | null }
 
 export interface Catalog { modules: CatalogModule[]; plans: CatalogPlan[] }
 
