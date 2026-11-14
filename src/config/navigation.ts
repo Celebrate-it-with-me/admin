@@ -90,7 +90,7 @@ export const NAV: NavGroup[] = [
         about: 'Personal del panel con roles de soporte y superadministrador, y permisos por acción.' },
       { key: 'Audit', title: 'Auditoría', icon: 'mdi-history', path: 'audit', permission: 'admin.audit.view', brief: 'A1',
         about: 'Registro de todo lo que hace el personal: quién, a quién, cuándo y por qué.' },
-      { key: 'Health', title: 'Salud del sistema', icon: 'mdi-heart-pulse', path: 'health', permission: 'admin.catalog.manage', brief: 'A10',
+      { key: 'Health', title: 'Salud del sistema', icon: 'mdi-heart-pulse', path: 'health', permission: 'admin.system.health', brief: 'A10',
         about: 'Trabajos fallidos, colas, errores recientes, banderas de funciones y modo mantenimiento.' },
     ],
   },

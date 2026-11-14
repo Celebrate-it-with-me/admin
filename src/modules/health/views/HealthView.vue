@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import ConnectionsCard from '../components/ConnectionsCard.vue'
 import ErrorsCard from '../components/ErrorsCard.vue'
 import FailedJobsCard from '../components/FailedJobsCard.vue'
+import MaintenanceCard from '../components/MaintenanceCard.vue'
 import ModulesCard from '../components/ModulesCard.vue'
 import QueuesCard from '../components/QueuesCard.vue'
 
@@ -24,13 +25,14 @@ const setCard = (el: unknown) => { if (el) cards.value.push(el as { load: () => 
     <header class="head mb-6">
       <div>
         <h2 class="title">Salud del sistema</h2>
-        <p class="text-medium-emphasis">Cómo está funcionando la plataforma ahora mismo. Solo lectura: en esta versión no se puede reintentar ni borrar nada.</p>
+        <p class="text-medium-emphasis">Cómo está funcionando la plataforma ahora mismo. Desde aquí también puedes reintentar o borrar trabajos fallidos y poner la plataforma en mantenimiento.</p>
       </div>
       <v-btn variant="tonal" prepend-icon="mdi-refresh" class="touch" :loading="refreshing" @click="refreshAll">Actualizar todo</v-btn>
     </header>
     <p class="sr-only" aria-live="polite">{{ announce }}</p>
 
     <div class="grid">
+      <MaintenanceCard :ref="setCard" class="wide" />
       <ConnectionsCard :ref="setCard" />
       <QueuesCard :ref="setCard" />
       <FailedJobsCard :ref="setCard" class="wide" />

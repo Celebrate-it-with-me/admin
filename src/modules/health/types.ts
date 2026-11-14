@@ -39,3 +39,17 @@ export interface ConnectionItem { key: string; label: string; driver: string; st
 
 export interface ModuleFlag { key: string; section: string; isEnabled: boolean; plans: string[] }
 export interface ModulesReport { total: number; enabled: number; disabled: number; items: ModuleFlag[] }
+
+export interface MaintenanceState {
+  active: boolean
+  message: string | null
+  /** ISO 8601 or null. */
+  estimatedEnd: string | null
+  activatedAt: string | null
+  /** The flag turns itself off at this moment even if nobody does. */
+  expiresAt: string | null
+  activatedBy: { id: number; name: string } | null
+  maxHours: number
+}
+
+export interface RetryQueueResult { retried: number; remaining: number; limit: number }
