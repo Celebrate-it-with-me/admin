@@ -165,5 +165,6 @@ const confirm = async (reason: string) => {
 .person__name { font-weight: 500; overflow-wrap: anywhere; }
 .person__email { font-size: 0.8125rem; color: var(--ink-500); overflow-wrap: anywhere; }
 .touch { min-height: 44px; }
+.switch-row a { color: var(--rose-700); text-decoration: underline; text-underline-offset: 2px; }
 code { font-size: 0.8125rem; overflow-wrap: anywhere; }
 </style>
