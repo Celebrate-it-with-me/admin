@@ -90,6 +90,7 @@ export const NAV: NavGroup[] = [
     items: [
       { key: 'Team', title: 'Equipo y roles', icon: 'mdi-account-key-outline', path: 'team', permission: 'admin.team.manage', brief: 'A1',
         about: 'Personal del panel con roles de soporte y superadministrador, y permisos por acción.' },
+      { key: 'Security', title: 'Seguridad', icon: 'mdi-shield-lock-outline', path: 'security', permission: 'admin.security.manage', brief: 'A1', about: 'Reglas de acceso del personal, como exigir la verificación en dos pasos a todo el equipo.' },
       { key: 'Audit', title: 'Auditoría', icon: 'mdi-history', path: 'audit', permission: 'admin.audit.view', brief: 'A1',
         about: 'Registro de todo lo que hace el personal: quién, a quién, cuándo y por qué.' },
       { key: 'Health', title: 'Salud del sistema', icon: 'mdi-heart-pulse', path: 'health', permission: 'admin.system.health', brief: 'A10',
