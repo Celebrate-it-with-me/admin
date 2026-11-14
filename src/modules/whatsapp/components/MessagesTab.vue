@@ -123,7 +123,7 @@ const open = (m: WaMessage) => { selected.value = m }
       <v-card v-for="m in rows" :key="m.id" class="pa-4 mcard" role="button" tabindex="0" :aria-label="`Ver el mensaje ${m.id}`" :data-message="m.id" @click="open(m)" @keydown.enter="open(m)">
         <div class="d-flex justify-space-between align-start ga-3">
           <strong class="mcard__name">{{ m.guestName ?? 'Envío de prueba' }}</strong>
-          <MessageStatusChip kind="message" :status="m.status" />
+          <MessageStatusChip kind="message" :status="m.status" :error-code="m.errorCode" />
         </div>
         <p class="text-body-2 text-medium-emphasis mcard__line">{{ m.to }} · {{ m.eventName ?? 'Sin evento' }}</p>
         <p class="text-body-2 text-medium-emphasis mcard__line">{{ TEMPLATE_NAMES[m.templateKey] }} · {{ LOCALE_NAMES[m.locale] }} · {{ dateTimeLabel(m.queuedAt) }}</p>
@@ -152,7 +152,7 @@ const open = (m: WaMessage) => { selected.value = m }
         hover
         @click:row="(_: Event, { item }: { item: WaMessage }) => open(item)"
       >
-        <template #item.status="{ item }"><MessageStatusChip kind="message" :status="item.status" /></template>
+        <template #item.status="{ item }"><MessageStatusChip kind="message" :status="item.status" :error-code="item.errorCode" /></template>
         <template #item.guest="{ item }"><div class="cell">{{ item.guestName ?? 'Envío de prueba' }}</div></template>
         <template #item.to="{ item }"><span class="nowrap">{{ item.to }}</span></template>
         <template #item.event="{ item }"><div class="cell">{{ item.eventName ?? '—' }}</div></template>

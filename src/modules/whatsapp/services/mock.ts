@@ -196,6 +196,7 @@ const FAILURES: [string, string][] = [
   ['131047', 'Re-engagement message'],
   ['invalid_phone', 'The phone is not a valid E.164 number.'],
   ['131049', 'This message was not delivered to maintain healthy ecosystem engagement.'],
+  ['unknown_delivery', 'Meta did not confirm the send (timeout).'],
 ]
 
 const buildMessages = (): WaMessage[] => {
@@ -219,7 +220,7 @@ const buildMessages = (): WaMessage[] => {
       status,
       errorCode: status === 'failed' ? failure[0] : null,
       errorMessage: status === 'failed' ? failure[1] : null,
-      waMessageId: status === 'queued' || (status === 'failed' && failure[0] === 'invalid_phone') ? null : `wamid.HBgLMTMwNTU1${String(5000 + i)}`,
+      waMessageId: status === 'queued' || (status === 'failed' && (failure[0] === 'invalid_phone' || failure[0] === 'unknown_delivery')) ? null : `wamid.HBgLMTMwNTU1${String(5000 + i)}`,
       queuedAt: ago(queuedMs),
       sentAt: status === 'queued' || status === 'failed' ? null : ago(sentMs),
       deliveredAt: status === 'delivered' || status === 'read' ? ago(sentMs - 6_000) : null,
@@ -248,7 +249,7 @@ export async function getSummary(period: PeriodFilter): Promise<WaSummary> {
   const delivered = count('delivered') + count('read')
   return {
     total, queued: count('queued'), sent: count('sent'), delivered: count('delivered'), read: count('read'), failed: count('failed'),
-    deliveryRate: sentOut ? Math.round((delivered / sentOut) * 1000) / 10 : null,
+    deliveryRate: sentOut ? Math.round((delivered / sentOut) * 1000) / 1000 : null,
   }
 }
 
