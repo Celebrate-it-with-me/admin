@@ -165,19 +165,22 @@ export const CHECKLIST: ChecklistItem[] = [
   { id: 'contrast', label: 'Contraste', hint: 'El texto tiene al menos 4,5:1 sobre su fondo (3:1 en letra script grande) en cada preset.' },
   { id: 'long_names', label: 'Nombres largos', hint: 'Un nombre de 40 o más caracteres y un itinerario de 8 momentos no se desbordan ni se cortan.' },
   { id: 'no_photo', label: 'Sin foto', hint: 'La portada sin foto y el estado «Guarda la fecha» se ven completos, sin huecos.' },
-  { id: 'sections', label: 'Secciones apagadas y reordenadas', hint: 'Al apagar o mover secciones no queda decoración huérfana.' },
+  { id: 'sections_reordered', label: 'Secciones apagadas y reordenadas', hint: 'Al apagar o mover secciones no queda decoración huérfana.' },
   { id: 'performance', label: 'Rendimiento', hint: 'El peso está dentro del presupuesto y la portada aparece rápido en un móvil modesto.' },
 ]
 
 export interface ChecklistEntry { by: string; at: string }
 export type ChecklistState = Record<string, ChecklistEntry>
 
+/** Body of `activate.checklist`: the six keys, all true (the server records who and when in the audit log). */
+export const checklistPayload = (): Record<string, true> => Object.fromEntries(CHECKLIST.map(i => [i.id, true])) as Record<string, true>
+
 export const checklistDone = (state: ChecklistState) => CHECKLIST.every(i => Boolean(state[i.id]))
 export const checklistProgress = (state: ChecklistState) => CHECKLIST.filter(i => Boolean(state[i.id])).length
 
 const checklistKey = (packageId: number) => `qv.admin.pkg-checklist.${packageId}`
 
-/** The contract has no place to store the checklist yet: it lives in this browser (see the report of this change). */
+/** UI help only: the server records the checklist when activating (`activate.checklist`); this just keeps the ticks between visits. */
 export function loadChecklist(packageId: number): ChecklistState {
   try {
     const raw = window.localStorage.getItem(checklistKey(packageId))
@@ -236,6 +239,7 @@ const FIELD_ERROR: Record<string, string> = {
   invalid_report: 'El informe tiene errores: corrígelos y vuelve a subir el paquete.',
   engine_too_new: 'El paquete necesita un motor más nuevo que el desplegado.',
   required_one: 'Indica un evento o una cuenta.',
+  incomplete: 'Falta marcar puntos de la lista de comprobación.',
   not_found: 'No lo encontramos.',
 }
 
@@ -265,6 +269,7 @@ export function explainPackageError(e: unknown): PackageError {
     const first = Object.entries(fields)[0]
     if (fields.reason) message = `Escribe un motivo de al menos ${MIN_REASON} caracteres.`
     else if (fields.ack_third_party_marks) message = 'Confirma que revisaste la autorización de uso de las marcas de terceros.'
+    else if (fields.checklist) message = FIELD_ERROR.incomplete
     else if (first) message = FIELD_ERROR[first[1]] ?? ERROR_BY_CODE[first[1]] ?? data?.message ?? 'Los datos no son válidos.'
     else message = data?.message ?? 'Los datos no son válidos.'
   }

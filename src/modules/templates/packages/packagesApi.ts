@@ -55,9 +55,9 @@ export async function getImpact(id: number, action: 'deactivate' | 'withdraw'): 
   return (await API.get(`${BASE}/${id}/impact`, { params: { action } })).data.data
 }
 
-export async function activatePackage(id: number, reason: string, ackThirdPartyMarks?: boolean): Promise<ActivateResult> {
-  if (useMock) return mock.activatePackage(id, reason, ackThirdPartyMarks)
-  const body: Record<string, unknown> = { reason }
+export async function activatePackage(id: number, reason: string, checklist: Record<string, true>, ackThirdPartyMarks?: boolean): Promise<ActivateResult> {
+  if (useMock) return mock.activatePackage(id, reason, checklist, ackThirdPartyMarks)
+  const body: Record<string, unknown> = { reason, checklist }
   if (ackThirdPartyMarks !== undefined) body.ack_third_party_marks = ackThirdPartyMarks
   return (await API.post(`${BASE}/${id}/activate`, body)).data.data
 }

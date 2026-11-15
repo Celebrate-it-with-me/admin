@@ -10,7 +10,7 @@ import PackageStatusChip from '../components/PackageStatusChip.vue'
 import QualityChecklist from '../components/QualityChecklist.vue'
 import ThirdPartyMarksBanner from '../components/ThirdPartyMarksBanner.vue'
 import {
-  TIER_LABEL, VISIBILITY_LABEL, canActivate, canDeactivate, canWithdraw, checklistDone, eventTypesLabel, eventsPinnedLabel, explainPackageError,
+  TIER_LABEL, VISIBILITY_LABEL, canActivate, canDeactivate, canWithdraw, checklistDone, checklistPayload, eventTypesLabel, eventsPinnedLabel, explainPackageError,
   formatBytes, formatDateTime, loadChecklist, presetOptions, saveChecklist, type ChecklistState,
 } from '../logic'
 import { activatePackage, deactivatePackage, getPackage, withdrawPackage } from '../packagesApi'
@@ -57,7 +57,7 @@ const doActivate = async (reason: string, ack: boolean | undefined) => {
   activate.value.busy = true
   activate.value.error = ''
   try {
-    const r = await activatePackage(props.id, reason, ack)
+    const r = await activatePackage(props.id, reason, checklistPayload(), ack)
     activate.value.open = false
     pkg.value = r.package
     const n = r.eventsOnPreviousVersion

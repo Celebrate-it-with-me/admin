@@ -146,9 +146,11 @@ export async function getImpact(id: number, action: 'deactivate' | 'withdraw'): 
   return { eventsPinned: p.eventsPinned, eventsUnpublished: action === 'deactivate' ? (p.slug === 'botanical' ? 5 : 0) : 0, templates: p.templates.map(t => ({ id: t.id, slug: t.slug })) }
 }
 
-export async function activatePackage(id: number, reason: string, ack?: boolean): Promise<ActivateResult> {
+export async function activatePackage(id: number, reason: string, checklist: Record<string, boolean>, ack?: boolean): Promise<ActivateResult> {
   await wait(300)
   reasonOk(reason)
+  const keys = ['accessibility', 'contrast', 'long_names', 'no_photo', 'sections_reordered', 'performance']
+  if (!keys.every(k => checklist?.[k] === true)) fail(422, { message: 'Invalid', errors: { checklist: ['incomplete'] } })
   const p = find(id)
   if (p.status === 'active' || p.status === 'withdrawn') fail(409, { message: 'State', code: 'package_not_installable' })
   if ((p.manifest.thirdPartyMarks ?? []).length > 0 && !ack) fail(422, { message: 'Invalid', errors: { ack_third_party_marks: ['required'] } })

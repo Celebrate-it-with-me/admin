@@ -67,10 +67,11 @@ describe('packagesApi', () => {
 
   it('activates with the reason, adding ack_third_party_marks only when given', async () => {
     http.post.mockResolvedValue({ data: { data: { package: { id: 4 }, eventsOnPreviousVersion: 17 } } })
-    await api.activatePackage(4, 'Aprobado por el equipo')
-    expect(http.post).toHaveBeenLastCalledWith('templates/packages/4/activate', { reason: 'Aprobado por el equipo' })
-    expect((await api.activatePackage(4, 'Aprobado por el equipo', true)).eventsOnPreviousVersion).toBe(17)
-    expect(http.post).toHaveBeenLastCalledWith('templates/packages/4/activate', { reason: 'Aprobado por el equipo', ack_third_party_marks: true })
+    const checklist = { accessibility: true, contrast: true, long_names: true, no_photo: true, sections_reordered: true, performance: true } as const
+    await api.activatePackage(4, 'Aprobado por el equipo', checklist)
+    expect(http.post).toHaveBeenLastCalledWith('templates/packages/4/activate', { reason: 'Aprobado por el equipo', checklist })
+    expect((await api.activatePackage(4, 'Aprobado por el equipo', checklist, true)).eventsOnPreviousVersion).toBe(17)
+    expect(http.post).toHaveBeenLastCalledWith('templates/packages/4/activate', { reason: 'Aprobado por el equipo', checklist, ack_third_party_marks: true })
   })
 
   it('deactivates with POST and withdraws with DELETE carrying the reason', async () => {

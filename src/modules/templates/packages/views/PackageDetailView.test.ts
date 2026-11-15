@@ -86,7 +86,7 @@ describe('PackageDetailView', () => {
     await typeReason()
     byText('Activar paquete').click()
     await flushPromises()
-    expect(api.activatePackage).toHaveBeenCalledWith(5, 'Aprobado por el equipo', undefined)
+    expect(api.activatePackage).toHaveBeenCalledWith(5, 'Aprobado por el equipo', { accessibility: true, contrast: true, long_names: true, no_photo: true, sections_reordered: true, performance: true }, undefined)
     expect(w.text()).toContain('17 eventos siguen en la versión anterior')
     expect(w.find('[data-status="active"]').exists()).toBe(true)
     w.unmount()
@@ -108,7 +108,7 @@ describe('PackageDetailView', () => {
     expect(byText('Activar paquete').disabled).toBe(false)
     byText('Activar paquete').click()
     await flushPromises()
-    expect(api.activatePackage).toHaveBeenCalledWith(5, 'Aprobado por el equipo', true)
+    expect(api.activatePackage).toHaveBeenCalledWith(5, 'Aprobado por el equipo', expect.objectContaining({ sections_reordered: true }), true)
     w.unmount()
   })
 

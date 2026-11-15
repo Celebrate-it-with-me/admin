@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  CHECKLIST, MAX_ZIP_BYTES, canActivate, canDeactivate, canWithdraw, checkZip, checklistDone, checklistProgress, codeHelp, explainPackageError,
+  CHECKLIST, MAX_ZIP_BYTES, checklistPayload, canActivate, canDeactivate, canWithdraw, checkZip, checklistDone, checklistProgress, codeHelp, explainPackageError,
   formatBytes, groupReport, impactMessage, loadChecklist, presetOptions, saveChecklist,
 } from './logic'
 import type { ReportItem } from './types'
@@ -71,6 +71,12 @@ describe('checklist', () => {
   })
 })
 
+describe('checklistPayload', () => {
+  it('sends the six keys of the contract, all true', () => {
+    expect(checklistPayload()).toEqual({ accessibility: true, contrast: true, long_names: true, no_photo: true, sections_reordered: true, performance: true })
+  })
+})
+
 describe('actions by status', () => {
   it('allows each action only in its states', () => {
     expect(canActivate({ status: 'installed' })).toBe(true)
@@ -109,6 +115,7 @@ describe('explainPackageError', () => {
   it('reads 422 field errors by their first code', () => {
     expect(explainPackageError(http(422, { errors: { reason: ['min'] } })).message).toMatch(/5 caracteres/)
     expect(explainPackageError(http(422, { errors: { ack_third_party_marks: ['required'] } })).message).toMatch(/marcas/)
+    expect(explainPackageError(http(422, { errors: { checklist: ['incomplete'] } })).message).toMatch(/lista de comprobación/)
     expect(explainPackageError(http(422, { errors: { package: ['too_large'] } })).message).toMatch(/8 MB/)
     expect(explainPackageError(http(422, { errors: { package: ['engine_too_new'] } })).message).toMatch(/motor/)
     expect(explainPackageError(http(422, { errors: { stage_token: ['invalid_report'] } })).fields).toEqual({ stage_token: 'invalid_report' })
