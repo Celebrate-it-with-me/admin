@@ -147,6 +147,7 @@ export async function installPackage(stageToken: string, reason: string): Promis
   await wait(350)
   reasonOk(reason)
   if (stageToken.startsWith('stg_expired')) fail(410, { message: 'Gone', code: 'stage_expired' })
+  if (reason.includes('corrupt')) fail(409, { message: 'stage_corrupt', code: 'stage_corrupt', differences: ['assets/flor.webp: tamaño distinto', 'manifest.json: hash distinto'] })
   const marks = stageToken.includes('marcas')
   const slug = marks ? 'habana-vip' : 'botanical'
   const pkg: Package = {
