@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { disableTwoFactor, regenerateRecoveryCodes } from '../services/accountApi'
-import { formatDateTime, parseApiError } from '../logic'
+import { formatDateTime, parseApiError, twoFactorCodeMessage } from '../logic'
 import type { TwoFactorStatus } from '../types'
+import DisableTwoFactorDialog from './DisableTwoFactorDialog.vue'
 import PasswordConfirmDialog from './PasswordConfirmDialog.vue'
 import RecoveryCodesPanel from './RecoveryCodesPanel.vue'
 import TwoFactorSetupDialog from './TwoFactorSetupDialog.vue'
@@ -19,9 +20,11 @@ const saved = ref(false)
 const loading = ref(false)
 const error = ref('')
 const notice = ref('')
+const disablePasswordError = ref('')
+const disableCodeError = ref('')
 
 const openRegen = () => { error.value = ''; regenOpen.value = true }
-const openDisable = () => { error.value = ''; disableOpen.value = true }
+const openDisable = () => { error.value = ''; disablePasswordError.value = ''; disableCodeError.value = ''; disableOpen.value = true }
 
 const regenerate = async (password: string) => {
   loading.value = true; error.value = ''
@@ -35,14 +38,20 @@ const regenerate = async (password: string) => {
   } catch (e) { error.value = parseApiError(e).message } finally { loading.value = false }
 }
 
-const disable = async (password: string) => {
-  loading.value = true; error.value = ''
+const disable = async ({ password, code }: { password: string; code: string }) => {
+  loading.value = true; error.value = ''; disablePasswordError.value = ''; disableCodeError.value = ''
   try {
-    await disableTwoFactor(password)
+    await disableTwoFactor(password, code)
     disableOpen.value = false
     notice.value = 'Desactivaste la verificación en dos pasos. Cerramos tus otras sesiones y te avisamos por correo.'
     emit('changed')
-  } catch (e) { error.value = parseApiError(e).message } finally { loading.value = false }
+  } catch (e) {
+    const p = parseApiError(e)
+    if (p.status === 422 && (p.fields.code || p.fields.password)) {
+      disableCodeError.value = twoFactorCodeMessage(p.fields.code)
+      disablePasswordError.value = p.fields.password ?? ''
+    } else error.value = p.message
+  } finally { loading.value = false }
 }
 
 const onSetupDone = () => { notice.value = 'Verificación en dos pasos activada. Te avisamos por correo.'; emit('changed') }
@@ -87,10 +96,9 @@ const closeCodes = () => { codesOpen.value = false; newCodes.value = [] }
       message="Los códigos que tienes ahora dejarán de funcionar. Los nuevos se muestran una sola vez."
       :loading="loading" :error="error" @confirm="regenerate"
     />
-    <password-confirm-dialog
-      v-model="disableOpen" title="Desactivar los dos pasos" confirm-label="Desactivar" danger
-      message="Tu cuenta volverá a pedir solo la contraseña y cerraremos tus otras sesiones."
-      :loading="loading" :error="error" @confirm="disable"
+    <disable-two-factor-dialog
+      v-model="disableOpen" :loading="loading" :error="error" :password-error="disablePasswordError" :code-error="disableCodeError"
+      @confirm="disable"
     />
 
     <v-dialog v-model="codesOpen" max-width="520" persistent scrollable @keydown.esc.prevent>
