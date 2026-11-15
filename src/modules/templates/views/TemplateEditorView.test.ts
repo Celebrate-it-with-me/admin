@@ -44,6 +44,30 @@ describe('TemplateEditorView with a package-managed version', () => {
     w.unmount()
   })
 
+  it('offers no publish for a package version even when the data says draft, and shows the 409 in Spanish if the server refuses', async () => {
+    const w = await mountEditor(version({ packageId: 5, status: 'draft' }))
+    expect(w.find('button[class*="rocket"], .actions').exists()).toBe(false)
+    expect(w.text()).not.toContain('Publicar')
+    w.unmount()
+    api.publishVersion.mockRejectedValue({ response: { status: 409, data: { code: 'package_managed' } } })
+    const plain = await mountEditor(version())
+    const publish = plain.findAll('button').find(b => b.text() === 'Publicar')!
+    expect(publish.attributes('disabled')).toBeUndefined()
+    await publish.trigger('click')
+    await flushPromises()
+    const ta = Array.from(document.body.querySelectorAll<HTMLTextAreaElement>('textarea')).at(-1)!
+    ta.value = 'Motivo suficiente'
+    ta.dispatchEvent(new Event('input'))
+    await flushPromises()
+    const confirm = Array.from(document.body.querySelectorAll<HTMLButtonElement>('button')).filter(b => b.textContent?.includes('Publicar')).at(-1)!
+    confirm.click()
+    await flushPromises()
+    expect(api.publishVersion).toHaveBeenCalled()
+    expect(plain.find('[data-testid="package-managed"]').text()).toContain('la gestiona un paquete')
+    expect(plain.text()).not.toContain('Guardar borrador')
+    plain.unmount()
+  })
+
   it('keeps the editor for a version without package', async () => {
     const w = await mountEditor(version())
     expect(w.find('[data-testid="package-managed"]').exists()).toBe(false)

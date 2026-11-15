@@ -25,15 +25,24 @@ const pick = async (w: ReturnType<typeof mountView>, file: File) => {
   const input = w.find('[data-testid="file-input"]')
   Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
   await input.trigger('change')
+  await new Promise(r => setTimeout(r, 30)) // reading the first bytes of the file is asynchronous
   await flushPromises()
 }
-const zip = (name = 'botanical-1.1.0.zip', size = 1000) => { const f = new File(['x'], name, { type: 'application/zip' }); Object.defineProperty(f, 'size', { value: size }); return f }
+const zip = (name = 'botanical-1.1.0.zip', size = 1000) => { const f = new File([new Uint8Array([0x50, 0x4b, 3, 4])], name, { type: 'application/zip' }); Object.defineProperty(f, 'size', { value: size }); return f }
 const button = (label: string) => Array.from(document.body.querySelectorAll<HTMLButtonElement>('button')).filter(b => b.textContent?.trim() === label).at(-1)!
 
 beforeEach(() => { Object.values(api).forEach(fn => fn.mockReset()); push.mockReset(); api.discardStage.mockResolvedValue(undefined) })
 afterEach(() => { document.body.innerHTML = '' })
 
 describe('PackageInstallView', () => {
+  it('rejects a file named .zip that does not start like a zip', async () => {
+    const w = await mountView()
+    await pick(w, new File(['<html>no soy un zip</html>'], 'falso.zip'))
+    expect(w.find('[data-testid="file-error"]').text()).toContain('no es un .zip válido')
+    expect(api.validatePackage).not.toHaveBeenCalled()
+    w.unmount()
+  })
+
   it('rejects a file that is not a zip or is over 8 MB without calling the API', async () => {
     const w = mountView()
     await pick(w, zip('diseno.rar'))

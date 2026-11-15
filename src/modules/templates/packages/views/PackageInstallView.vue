@@ -5,7 +5,7 @@ import ReasonDialog from '@/components/ReasonDialog.vue'
 import PackagePreviewPane from '../components/PackagePreviewPane.vue'
 import ValidationReport from '../components/ValidationReport.vue'
 import { discardStage, installPackage, validatePackage } from '../packagesApi'
-import { checkZip, explainPackageError, formatBytes, formatDateTime, presetOptions } from '../logic'
+import { checkZip, explainPackageError, hasZipSignature, formatBytes, formatDateTime, presetOptions } from '../logic'
 import type { ValidateResult } from '../types'
 import type { EventTypeSlug } from '../../types'
 
@@ -41,6 +41,7 @@ const upload = async (f: File) => {
   requestError.value = ''
   const problem = checkZip(f)
   if (problem) { fileError.value = problem; return }
+  if (!(await hasZipSignature(f))) { fileError.value = 'El archivo no es un .zip válido.'; return }
   if (result.value) await reset()
   file.value = f
   uploading.value = true

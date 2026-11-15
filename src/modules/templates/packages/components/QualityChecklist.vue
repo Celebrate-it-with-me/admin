@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { CHECKLIST, checklistDone, checklistProgress, formatDateTime, type ChecklistState } from '../logic'
 
 /** The quality review the team does with the preview before activating. Each tick records who and when. */
-const props = defineProps<{ modelValue: ChecklistState; reviewer: string; readonly?: boolean }>()
+const props = defineProps<{ modelValue: ChecklistState; reviewer: string; readonly?: boolean; /** What the reviewer has not opened in the preview yet: while it has items the points cannot be ticked. */ pending?: string[] }>()
 const emit = defineEmits<{ 'update:modelValue': [ChecklistState] }>()
 
 const done = computed(() => checklistDone(props.modelValue))
@@ -24,10 +24,13 @@ const toggle = (id: string, on: boolean | null) => {
       <v-chip size="small" variant="tonal" :color="done ? 'success' : undefined">{{ progress }} de {{ CHECKLIST.length }}</v-chip>
     </div>
     <p class="text-medium-emphasis small">Revisa el paquete en la vista previa, en móvil y escritorio, y marca cada punto. Queda anotado aquí quién lo marcó y cuándo.</p>
+    <v-alert v-if="pending?.length" type="warning" variant="tonal" density="compact" class="mb-2" data-testid="preview-gate">
+      Antes de marcar, abre la vista previa y revisa todo: falta ver {{ pending.join(', ') }}.
+    </v-alert>
     <ul class="list">
       <li v-for="item in CHECKLIST" :key="item.id" :data-item="item.id">
         <v-checkbox
-          :model-value="Boolean(modelValue[item.id])" :disabled="readonly" hide-details density="compact" color="primary"
+          :model-value="Boolean(modelValue[item.id])" :disabled="readonly || Boolean(pending?.length)" hide-details density="compact" color="primary"
           @update:model-value="toggle(item.id, $event)"
         >
           <template #label>

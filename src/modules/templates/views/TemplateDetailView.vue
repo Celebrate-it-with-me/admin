@@ -54,7 +54,11 @@ const confirmArchive = async (reason: string) => {
     archiving.value = null
     notice.value = `El borrador de la versión ${v.version} se archivó.`
     await load()
-  } catch (e) { archiveError.value = explainError(e).message } finally { archiveBusy.value = false }
+  } catch (e) {
+    const x = explainError(e)
+    archiveError.value = x.message
+    if (x.code === 'package_managed') { archiving.value = null; actionError.value = x.message; await load() }
+  } finally { archiveBusy.value = false }
 }
 
 const dialogOpen = computed({ get: () => archiving.value !== null, set: v => { if (!v) { archiving.value = null; archiveError.value = '' } } })

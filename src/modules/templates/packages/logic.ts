@@ -36,6 +36,20 @@ export function checkZip(file: { name: string; size: number }): string | null {
   return null
 }
 
+/** A zip starts with `PK\x03\x04` (or `PK\x05\x06` when empty). Cheap check before uploading something that only has the name of a zip. */
+export async function hasZipSignature(file: Pick<Blob, 'slice'>): Promise<boolean> {
+  try {
+    const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as ArrayBuffer)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsArrayBuffer(file.slice(0, 4))
+    })
+    const head = new Uint8Array(buffer)
+    return head[0] === 0x50 && head[1] === 0x4b && ((head[2] === 3 && head[3] === 4) || (head[2] === 5 && head[3] === 6))
+  } catch { return false }
+}
+
 // --- Validation report -------------------------------------------------------------------------------------------
 
 /** What each code means and how to fix it (spec §4.8 and the sanitizer spike). The server's own message is shown too. */
@@ -180,17 +194,74 @@ export const checklistProgress = (state: ChecklistState) => CHECKLIST.filter(i =
 
 const checklistKey = (packageId: number) => `qv.admin.pkg-checklist.${packageId}`
 
-/** UI help only: the server records the checklist when activating (`activate.checklist`); this just keeps the ticks between visits. */
-export function loadChecklist(packageId: number): ChecklistState {
+/**
+ * UI help only: the server records the checklist when activating (`activate.checklist`); this just keeps the ticks between visits.
+ * It stores nothing but the ids ticked and when (no names, no tokens). What it reads back is untrusted: only known ids with a date survive,
+ * and `by` is always the current reviewer, never something taken from storage.
+ */
+export function loadChecklist(packageId: number, reviewer = 'Revisor'): ChecklistState {
   try {
     const raw = window.localStorage.getItem(checklistKey(packageId))
-    const parsed = raw ? JSON.parse(raw) : {}
-    return parsed && typeof parsed === 'object' ? parsed as ChecklistState : {}
+    const parsed: unknown = raw ? JSON.parse(raw) : {}
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    const out: ChecklistState = {}
+    for (const item of CHECKLIST) {
+      const at = (parsed as Record<string, { at?: unknown } | null>)[item.id]?.at
+      if (typeof at === 'string' && at.length <= 40 && !Number.isNaN(new Date(at).getTime())) out[item.id] = { by: reviewer, at }
+    }
+    return out
   } catch { return {} }
 }
 
 export function saveChecklist(packageId: number, state: ChecklistState): void {
-  try { window.localStorage.setItem(checklistKey(packageId), JSON.stringify(state)) } catch { /* private window: it just does not persist */ }
+  try {
+    const slim = Object.fromEntries(Object.entries(state).map(([id, e]) => [id, { at: e.at }]))
+    window.localStorage.setItem(checklistKey(packageId), JSON.stringify(slim))
+  } catch { /* private window: it just does not persist */ }
+}
+
+// --- Preview coverage (W6-09): the checklist opens only after the reviewer has looked at the package ----------------
+
+export type PreviewDevice = 'mobile' | 'desktop'
+export const PREVIEW_DEVICES: { value: PreviewDevice; label: string }[] = [{ value: 'mobile', label: 'móvil' }, { value: 'desktop', label: 'escritorio' }]
+
+export interface PreviewCoverage { devices: PreviewDevice[]; states: string[] }
+export const emptyCoverage = (): PreviewCoverage => ({ devices: [], states: [] })
+
+/** What the reviewer still has to open in the preview, as words ("escritorio", "Sin foto"). Empty when nothing is missing. */
+export function coverageMissing(c: PreviewCoverage): string[] {
+  return [
+    ...PREVIEW_DEVICES.filter(d => !c.devices.includes(d.value)).map(d => d.label),
+    ...PREVIEW_STATES.filter(s => !c.states.includes(s.value)).map(s => s.label),
+  ]
+}
+export const coverageDone = (c: PreviewCoverage) => coverageMissing(c).length === 0
+
+// --- Links that come from the package (W6-01) ---------------------------------------------------------------------
+
+const BLOCKED_SUFFIXES = ['.localhost', '.local', '.internal', '.lan', '.home', '.corp', '.intranet']
+
+/**
+ * A link written by the package author is third-party text: it becomes a clickable link only when it is a plain `https:` URL
+ * with a public-looking host (no credentials, `localhost`, internal TLD or literal IP). Anything else returns null and
+ * the caller shows it as text. Returns the normalised href.
+ */
+export function safeExternalUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null
+  const text = raw.trim()
+  if (text.length === 0 || text.length > 2048) return null
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u0020\u007f-\u009f\\]/.test(text)) return null
+  if (!/^https:\/\/[^/?#]/i.test(text)) return null
+  let u: URL
+  try { u = new URL(text) } catch { return null }
+  if (u.protocol !== 'https:' || u.username || u.password) return null
+  const host = u.hostname.toLowerCase().replace(/\.$/, '')
+  if (!host || host.startsWith('[') || host.includes(':')) return null
+  if (/^(\d+|0x[0-9a-f]*)$/i.test(host.split('.').pop() ?? '')) return null // IPv4 literal in any notation
+  if (host === 'localhost' || BLOCKED_SUFFIXES.some(s => host.endsWith(s))) return null
+  if (!host.includes('.')) return null
+  return u.href
 }
 
 // --- Lists and actions -------------------------------------------------------------------------------------------

@@ -32,7 +32,7 @@ const manifestOf = (slug: string, marks: boolean): Package['manifest'] => ({
   presets: { salvia: { label: { es: 'Salvia y durazno', en: 'Sage & peach' } }, oliva: { label: { es: 'Oliva y marfil', en: 'Olive & ivory' } }, rosa: { label: { es: 'Eucalipto y rosa palo', en: 'Eucalyptus & blush' } } },
 })
 
-let nextId = 4
+let nextId = 5
 const packages: Package[] = [
   {
     id: 1, slug: 'botanical', semver: '1.0.0', level: 1, visibility: 'public', tier: 'premium', status: 'active',
@@ -60,6 +60,26 @@ const packages: Package[] = [
     author: { name: 'Estudio Ejemplo', url: null }, sizeBytes: 402100, installedAt: '2026-11-10T13:00:00Z', eventsPinned: 1,
     manifest: manifestOf('habana-vip', true), files: files(), contentHash: '90ab11cd'.repeat(8),
     templates: [{ id: 21, slug: 'habana-vip-wedding', versionId: 51, versionStatus: 'published' }],
+  },
+  // Hostile text on purpose (W6-01): the credits and the author must never become a dangerous link nor markup.
+  {
+    id: 4, slug: 'credits-hostiles', semver: '0.1.0', level: 1, visibility: 'public', tier: 'free', status: 'installed',
+    name: { es: 'Prueba de créditos hostiles', en: 'Hostile credits test' }, eventTypes: ['wedding'], engineMin: 1,
+    author: { name: '<b>Autor</b> <img src=x onerror=alert(1)>', url: 'javascript:alert(document.cookie)' }, sizeBytes: 90000, installedAt: '2026-11-15T11:00:00Z', eventsPinned: 0,
+    manifest: {
+      ...manifestOf('credits-hostiles', false),
+      assetsCredits: [
+        { path: 'assets/a.webp', title: 'Con https', author: 'Alguien', source: 'Unsplash', license: 'CC0', url: 'https://unsplash.com/photos/abc' },
+        { path: 'assets/b.webp', title: '<script>alert(1)</script>', author: 'x', source: 'javascript:', license: 'MIT', url: 'javascript:alert(document.cookie)' },
+        { path: 'assets/c.webp', title: 'data', author: 'x', source: 'Datos', license: 'MIT', url: 'data:text/html,<script>alert(1)</script>' },
+        { path: 'assets/d.webp', title: 'protocolo relativo', author: 'x', source: 'Relativo', license: 'MIT', url: '//evil.example/x' },
+        { path: 'assets/e.webp', title: 'credenciales', author: 'x', source: 'Credenciales', license: 'MIT', url: 'https://user:pass@example.com/' },
+        { path: 'assets/f.webp', title: 'IP literal', author: 'x', source: 'IP local', license: 'MIT', url: 'https://127.0.0.1:8080/x' },
+        { path: 'assets/g.webp', title: 'localhost', author: 'x', source: 'Localhost', license: 'MIT', url: 'https://localhost/x' },
+      ],
+    },
+    files: files().slice(0, 2), contentHash: 'deadbeef'.repeat(8),
+    templates: [{ id: 31, slug: 'credits-hostiles-wedding', versionId: 61, versionStatus: 'draft' }],
   },
 ]
 const toSummary = (p: Package): PackageSummary => ({

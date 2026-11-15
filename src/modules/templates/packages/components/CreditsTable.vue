@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AssetCredit } from '../types'
+import { safeExternalUrl } from '../logic'
 
 /** Credit and license of every file in assets/ (spec §1.1 `assetsCredits`). */
 defineProps<{ credits: AssetCredit[] }>()
@@ -14,7 +15,7 @@ defineProps<{ credits: AssetCredit[] }>()
       <tbody>
         <tr v-for="c in credits" :key="c.path">
           <th scope="row"><code>{{ c.path }}</code></th><td>{{ c.title }}</td><td>{{ c.author }}</td><td>{{ c.license }}</td>
-          <td><a v-if="c.url" :href="c.url" target="_blank" rel="noopener noreferrer">{{ c.source }}</a><template v-else>{{ c.source }}</template></td>
+          <td><a v-if="safeExternalUrl(c.url)" :href="safeExternalUrl(c.url) ?? undefined" target="_blank" rel="noopener noreferrer">{{ c.source }}</a><template v-else>{{ c.source }}</template></td>
         </tr>
       </tbody>
     </table>
