@@ -24,8 +24,10 @@ API.interceptors.response.use(
 
       currentUser.$reset()
       // The server ended the session (idle or too old): say so on the login instead of a silent redirect.
-      const expired = error.response?.data?.code === 'session_expired'
-      router.push(expired ? { name: 'Home', query: { expired: '1' } } : { name: 'Home' })
+      const code = error.response?.data?.code
+      // `admin_session_required`: the token is not one from the panel login (e.g. a cookie or another client's token).
+      const query = code === 'session_expired' ? { expired: '1' } : code === 'admin_session_required' ? { expired: 'login' } : undefined
+      router.push(query ? { name: 'Home', query } : { name: 'Home' })
     }
 
     // A very sensitive action asked for a recent re-authentication: confirm in the dialog, then repeat the request

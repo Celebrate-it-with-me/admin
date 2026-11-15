@@ -2,27 +2,34 @@
 import { computed, ref, watch } from 'vue'
 import { API } from '@/services/axios'
 
-/** Simple create/edit of an account (superadmin, `admin.users.manage`), on the legacy endpoints. */
-const props = defineProps<{ modelValue: boolean; user?: { id: number; name: string; email: string } | null }>()
+/** Create an account (superadmin, `admin.users.manage`). The API no longer edits accounts: only creation remains. */
+const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [boolean]; saved: [] }>()
 
-const editing = computed(() => !!props.user)
+const MIN_PASSWORD = 12
 const form = ref({ name: '', email: '', password: '' })
 const loading = ref(false)
 const error = ref('')
 const touched = ref(false)
+/** Messages the server sent per field (422), shown under that field. */
+const fieldErrors = ref<Record<string, string>>({})
 
 watch(() => props.modelValue, open => {
   if (!open) return
-  form.value = { name: props.user?.name ?? '', email: props.user?.email ?? '', password: '' }
+  form.value = { name: '', email: '', password: '' }
   error.value = ''
+  fieldErrors.value = {}
   touched.value = false
 })
 
 const nameOk = computed(() => form.value.name.trim().length > 0)
 const emailOk = computed(() => /^\S+@\S+\.\S+$/.test(form.value.email.trim()))
-const passOk = computed(() => (editing.value && !form.value.password) || form.value.password.length >= 8)
+const passOk = computed(() => form.value.password.length >= MIN_PASSWORD)
 const valid = computed(() => nameOk.value && emailOk.value && passOk.value)
+
+const nameMsg = computed(() => fieldErrors.value.name || (touched.value && !nameOk.value ? 'Escribe un nombre.' : ''))
+const emailMsg = computed(() => fieldErrors.value.email || (touched.value && !emailOk.value ? 'Escribe un correo válido.' : ''))
+const passMsg = computed(() => fieldErrors.value.password || (touched.value && !passOk.value ? `Mínimo ${MIN_PASSWORD} caracteres.` : ''))
 
 const close = () => emit('update:modelValue', false)
 const submit = async () => {
@@ -30,15 +37,20 @@ const submit = async () => {
   if (!valid.value || loading.value) return
   loading.value = true
   error.value = ''
-  const body: Record<string, string> = { name: form.value.name.trim(), email: form.value.email.trim() }
-  if (form.value.password) body.password = form.value.password
+  fieldErrors.value = {}
+  const body = { name: form.value.name.trim(), email: form.value.email.trim(), password: form.value.password }
   try {
-    if (editing.value) await API.put(`users/${props.user!.id}`, body)
-    else await API.post('users', body)
+    await API.post('users', body)
     emit('saved')
   } catch (e) {
-    const data = (e as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } })?.response?.data
-    error.value = Object.values(data?.errors ?? {})[0]?.[0] ?? 'No pudimos guardar la cuenta. Revisa los datos e inténtalo de nuevo.'
+    const res = (e as { response?: { status?: number; data?: { errors?: Record<string, string[]> } } })?.response
+    const errors = res?.data?.errors ?? {}
+    if (res?.status === 422 && Object.keys(errors).length) {
+      // Per-field messages (taken email, short password...) go under their field.
+      fieldErrors.value = Object.fromEntries(Object.entries(errors).map(([k, v]) => [k, v?.[0] ?? '']))
+    } else {
+      error.value = 'No pudimos crear la cuenta. Revisa los datos e inténtalo de nuevo.'
+    }
   } finally { loading.value = false }
 }
 </script>
@@ -46,15 +58,15 @@ const submit = async () => {
 <template>
   <v-dialog :model-value="modelValue" max-width="480" persistent @update:model-value="close" @keydown.esc="close">
     <v-card class="pa-2">
-      <v-card-title class="dialog-title">{{ editing ? 'Editar usuario' : 'Nuevo usuario' }}</v-card-title>
+      <v-card-title class="dialog-title">Nuevo usuario</v-card-title>
       <v-card-text>
         <form id="user-form" novalidate @submit.prevent="submit">
-          <v-text-field v-model="form.name" label="Nombre" autocomplete="off" :error="touched && !nameOk" :error-messages="touched && !nameOk ? 'Escribe un nombre.' : ''" />
-          <v-text-field v-model="form.email" label="Correo" type="email" inputmode="email" autocomplete="off" :error-messages="touched && !emailOk ? 'Escribe un correo válido.' : ''" />
+          <v-text-field v-model="form.name" label="Nombre" autocomplete="off" :error-messages="nameMsg" @update:model-value="delete fieldErrors.name" />
+          <v-text-field v-model="form.email" label="Correo" type="email" inputmode="email" autocomplete="off" :error-messages="emailMsg" @update:model-value="delete fieldErrors.email" />
           <v-text-field
             v-model="form.password" label="Contraseña" type="password" autocomplete="new-password"
-            :hint="editing ? 'Déjala vacía para no cambiarla.' : 'Mínimo 8 caracteres.'" persistent-hint
-            :error-messages="touched && !passOk ? 'Mínimo 8 caracteres.' : ''"
+            :hint="`Mínimo ${MIN_PASSWORD} caracteres.`" persistent-hint
+            :error-messages="passMsg" @update:model-value="delete fieldErrors.password"
           />
         </form>
         <v-alert v-if="error" type="error" variant="tonal" density="compact" class="mt-4" :text="error" />
@@ -62,7 +74,7 @@ const submit = async () => {
       <v-card-actions>
         <v-spacer />
         <v-btn variant="text" :disabled="loading" @click="close">Cancelar</v-btn>
-        <v-btn color="primary" variant="flat" type="submit" form="user-form" :loading="loading">{{ editing ? 'Guardar' : 'Crear' }}</v-btn>
+        <v-btn color="primary" variant="flat" type="submit" form="user-form" :loading="loading">Crear</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

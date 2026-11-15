@@ -13,7 +13,23 @@ const router = useRouter()
 const route = useRoute()
 const alertMessage = ref('')
 // The server closed the session (idle too long, or older than the maximum): the interceptor sends her here with ?expired=1.
-const expiredNotice = route.query.expired ? 'Tu sesión venció por seguridad. Entra de nuevo para continuar.' : ''
+// `expired=login`: the API refused a token that did not come from this login.
+const expiredNotice = route.query.expired === 'login'
+  ? 'Necesitas entrar con tu cuenta del panel para continuar.'
+  : route.query.expired ? 'Tu sesión venció por seguridad. Entra de nuevo para continuar.' : ''
+
+/** "5 minutos" / "1 minuto" / "30 segundos" from a Retry-After header (seconds). */
+const waitLabel = (seconds: number) => {
+  if (!Number.isFinite(seconds) || seconds <= 0) return ''
+  if (seconds < 60) return `${Math.ceil(seconds)} segundos`
+  const m = Math.ceil(seconds / 60)
+  return m === 1 ? '1 minuto' : `${m} minutos`
+}
+const tooManyAttempts = (res: unknown) => {
+  const raw = (res as { response?: { headers?: Record<string, string> } })?.response?.headers?.['retry-after']
+  const wait = waitLabel(Number(raw))
+  return wait ? `Demasiados intentos. Espera ${wait} e inténtalo de nuevo.` : 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.'
+}
 
 // Second step (only when the account has two-factor on): the server hands back a challenge to answer with a code.
 const challenge = ref('')
@@ -64,7 +80,7 @@ const login = async () => {
         alertMessage.value = 'Esta cuenta no tiene acceso al panel.'
         break
       case 429:
-        alertMessage.value = 'Demasiados intentos. Espera un momento e inténtalo de nuevo.'
+        alertMessage.value = tooManyAttempts(response)
         break
       default:
         alertMessage.value = 'No pudimos entrar. Inténtalo de nuevo.'
@@ -102,7 +118,7 @@ const verify = async () => {
     } else if (status === 422) {
       alertMessage.value = useRecovery.value ? 'Ese código de recuperación no es válido o ya se usó.' : 'El código no es correcto. Revisa que la hora de tu teléfono esté en automático.'
     } else if (status === 429) {
-      alertMessage.value = 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.'
+      alertMessage.value = tooManyAttempts(response)
     } else {
       alertMessage.value = 'No pudimos verificar el código. Inténtalo de nuevo.'
     }
