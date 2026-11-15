@@ -193,6 +193,33 @@ export function saveChecklist(packageId: number, state: ChecklistState): void {
   try { window.localStorage.setItem(checklistKey(packageId), JSON.stringify(state)) } catch { /* private window: it just does not persist */ }
 }
 
+// --- Links that come from the package (W6-01) ---------------------------------------------------------------------
+
+const BLOCKED_SUFFIXES = ['.localhost', '.local', '.internal', '.lan', '.home', '.corp', '.intranet']
+
+/**
+ * A link written by the package author is third-party text: it becomes a clickable link only when it is a plain `https:` URL
+ * with a public-looking host (no credentials, `localhost`, internal TLD or literal IP). Anything else returns null and
+ * the caller shows it as text. Returns the normalised href.
+ */
+export function safeExternalUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null
+  const text = raw.trim()
+  if (text.length === 0 || text.length > 2048) return null
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u0020\u007f-\u009f\\]/.test(text)) return null
+  if (!/^https:\/\/[^/?#]/i.test(text)) return null
+  let u: URL
+  try { u = new URL(text) } catch { return null }
+  if (u.protocol !== 'https:' || u.username || u.password) return null
+  const host = u.hostname.toLowerCase().replace(/\.$/, '')
+  if (!host || host.startsWith('[') || host.includes(':')) return null
+  if (/^(\d+|0x[0-9a-f]*)$/i.test(host.split('.').pop() ?? '')) return null // IPv4 literal in any notation
+  if (host === 'localhost' || BLOCKED_SUFFIXES.some(s => host.endsWith(s))) return null
+  if (!host.includes('.')) return null
+  return u.href
+}
+
 // --- Lists and actions -------------------------------------------------------------------------------------------
 
 export const canActivate = (p: Pick<PackageSummary, 'status'>) => p.status === 'installed' || p.status === 'deactivated'

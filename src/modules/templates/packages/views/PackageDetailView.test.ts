@@ -66,6 +66,18 @@ describe('PackageDetailView', () => {
     w.unmount()
   })
 
+  it('links the author URL only when it is a safe https URL, and paints hostile package text as text', async () => {
+    const ok = await mountView(pkg({ author: { name: 'Estudio', url: 'https://estudio.example/' } }))
+    expect(ok.find('.facts a').attributes('href')).toBe('https://estudio.example/')
+    expect(ok.find('.facts a').attributes('rel')).toBe('noopener noreferrer')
+    ok.unmount()
+    const bad = await mountView(pkg({ author: { name: '<b>Estudio</b>', url: 'javascript:alert(1)' }, manifest: { license: { id: '<i>x</i>', summary: '<img src=x>' }, assetsCredits: [], thirdPartyMarks: [] } }))
+    expect(bad.find('.facts a').exists()).toBe(false)
+    expect(bad.text()).toContain('javascript:alert(1)')
+    expect(bad.find('.facts b, .facts i, .facts img').exists()).toBe(false)
+    bad.unmount()
+  })
+
   it('keeps Activar off until every point of the checklist is marked, and records who marked it', async () => {
     const w = await mountView(pkg())
     const activate = () => w.find('[data-testid="activate"]')

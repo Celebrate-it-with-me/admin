@@ -12,7 +12,7 @@ import QualityChecklist from '../components/QualityChecklist.vue'
 import ThirdPartyMarksBanner from '../components/ThirdPartyMarksBanner.vue'
 import {
   TIER_LABEL, VISIBILITY_LABEL, canActivate, canDeactivate, canWithdraw, checklistDone, checklistPayload, eventTypesLabel, eventsPinnedLabel, explainPackageError,
-  formatBytes, formatDateTime, loadChecklist, presetOptions, saveChecklist, type ChecklistState,
+  formatBytes, formatDateTime, loadChecklist, presetOptions, safeExternalUrl, saveChecklist, type ChecklistState,
 } from '../logic'
 import { activatePackage, deactivatePackage, getPackage, withdrawPackage } from '../packagesApi'
 import type { Package } from '../types'
@@ -151,7 +151,7 @@ const versionLabel: Record<string, string> = { draft: 'Borrador', published: 'Pu
           <dt>Huella</dt><dd><code>{{ pkg.contentHash ? pkg.contentHash.slice(0, 16) : '—' }}</code></dd>
           <dt>Motor mínimo</dt><dd>{{ pkg.engineMin }}</dd>
           <dt>Autor</dt>
-          <dd>{{ pkg.author?.name ?? '—' }}<a v-if="pkg.author?.url" :href="pkg.author.url" target="_blank" rel="noopener noreferrer" class="ml-2">{{ pkg.author.url }}</a></dd>
+          <dd>{{ pkg.author?.name ?? '—' }}<template v-if="pkg.author?.url"><a v-if="safeExternalUrl(pkg.author.url)" :href="safeExternalUrl(pkg.author.url) ?? undefined" target="_blank" rel="noopener noreferrer" class="ml-2">{{ pkg.author.url }}</a><span v-else class="ml-2">{{ pkg.author.url }}</span></template></dd>
           <dt>Licencia</dt><dd>{{ pkg.manifest.license?.id ?? '—' }}<span v-if="pkg.manifest.license?.summary" class="text-medium-emphasis"> · {{ pkg.manifest.license.summary }}</span></dd>
           <dt>Peso</dt><dd>{{ formatBytes(pkg.sizeBytes) }}</dd>
           <dt>Instalado</dt><dd>{{ formatDateTime(pkg.installedAt) }}<template v-if="installedBy"> · {{ installedBy }}</template></dd>
