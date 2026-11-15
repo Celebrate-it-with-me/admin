@@ -23,7 +23,7 @@ const toggle = (id: string, on: boolean | null) => {
       <h3 id="qc-title" class="h">Lista de comprobación de calidad</h3>
       <v-chip size="small" variant="tonal" :color="done ? 'success' : undefined">{{ progress }} de {{ CHECKLIST.length }}</v-chip>
     </div>
-    <p class="text-medium-emphasis small">Revisa el paquete en la vista previa, en móvil y escritorio, y marca cada punto. Queda anotado quién lo marcó y cuándo.</p>
+    <p class="text-medium-emphasis small">Revisa el paquete en la vista previa, en móvil y escritorio, y marca cada punto. Queda anotado aquí quién lo marcó y cuándo.</p>
     <ul class="list">
       <li v-for="item in CHECKLIST" :key="item.id" :data-item="item.id">
         <v-checkbox

@@ -190,7 +190,7 @@ const versionLabel: Record<string, string> = { draft: 'Borrador', published: 'Pu
         <PackagePreviewPane v-if="tab === 'review'" :package-id="pkg.id" :event-types="pkg.eventTypes" :presets="presets" :visible="tab === 'review'" />
         <div>
           <QualityChecklist v-model="checklist" :reviewer="reviewer" :readonly="pkg.status === 'withdrawn'" />
-          <p class="text-caption text-medium-emphasis mt-2">Este registro se guarda en este navegador; la auditoría de la activación guarda el motivo y quién activó.</p>
+          <p class="text-caption text-medium-emphasis mt-2">Los puntos marcados se recuerdan en este navegador. Al activar, la lista completa se envía al servidor, que registra en la auditoría quién y cuándo, junto con el motivo.</p>
         </div>
       </div>
 
