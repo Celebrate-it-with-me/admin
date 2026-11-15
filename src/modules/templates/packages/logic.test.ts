@@ -1,0 +1,119 @@
+import { beforeEach, describe, expect, it } from 'vitest'
+import {
+  CHECKLIST, MAX_ZIP_BYTES, canActivate, canDeactivate, canWithdraw, checkZip, checklistDone, checklistProgress, codeHelp, explainPackageError,
+  formatBytes, groupReport, impactMessage, loadChecklist, presetOptions, saveChecklist,
+} from './logic'
+import type { ReportItem } from './types'
+
+const item = (file: string | null, code: string, line: number | null = null): ReportItem => ({ file, code, line, message: code })
+const http = (status: number, data: Record<string, unknown> = {}) => ({ response: { status, data } })
+
+describe('checkZip', () => {
+  it('accepts a zip of up to 8 MB', () => {
+    expect(checkZip({ name: 'botanical-1.0.0.ZIP', size: 1000 })).toBeNull()
+    expect(checkZip({ name: 'a.zip', size: MAX_ZIP_BYTES })).toBeNull()
+  })
+  it('rejects other extensions, empty files and files over 8 MB', () => {
+    expect(checkZip({ name: 'a.rar', size: 10 })).toMatch(/\.zip/)
+    expect(checkZip({ name: 'a.zip.exe', size: 10 })).toMatch(/\.zip/)
+    expect(checkZip({ name: 'a.zip', size: 0 })).toMatch(/vacío/)
+    expect(checkZip({ name: 'a.zip', size: MAX_ZIP_BYTES + 1 })).toMatch(/8 MB/)
+  })
+})
+
+describe('formatBytes', () => {
+  it('uses B, KB and MB', () => {
+    expect(formatBytes(512)).toBe('512 B')
+    expect(formatBytes(2048)).toBe('2.0 KB')
+    expect(formatBytes(311220)).toBe('304 KB')
+    expect(formatBytes(8 * 1024 * 1024)).toBe('8.0 MB')
+    expect(formatBytes(null)).toBe('—')
+  })
+})
+
+describe('groupReport', () => {
+  it('groups by file: general first, then files with errors, then the rest by name', () => {
+    const groups = groupReport({
+      errors: [item('theme.css', 'css_important', 31), item('theme.css', 'css_url_external', 14), item(null, 'license_missing')],
+      warnings: [item('assets/a.webp', 'budget_exceeded'), item('manifest.json', 'contrast_low'), item('theme.css', 'css_costly_property', 88)],
+    })
+    expect(groups.map(g => g.label)).toEqual(['Paquete (general)', 'theme.css', 'assets/a.webp', 'manifest.json'])
+    expect(groups[1].errors.map(e => e.line)).toEqual([14, 31])
+    expect(groups[1].warnings).toHaveLength(1)
+  })
+  it('is empty without problems', () => {
+    expect(groupReport({ errors: [], warnings: [] })).toEqual([])
+  })
+})
+
+describe('codeHelp', () => {
+  it('explains known codes and returns null for unknown ones', () => {
+    expect(codeHelp('css_url_external')).toMatch(/assets/)
+    expect(codeHelp('something_new')).toBeNull()
+  })
+})
+
+describe('checklist', () => {
+  beforeEach(() => window.localStorage.clear())
+  it('is done only when every point has an entry', () => {
+    const state = Object.fromEntries(CHECKLIST.slice(0, -1).map(i => [i.id, { by: 'Ana', at: '2026-11-15T10:00:00Z' }]))
+    expect(checklistProgress(state)).toBe(CHECKLIST.length - 1)
+    expect(checklistDone(state)).toBe(false)
+    state[CHECKLIST.at(-1)!.id] = { by: 'Ana', at: '2026-11-15T10:05:00Z' }
+    expect(checklistDone(state)).toBe(true)
+  })
+  it('persists per package in the browser and survives a broken store', () => {
+    saveChecklist(3, { contrast: { by: 'Ana', at: 'x' } })
+    expect(loadChecklist(3)).toEqual({ contrast: { by: 'Ana', at: 'x' } })
+    expect(loadChecklist(4)).toEqual({})
+    window.localStorage.setItem('qv.admin.pkg-checklist.5', '{no json')
+    expect(loadChecklist(5)).toEqual({})
+  })
+})
+
+describe('actions by status', () => {
+  it('allows each action only in its states', () => {
+    expect(canActivate({ status: 'installed' })).toBe(true)
+    expect(canActivate({ status: 'deactivated' })).toBe(true)
+    expect(canActivate({ status: 'active' })).toBe(false)
+    expect(canDeactivate({ status: 'active' })).toBe(true)
+    expect(canDeactivate({ status: 'installed' })).toBe(false)
+    expect(canWithdraw({ status: 'withdrawn' })).toBe(false)
+  })
+  it('words the impact of deactivating', () => {
+    expect(impactMessage(0)).toMatch(/Ningún evento/)
+    expect(impactMessage(1)).toBe('1 evento sin publicar usa este paquete y pasará a la plantilla gratuita.')
+    expect(impactMessage(5)).toBe('5 eventos sin publicar usan este paquete y pasarán a la plantilla gratuita.')
+  })
+})
+
+describe('presetOptions', () => {
+  it('lists the presets with their Spanish label', () => {
+    expect(presetOptions({ salvia: { label: { es: 'Salvia', en: 'Sage' } }, x: {} })).toEqual([{ id: 'salvia', label: 'Salvia' }, { id: 'x', label: 'x' }])
+    expect(presetOptions(undefined)).toEqual([])
+  })
+})
+
+describe('explainPackageError', () => {
+  it('explains a lost connection', () => {
+    expect(explainPackageError(new Error('network'))).toMatchObject({ status: null, code: null, message: expect.stringContaining('conexión') })
+  })
+  it('maps codes of 403/404/409/410 and keeps the extras', () => {
+    expect(explainPackageError(http(409, { code: 'package_in_use', eventsPinned: 4 }))).toMatchObject({ code: 'package_in_use', eventsPinned: 4, message: expect.stringContaining('no se puede retirar') })
+    expect(explainPackageError(http(409, { code: 'package_exists', packageId: 12 })).packageId).toBe(12)
+    expect(explainPackageError(http(410, { code: 'stage_expired' })).message).toMatch(/caducó/)
+    expect(explainPackageError(http(404, { code: 'stage_not_found' })).message).toMatch(/subir/)
+    expect(explainPackageError(http(403, { code: 'forbidden' })).message).toMatch(/superadmin/)
+    expect(explainPackageError(http(429, { code: 'too_many_attempts' })).message).toMatch(/intentos/)
+  })
+  it('reads 422 field errors by their first code', () => {
+    expect(explainPackageError(http(422, { errors: { reason: ['min'] } })).message).toMatch(/5 caracteres/)
+    expect(explainPackageError(http(422, { errors: { ack_third_party_marks: ['required'] } })).message).toMatch(/marcas/)
+    expect(explainPackageError(http(422, { errors: { package: ['too_large'] } })).message).toMatch(/8 MB/)
+    expect(explainPackageError(http(422, { errors: { package: ['engine_too_new'] } })).message).toMatch(/motor/)
+    expect(explainPackageError(http(422, { errors: { stage_token: ['invalid_report'] } })).fields).toEqual({ stage_token: 'invalid_report' })
+  })
+  it('tells apart a cancelled re-authentication', () => {
+    expect(explainPackageError({ reauthCancelled: true, response: { status: 403, data: { code: 'reauth_required' } } })).toMatchObject({ reauthCancelled: true })
+  })
+})
