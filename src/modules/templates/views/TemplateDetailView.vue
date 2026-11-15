@@ -58,7 +58,7 @@ const confirmArchive = async (reason: string) => {
 }
 
 const dialogOpen = computed({ get: () => archiving.value !== null, set: v => { if (!v) { archiving.value = null; archiveError.value = '' } } })
-const actionLabel = (v: VersionRow) => (v.status === 'draft' ? 'Abrir' : 'Ver')
+const actionLabel = (v: VersionRow) => (v.status === 'draft' && !v.packageId ? 'Abrir' : 'Ver')
 </script>
 
 <template>
@@ -110,14 +110,14 @@ const actionLabel = (v: VersionRow) => (v.status === 'draft' ? 'Abrir' : 'Ver')
           <tbody>
             <tr v-for="v in template.versions" :key="v.id">
               <th scope="row">Versión {{ v.version }}</th>
-              <td><VersionStatusChip :status="v.status" /></td>
+              <td><VersionStatusChip :status="v.status" /><v-chip v-if="v.packageId" size="x-small" variant="tonal" class="ml-1" prepend-icon="mdi-package-variant-closed">Paquete</v-chip></td>
               <td>{{ formatDate(v.createdAt) }}</td>
               <td>{{ formatDate(v.publishedAt) }}</td>
               <td class="text-right">{{ v.eventsCount }}</td>
               <td class="notes">{{ v.notes || '—' }}</td>
               <td class="text-right nowrap">
                 <v-btn size="small" variant="tonal" @click="openEditor(v.id)">{{ actionLabel(v) }}</v-btn>
-                <v-btn v-if="v.status === 'draft'" size="small" variant="text" color="error" class="ml-1" @click="archiving = v">Archivar</v-btn>
+                <v-btn v-if="v.status === 'draft' && !v.packageId" size="small" variant="text" color="error" class="ml-1" @click="archiving = v">Archivar</v-btn>
               </td>
             </tr>
           </tbody>
@@ -129,6 +129,7 @@ const actionLabel = (v: VersionRow) => (v.status === 'draft' ? 'Abrir' : 'Ver')
           <v-card class="pa-4">
             <div class="d-flex align-center ga-2 mb-2">
               <strong>Versión {{ v.version }}</strong><VersionStatusChip :status="v.status" />
+              <v-chip v-if="v.packageId" size="x-small" variant="tonal" prepend-icon="mdi-package-variant-closed">Paquete</v-chip>
             </div>
             <dl class="facts">
               <dt>Creada</dt><dd>{{ formatDate(v.createdAt) }}</dd>
@@ -138,7 +139,7 @@ const actionLabel = (v: VersionRow) => (v.status === 'draft' ? 'Abrir' : 'Ver')
             </dl>
             <div class="d-flex ga-2 mt-3">
               <v-btn variant="tonal" class="tap flex-grow-1" @click="openEditor(v.id)">{{ actionLabel(v) }}</v-btn>
-              <v-btn v-if="v.status === 'draft'" variant="text" color="error" class="tap" @click="archiving = v">Archivar</v-btn>
+              <v-btn v-if="v.status === 'draft' && !v.packageId" variant="text" color="error" class="tap" @click="archiving = v">Archivar</v-btn>
             </div>
           </v-card>
         </li>

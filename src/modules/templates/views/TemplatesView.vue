@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import TemplatesTabs from '../packages/components/TemplatesTabs.vue'
 import { listTemplates } from '../services/templatesApi'
 import { eventTypeLabel, eventsLabel, formatDate } from '../logic'
 import type { TemplateSummary } from '../types'
@@ -21,6 +22,7 @@ const published = (t: TemplateSummary) => (t.currentVersion ? `Versión ${t.curr
 
 <template>
   <div>
+    <TemplatesTabs current="templates" />
     <p class="text-medium-emphasis mb-4 intro">
       Las plantillas de invitación tienen versiones. Una versión publicada no se edita: se crea un borrador, se prueba con la vista previa y se publica.
       Las invitaciones que ya salieron no cambian de aspecto.

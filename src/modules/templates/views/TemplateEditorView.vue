@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
+import PackagePreviewPane from '../packages/components/PackagePreviewPane.vue'
 import PreviewPane from '../components/PreviewPane.vue'
 import PublishDialog from '../components/PublishDialog.vue'
 import SectionList from '../components/SectionList.vue'
@@ -32,7 +33,10 @@ const saveError = ref('')
 const notice = ref('')
 const tab = ref<'edit' | 'preview'>('edit')
 
-const readonly = computed(() => version.value?.status !== 'draft')
+// A version a template package manages is never edited here (409 `package_managed`): the package is the source of truth.
+const managedByServer = ref(false)
+const managed = computed(() => Boolean(version.value?.packageId) || managedByServer.value)
+const readonly = computed(() => version.value?.status !== 'draft' || managed.value)
 
 const apply = (v: TemplateVersion) => {
   version.value = v
@@ -85,6 +89,7 @@ const save = async (): Promise<boolean> => {
     const x = explainError(e)
     saveError.value = x.message
     if (x.status === 422) serverErrors.value = x.fields
+    if (x.code === 'package_managed') managedByServer.value = true
     if (x.code === 'version_immutable') await load()
     return false
   } finally { saving.value = false }
@@ -149,14 +154,22 @@ const eventType = computed(() => (template.value ? eventTypeSlug(template.value)
             <template v-if="dirty"> · <strong class="text-warning-dark">cambios sin guardar</strong></template>
           </p>
         </div>
-        <div v-if="!readonly" class="actions">
+        <div v-if="!readonly && !managed" class="actions">
           <v-btn variant="tonal" prepend-icon="mdi-content-save-outline" class="tap" :loading="saving" :disabled="!dirty" @click="save">Guardar borrador</v-btn>
           <v-btn color="primary" variant="flat" prepend-icon="mdi-rocket-launch-outline" class="tap" :disabled="dirty || saving || errorCount > 0" @click="publishOpen = true">Publicar</v-btn>
         </div>
       </div>
       <p v-if="!readonly && dirty" class="text-caption text-medium-emphasis mt-n3 mb-3">Guarda el borrador antes de publicar.</p>
 
-      <v-alert v-if="readonly" type="info" variant="tonal" density="compact" class="mb-3">
+      <v-alert v-if="managed" type="info" variant="tonal" icon="mdi-package-variant-closed" class="mb-3" data-testid="package-managed">
+        <strong>Esta versión la gestiona un paquete de plantilla.</strong>
+        Sus secciones, colores y tipografías vienen del paquete y no se editan aquí: para cambiar algo se instala otra versión del paquete.
+        Se activa o se desactiva desde la pantalla del paquete.
+        <div v-if="version.packageId" class="mt-3">
+          <v-btn variant="flat" color="primary" size="small" prepend-icon="mdi-package-variant-closed" :to="{ name: 'TemplatePackageDetail', params: { id: version.packageId } }">Abrir el paquete</v-btn>
+        </div>
+      </v-alert>
+      <v-alert v-else-if="readonly" type="info" variant="tonal" density="compact" class="mb-3">
         Esta versión está {{ version.status === 'published' ? 'publicada' : 'archivada' }} y no se puede modificar. Puedes verla y probar la vista previa.
         <template v-if="version.status === 'published'"> Para cambiarla, crea un borrador nuevo desde la plantilla.</template>
       </v-alert>
@@ -166,12 +179,16 @@ const eventType = computed(() => (template.value ? eventTypeSlug(template.value)
         <ul v-if="otherErrors.length" class="mt-1 pl-4"><li v-for="(m, n) in otherErrors" :key="n">{{ m }}</li></ul>
       </v-alert>
 
-      <v-tabs v-if="!mdAndUp" v-model="tab" grow class="mb-3" aria-label="Editor y vista previa">
+      <div v-if="managed && version.packageId" class="managed-preview">
+        <PackagePreviewPane :package-id="version.packageId" :event-types="[eventType]" :presets="[]" :visible="true" />
+      </div>
+
+      <v-tabs v-if="!managed && !mdAndUp" v-model="tab" grow class="mb-3" aria-label="Editor y vista previa">
         <v-tab value="edit" prepend-icon="mdi-pencil-outline">Editar</v-tab>
         <v-tab value="preview" prepend-icon="mdi-eye-outline">Vista previa</v-tab>
       </v-tabs>
 
-      <div class="split">
+      <div v-if="!managed" class="split">
         <div v-show="mdAndUp || tab === 'edit'" class="edit">
           <h3 class="h">Secciones</h3>
           <SectionList v-model="rows" :errors="errors" :readonly="readonly" />

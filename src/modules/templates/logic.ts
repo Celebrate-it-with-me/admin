@@ -151,6 +151,7 @@ export function unplacedErrors(errors: FieldErrors, rowCount: number): string[] 
 const ERROR_BY_CODE: Record<string, string> = {
   version_immutable: 'Esta versión ya no es un borrador: las versiones publicadas y archivadas no se pueden modificar. Crea un borrador nuevo desde la plantilla.',
   draft_exists: 'La plantilla ya tiene un borrador abierto. Solo puede haber uno a la vez.',
+  package_managed: 'Esta versión la gestiona un paquete de plantilla y no se edita aquí. Para cambiarla, instala otra versión del paquete.',
 }
 
 /** Turns a failed request into something the screens can show: a sentence, field errors and the codes they act on. */
