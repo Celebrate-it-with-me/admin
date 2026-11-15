@@ -12,10 +12,11 @@ import QualityChecklist from '../components/QualityChecklist.vue'
 import ThirdPartyMarksBanner from '../components/ThirdPartyMarksBanner.vue'
 import {
   TIER_LABEL, VISIBILITY_LABEL, canActivate, canDeactivate, canWithdraw, checklistDone, checklistPayload, eventTypesLabel, eventsPinnedLabel, explainPackageError,
-  formatBytes, formatDateTime, loadChecklist, presetOptions, safeExternalUrl, saveChecklist, type ChecklistState,
+  coverageDone, coverageMissing, emptyCoverage, formatBytes, formatDateTime, loadChecklist, presetOptions, safeExternalUrl, saveChecklist, type ChecklistState,
 } from '../logic'
+import type { PreviewDevice } from '../logic'
 import { activatePackage, deactivatePackage, getPackage, withdrawPackage } from '../packagesApi'
-import type { Package } from '../types'
+import type { Package, PreviewState } from '../types'
 
 const props = defineProps<{ id: number }>()
 const route = useRoute()
@@ -37,10 +38,17 @@ const load = async () => {
 }
 onMounted(load)
 
-const checklist = ref<ChecklistState>(loadChecklist(props.id))
-watch(checklist, v => saveChecklist(props.id, v), { deep: true })
 const reviewer = computed(() => user.user?.name || user.user?.email || 'Revisor')
-const reviewed = computed(() => checklistDone(checklist.value))
+const checklist = ref<ChecklistState>(loadChecklist(props.id, reviewer.value))
+watch(checklist, v => saveChecklist(props.id, v), { deep: true })
+// W6-09: what the reviewer has really opened in the preview during this visit (never stored). Without it the checklist stays closed.
+const coverage = ref(emptyCoverage())
+const onViewed = (device: PreviewDevice, state: PreviewState) => {
+  if (!coverage.value.devices.includes(device)) coverage.value.devices.push(device)
+  if (!coverage.value.states.includes(state)) coverage.value.states.push(state)
+}
+const pending = computed(() => coverageMissing(coverage.value))
+const reviewed = computed(() => coverageDone(coverage.value) && checklistDone(checklist.value))
 
 const marks = computed(() => pkg.value?.manifest.thirdPartyMarks ?? [])
 const credits = computed(() => pkg.value?.manifest.assetsCredits ?? [])
@@ -130,7 +138,7 @@ const versionLabel: Record<string, string> = { draft: 'Borrador', published: 'Pu
           <v-btn v-if="canWithdraw(pkg)" variant="text" color="error" prepend-icon="mdi-archive-arrow-down-outline" class="tap" data-testid="withdraw" @click="openImpact('withdraw')">Retirar</v-btn>
         </div>
       </div>
-      <p v-if="canActivate(pkg) && !reviewed" class="text-caption text-medium-emphasis mt-n2 mb-3">Para activar, completa la lista de comprobación en la pestaña Revisión.</p>
+      <p v-if="canActivate(pkg) && !reviewed" class="text-caption text-medium-emphasis mt-n2 mb-3">Para activar, revisa la vista previa (móvil, escritorio y cada estado) y completa la lista de comprobación en la pestaña Revisión.</p>
 
       <v-alert v-if="notice" type="success" variant="tonal" density="compact" closable class="mb-3" aria-live="polite" @click:close="notice = ''">{{ notice }}</v-alert>
       <v-alert v-if="actionError" type="error" variant="tonal" density="compact" closable class="mb-3" role="alert" @click:close="actionError = ''">{{ actionError }}</v-alert>
@@ -187,10 +195,10 @@ const versionLabel: Record<string, string> = { draft: 'Borrador', published: 'Pu
 
       <!-- Review: preview + checklist -->
       <div v-show="tab === 'review'" class="review">
-        <PackagePreviewPane v-if="tab === 'review'" :package-id="pkg.id" :event-types="pkg.eventTypes" :presets="presets" :visible="tab === 'review'" />
+        <PackagePreviewPane v-if="tab === 'review'" :package-id="pkg.id" :event-types="pkg.eventTypes" :presets="presets" :visible="tab === 'review'" @viewed="onViewed" />
         <div>
-          <QualityChecklist v-model="checklist" :reviewer="reviewer" :readonly="pkg.status === 'withdrawn'" />
-          <p class="text-caption text-medium-emphasis mt-2">Los puntos marcados se recuerdan en este navegador. Al activar, la lista completa se envía al servidor, que registra en la auditoría quién y cuándo, junto con el motivo.</p>
+          <QualityChecklist v-model="checklist" :reviewer="reviewer" :readonly="pkg.status === 'withdrawn'" :pending="pending" />
+          <p class="text-caption text-medium-emphasis mt-2">Los puntos marcados (solo cuáles y cuándo) se recuerdan en este navegador, pero la vista previa hay que abrirla en cada visita. Al activar, la lista completa se envía al servidor, que registra en la auditoría quién y cuándo, junto con el motivo.</p>
         </div>
       </div>
 

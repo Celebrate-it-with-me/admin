@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent, onMounted } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { bodyText, mountUi } from '@/test/mount'
 import { CHECKLIST } from '../logic'
@@ -14,7 +15,15 @@ const push = vi.hoisted(() => vi.fn())
 vi.mock('vue-router', () => ({ useRoute: () => ({ query: {} }), useRouter: () => ({ push }) }))
 vi.mock('@/store/currentUser', () => ({ useCurrentUserStore: () => ({ user: { name: 'Ana Revisora' } }) }))
 
-const stubs = { 'router-link': { template: '<a><slot /></a>' }, PackagePreviewPane: { template: '<div data-testid="preview" />' } }
+// The preview stub says which combinations the reviewer "opened"; by default all of them (mobile and desktop, the three states).
+const ALL_VIEWS: [string, string][] = [['mobile', 'invitation'], ['desktop', 'invitation'], ['mobile', 'save_the_date'], ['mobile', 'no_photo']]
+let views: [string, string][] = ALL_VIEWS
+const PreviewStub = defineComponent({
+  emits: ['viewed'],
+  setup(_, { emit }) { onMounted(() => { for (const [d, s] of views) emit('viewed', d, s) }) },
+  template: '<div data-testid="preview" />',
+})
+const stubs = { 'router-link': { template: '<a><slot /></a>' }, PackagePreviewPane: PreviewStub }
 const pkg = (over: Partial<Package> = {}): Package => ({
   id: 5, slug: 'botanical', semver: '1.0.0', level: 1, visibility: 'public', tier: 'premium', status: 'installed', name: { es: 'Botánica acuarela', en: 'Botanical' },
   eventTypes: ['wedding'], engineMin: 1, author: { name: 'Estudio Ejemplo', url: null }, sizeBytes: 300000, installedAt: '2026-11-14T16:20:00Z', eventsPinned: 2,
@@ -34,7 +43,12 @@ const mountView = async (p: Package) => {
   await flushPromises()
   return w
 }
+const openReview = async (w: Awaited<ReturnType<typeof mountView>>) => {
+  await w.findAll('.v-tab').find(t => t.text().includes('Revisión'))!.trigger('click')
+  await flushPromises()
+}
 const tick = async (w: Awaited<ReturnType<typeof mountView>>) => {
+  await openReview(w)
   for (const item of CHECKLIST) await w.find(`[data-item="${item.id}"] input`).setValue(true)
 }
 const byText = (label: string) => Array.from(document.body.querySelectorAll<HTMLButtonElement>('button')).filter(b => b.textContent?.trim() === label).at(-1)!
@@ -49,6 +63,7 @@ beforeEach(() => {
   Object.values(api).forEach(fn => fn.mockReset())
   push.mockReset()
   window.localStorage.clear()
+  views = ALL_VIEWS
   api.getImpact.mockResolvedValue({ eventsPinned: 12, eventsUnpublished: 5, templates: [] })
   api.listGrants.mockResolvedValue([])
 })
@@ -85,7 +100,32 @@ describe('PackageDetailView', () => {
     await tick(w)
     expect(activate().attributes('disabled')).toBeUndefined()
     expect(w.text()).toContain('Revisado por Ana Revisora')
-    expect(JSON.parse(window.localStorage.getItem('qv.admin.pkg-checklist.5')!).contrast.by).toBe('Ana Revisora')
+    const stored = window.localStorage.getItem('qv.admin.pkg-checklist.5')!
+    expect(Object.keys(JSON.parse(stored).contrast)).toEqual(['at'])
+    expect(stored).not.toContain('Ana Revisora')
+    w.unmount()
+  })
+
+  it('does not open the checklist until the preview was seen on mobile and desktop and in every state', async () => {
+    views = [['mobile', 'invitation'], ['mobile', 'save_the_date']]
+    const w = await mountView(pkg())
+    await openReview(w)
+    const box = () => w.find('[data-item="contrast"] input')
+    expect(box().attributes('disabled')).toBeDefined()
+    expect(w.find('[data-testid="preview-gate"]').text()).toContain('escritorio')
+    expect(w.find('[data-testid="preview-gate"]').text()).toContain('Sin foto')
+    expect(w.find('[data-testid="preview-gate"]').text()).not.toContain('móvil')
+    expect(w.find('[data-testid="activate"]').attributes('disabled')).toBeDefined()
+    w.unmount()
+  })
+
+  it('does not trust ticks restored from the browser: activating still needs the preview', async () => {
+    views = []
+    window.localStorage.setItem('qv.admin.pkg-checklist.5', JSON.stringify(Object.fromEntries(CHECKLIST.map(i => [i.id, { at: '2026-11-15T10:00:00Z', by: 'Intruso' }]))))
+    const w = await mountView(pkg())
+    await openReview(w)
+    expect(w.find('[data-testid="activate"]').attributes('disabled')).toBeDefined()
+    expect(w.text()).not.toContain('Intruso')
     w.unmount()
   })
 

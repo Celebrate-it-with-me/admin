@@ -180,18 +180,48 @@ export const checklistProgress = (state: ChecklistState) => CHECKLIST.filter(i =
 
 const checklistKey = (packageId: number) => `qv.admin.pkg-checklist.${packageId}`
 
-/** UI help only: the server records the checklist when activating (`activate.checklist`); this just keeps the ticks between visits. */
-export function loadChecklist(packageId: number): ChecklistState {
+/**
+ * UI help only: the server records the checklist when activating (`activate.checklist`); this just keeps the ticks between visits.
+ * It stores nothing but the ids ticked and when (no names, no tokens). What it reads back is untrusted: only known ids with a date survive,
+ * and `by` is always the current reviewer, never something taken from storage.
+ */
+export function loadChecklist(packageId: number, reviewer = 'Revisor'): ChecklistState {
   try {
     const raw = window.localStorage.getItem(checklistKey(packageId))
-    const parsed = raw ? JSON.parse(raw) : {}
-    return parsed && typeof parsed === 'object' ? parsed as ChecklistState : {}
+    const parsed: unknown = raw ? JSON.parse(raw) : {}
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    const out: ChecklistState = {}
+    for (const item of CHECKLIST) {
+      const at = (parsed as Record<string, { at?: unknown } | null>)[item.id]?.at
+      if (typeof at === 'string' && at.length <= 40 && !Number.isNaN(new Date(at).getTime())) out[item.id] = { by: reviewer, at }
+    }
+    return out
   } catch { return {} }
 }
 
 export function saveChecklist(packageId: number, state: ChecklistState): void {
-  try { window.localStorage.setItem(checklistKey(packageId), JSON.stringify(state)) } catch { /* private window: it just does not persist */ }
+  try {
+    const slim = Object.fromEntries(Object.entries(state).map(([id, e]) => [id, { at: e.at }]))
+    window.localStorage.setItem(checklistKey(packageId), JSON.stringify(slim))
+  } catch { /* private window: it just does not persist */ }
 }
+
+// --- Preview coverage (W6-09): the checklist opens only after the reviewer has looked at the package ----------------
+
+export type PreviewDevice = 'mobile' | 'desktop'
+export const PREVIEW_DEVICES: { value: PreviewDevice; label: string }[] = [{ value: 'mobile', label: 'móvil' }, { value: 'desktop', label: 'escritorio' }]
+
+export interface PreviewCoverage { devices: PreviewDevice[]; states: string[] }
+export const emptyCoverage = (): PreviewCoverage => ({ devices: [], states: [] })
+
+/** What the reviewer still has to open in the preview, as words ("escritorio", "Sin foto"). Empty when nothing is missing. */
+export function coverageMissing(c: PreviewCoverage): string[] {
+  return [
+    ...PREVIEW_DEVICES.filter(d => !c.devices.includes(d.value)).map(d => d.label),
+    ...PREVIEW_STATES.filter(s => !c.states.includes(s.value)).map(s => s.label),
+  ]
+}
+export const coverageDone = (c: PreviewCoverage) => coverageMissing(c).length === 0
 
 // --- Links that come from the package (W6-01) ---------------------------------------------------------------------
 

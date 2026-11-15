@@ -4,6 +4,7 @@ import { originOf } from '../../logic'
 import { previewPackage, useMock } from '../packagesApi'
 import { explainPackageError, PREVIEW_STATES } from '../logic'
 import type { PreviewState } from '../types'
+import type { PreviewDevice } from '../logic'
 import type { EventTypeSlug, Locale } from '../../types'
 
 /**
@@ -18,6 +19,8 @@ const props = defineProps<{
   presets: { id: string; label: string }[]
   visible?: boolean
 }>()
+/** `viewed`: the sample invitation of this device and state was drawn in the iframe (the checklist opens after all of them). */
+const emit = defineEmits<{ viewed: [device: PreviewDevice, state: PreviewState] }>()
 
 const DEBOUNCE_MS = 250
 const READY_TIMEOUT_MS = 10000
@@ -42,6 +45,7 @@ const error = ref('')
 const frameFailed = ref(false)
 // Not reactive on purpose: postMessage cannot clone a Vue proxy.
 let lastPayload: unknown = null
+let lastPayloadState: PreviewState | null = null
 const stageWidth = ref(0)
 const stageHeight = ref(0)
 
@@ -54,6 +58,12 @@ const misconfigured = computed(() => !appOrigin)
 const deliver = () => {
   if (!ready.value || lastPayload == null || !appOrigin) return
   frame.value?.contentWindow?.postMessage({ type: 'qv-preview', payload: lastPayload }, appOrigin)
+  announce()
+}
+
+// Counts as "viewed" only what was really delivered to the iframe: never a failed request or a frame that did not answer.
+const announce = () => {
+  if (ready.value && lastPayload != null && lastPayloadState && !error.value) emit('viewed', device.value, lastPayloadState)
 }
 
 const refresh = async () => {
@@ -61,8 +71,9 @@ const refresh = async () => {
   const mine = ++request
   loading.value = true
   error.value = ''
+  const askedState = state.value
   try {
-    lastPayload = await previewPackage({
+    const payload = await previewPackage({
       locale: locale.value,
       eventType: eventType.value,
       state: state.value,
@@ -70,6 +81,8 @@ const refresh = async () => {
       ...(props.stageToken ? { stage_token: props.stageToken } : { package_id: props.packageId as number }),
     })
     if (mine !== request) return
+    lastPayload = payload
+    lastPayloadState = askedState
     deliver()
   } catch (e) {
     if (mine !== request) return
@@ -101,6 +114,7 @@ const retry = () => {
   refresh()
 }
 
+watch(device, announce)
 watch([locale, eventType, state, preset, () => props.stageToken, () => props.packageId], schedule)
 watch(() => props.visible, async v => { if (v) { await nextTick(); measure() } })
 

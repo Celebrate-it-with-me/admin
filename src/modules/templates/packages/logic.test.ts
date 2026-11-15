@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import {
+import { coverageDone, coverageMissing, emptyCoverage,
   CHECKLIST, MAX_ZIP_BYTES, checklistPayload, canActivate, canDeactivate, canWithdraw, checkZip, checklistDone, checklistProgress, codeHelp, explainPackageError,
   formatBytes, groupReport, impactMessage, loadChecklist, presetOptions, saveChecklist,
 } from './logic'
@@ -63,11 +63,23 @@ describe('checklist', () => {
     expect(checklistDone(state)).toBe(true)
   })
   it('persists per package in the browser and survives a broken store', () => {
-    saveChecklist(3, { contrast: { by: 'Ana', at: 'x' } })
-    expect(loadChecklist(3)).toEqual({ contrast: { by: 'Ana', at: 'x' } })
+    saveChecklist(3, { contrast: { by: 'Ana', at: '2026-11-15T10:00:00Z' } })
+    expect(window.localStorage.getItem('qv.admin.pkg-checklist.3')).toBe('{"contrast":{"at":"2026-11-15T10:00:00Z"}}')
+    expect(loadChecklist(3, 'Ana')).toEqual({ contrast: { by: 'Ana', at: '2026-11-15T10:00:00Z' } })
     expect(loadChecklist(4)).toEqual({})
     window.localStorage.setItem('qv.admin.pkg-checklist.5', '{no json')
     expect(loadChecklist(5)).toEqual({})
+  })
+  it('keeps only known ids with a real date from what it reads back', () => {
+    window.localStorage.setItem('qv.admin.pkg-checklist.6', JSON.stringify({ contrast: { at: 'not a date' }, hacked: { at: '2026-11-15T10:00:00Z' }, performance: { at: '2026-11-15T10:00:00Z', by: 'Intruso' }, accessibility: 'yes' }))
+    expect(loadChecklist(6, 'Ana')).toEqual({ performance: { by: 'Ana', at: '2026-11-15T10:00:00Z' } })
+    window.localStorage.setItem('qv.admin.pkg-checklist.7', '[1,2]')
+    expect(loadChecklist(7)).toEqual({})
+  })
+  it('asks for the preview on both devices and in every state', () => {
+    expect(coverageMissing(emptyCoverage())).toEqual(['móvil', 'escritorio', 'Invitación', 'Guarda la fecha', 'Sin foto'])
+    expect(coverageDone({ devices: ['mobile', 'desktop'], states: ['invitation', 'save_the_date', 'no_photo'] })).toBe(true)
+    expect(coverageMissing({ devices: ['mobile'], states: ['invitation', 'no_photo'] })).toEqual(['escritorio', 'Guarda la fecha'])
   })
 })
 
