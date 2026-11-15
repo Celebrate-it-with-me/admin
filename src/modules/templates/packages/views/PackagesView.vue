@@ -126,7 +126,7 @@ const detail = (p: PackageSummary) => ({ name: 'TemplatePackageDetail', params: 
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .name { font-weight: 600; text-align: left; }
 .slug { font-weight: 400; font-size: 0.82rem; color: var(--ink-500); }
-a { color: var(--rose-700); }
+.name a, .card-name { color: var(--rose-700); }
 .cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .card-name { font-weight: 600; font-size: 1.05rem; overflow-wrap: anywhere; }
 .facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 0; }

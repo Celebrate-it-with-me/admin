@@ -47,7 +47,7 @@ const presets = computed(() => presetOptions(pkg.value?.manifest.presets))
 const isPrivate = computed(() => pkg.value?.visibility === 'private')
 const installedBy = computed(() => {
   const by = pkg.value?.installedBy
-  return typeof by === 'string' ? by : by?.name ?? '—'
+  return typeof by === 'string' ? by : by?.name ?? ''
 })
 const description = computed(() => pkg.value?.manifest.description?.es ?? '')
 
@@ -156,7 +156,7 @@ const versionLabel: Record<string, string> = { draft: 'Borrador', published: 'Pu
           <dd>{{ pkg.author?.name ?? '—' }}<a v-if="pkg.author?.url" :href="pkg.author.url" target="_blank" rel="noopener noreferrer" class="ml-2">{{ pkg.author.url }}</a></dd>
           <dt>Licencia</dt><dd>{{ pkg.manifest.license?.id ?? '—' }}<span v-if="pkg.manifest.license?.summary" class="text-medium-emphasis"> · {{ pkg.manifest.license.summary }}</span></dd>
           <dt>Peso</dt><dd>{{ formatBytes(pkg.sizeBytes) }}</dd>
-          <dt>Instalado</dt><dd>{{ formatDateTime(pkg.installedAt) }} · {{ installedBy }}</dd>
+          <dt>Instalado</dt><dd>{{ formatDateTime(pkg.installedAt) }}<template v-if="installedBy"> · {{ installedBy }}</template></dd>
           <dt>Eventos fijados</dt><dd>{{ eventsPinnedLabel(pkg.eventsPinned) }}</dd>
         </dl>
 
@@ -239,12 +239,14 @@ const versionLabel: Record<string, string> = { draft: 'Borrador', published: 'Pu
 .facts dd { margin: 0; overflow-wrap: anywhere; }
 .plain { list-style: none; margin: 0; padding: 0; }
 .row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
-a { color: var(--rose-700); }
+.row a, .facts a, .tbl a { color: var(--rose-700); }
 .scroll { overflow-x: auto; }
 .tbl { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
 .tbl th, .tbl td { text-align: left; vertical-align: top; padding: 6px 12px 6px 0; border-bottom: 1px solid var(--line); }
 .tbl thead th { font-weight: 600; white-space: nowrap; }
-.tbl tbody th { font-weight: 400; overflow-wrap: anywhere; }
+.tbl tbody th { font-weight: 400; }
+.tbl code { white-space: nowrap; }
+.tbl td { min-width: 90px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .review { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 960px) { .review { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }

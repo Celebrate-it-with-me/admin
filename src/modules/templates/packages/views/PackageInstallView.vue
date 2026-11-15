@@ -5,7 +5,7 @@ import ReasonDialog from '@/components/ReasonDialog.vue'
 import PackagePreviewPane from '../components/PackagePreviewPane.vue'
 import ValidationReport from '../components/ValidationReport.vue'
 import { discardStage, installPackage, validatePackage } from '../packagesApi'
-import { MAX_ZIP_BYTES, checkZip, explainPackageError, formatBytes, formatDateTime, presetOptions } from '../logic'
+import { checkZip, explainPackageError, formatBytes, formatDateTime, presetOptions } from '../logic'
 import type { ValidateResult } from '../types'
 import type { EventTypeSlug } from '../../types'
 
@@ -120,7 +120,7 @@ onBeforeUnmount(() => {
       <template v-else>
         <v-icon icon="mdi-cloud-upload-outline" size="40" />
         <p class="lead">Arrastra aquí el archivo .zip</p>
-        <p class="text-medium-emphasis">o elígelo desde tu equipo. Solo .zip, máximo {{ formatBytes(MAX_ZIP_BYTES) }}.</p>
+        <p class="text-medium-emphasis">o elígelo desde tu equipo. Solo .zip, máximo 8 MB.</p>
         <v-btn variant="flat" color="primary" prepend-icon="mdi-folder-open-outline" class="tap" @click="choose">Elegir archivo</v-btn>
       </template>
     </div>
