@@ -24,6 +24,8 @@ export interface VersionRow {
   createdAt: string | null
   publishedAt: string | null
   eventsCount: number
+  /** Set when a template package manages this version (docs/plans/template-package-spec.md §6.2): it is not edited here. */
+  packageId?: number | null
 }
 
 export interface TemplateDetail extends TemplateSummary {
@@ -79,6 +81,8 @@ export interface TemplateVersion {
   createdAt?: string | null
   publishedAt?: string | null
   archivedAt?: string | null
+  /** Set when a template package manages this version: the section and theme editor stays closed (409 `package_managed`). */
+  packageId?: number | null
 }
 
 export interface DraftBody {
