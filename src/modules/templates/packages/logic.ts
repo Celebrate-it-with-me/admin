@@ -302,6 +302,13 @@ const ERROR_BY_CODE: Record<string, string> = {
   grant_revoked: 'Ese acceso ya estaba revocado.',
   too_many_attempts: 'Demasiados intentos seguidos. Espera un minuto e inténtalo de nuevo.',
   engine_too_new: 'El paquete necesita un motor más nuevo que el desplegado.',
+  stage_forbidden: 'Ese paquete lo subió otro administrador. Súbelo de nuevo desde tu cuenta.',
+  stage_corrupt: 'Los archivos de la subida no coinciden con lo que se validó. Vuelve a subir el .zip.',
+  install_busy: 'Otra instalación de paquete está en curso. Inténtalo de nuevo en unos segundos.',
+  version_not_greater: 'La versión debe ser mayor que todas las ya instaladas de este paquete.',
+  invalid_report: 'El informe tiene errores: corrígelos y vuelve a subir el paquete.',
+  required: 'Es obligatorio.',
+  incomplete: 'Falta marcar puntos de la lista de comprobación.',
 }
 const FIELD_ERROR: Record<string, string> = {
   required: 'Es obligatorio.',
@@ -314,17 +321,21 @@ const FIELD_ERROR: Record<string, string> = {
   not_found: 'No lo encontramos.',
 }
 
+/** A machine code (`stage_forbidden`, `required`...) is never something to show: only real sentences may pass. */
+const looksLikeCode = (text: unknown) => typeof text !== 'string' || text === '' || /^[a-z0-9_.:-]+$/i.test(text)
+const readable = (text: unknown): string | null => (looksLikeCode(text) ? null : (text as string))
+
 /** Turns a failed request into something the screens can show. Never throws. */
 export function explainPackageError(e: unknown): PackageError {
   const err = e as {
     reauthCancelled?: boolean
-    response?: { status?: number; data?: { code?: string; message?: string; eventsPinned?: number; packageId?: number; errors?: Record<string, string[]> } }
+    response?: { status?: number; data?: { code?: string; message?: string; differences?: unknown; eventsPinned?: number; packageId?: number; errors?: Record<string, string[]> } }
   }
   if (err?.reauthCancelled) {
-    return { code: 'reauth_cancelled', status: 403, message: 'No se confirmó tu contraseña, así que no se hizo nada.', fields: {}, eventsPinned: null, packageId: null, reauthCancelled: true }
+    return { code: 'reauth_cancelled', status: 403, message: 'No se confirmó tu contraseña, así que no se hizo nada.', fields: {}, eventsPinned: null, packageId: null, reauthCancelled: true, differences: [] }
   }
   if (!err?.response) {
-    return { code: null, status: null, message: 'No hay conexión con el servidor. Revisa tu red e inténtalo de nuevo.', fields: {}, eventsPinned: null, packageId: null, reauthCancelled: false }
+    return { code: null, status: null, message: 'No hay conexión con el servidor. Revisa tu red e inténtalo de nuevo.', fields: {}, eventsPinned: null, packageId: null, reauthCancelled: false, differences: [] }
   }
   const { status = null, data } = err.response
   const code = data?.code ?? null
@@ -341,10 +352,11 @@ export function explainPackageError(e: unknown): PackageError {
     if (fields.reason) message = `Escribe un motivo de al menos ${MIN_REASON} caracteres.`
     else if (fields.ack_third_party_marks) message = 'Confirma que revisaste la autorización de uso de las marcas de terceros.'
     else if (fields.checklist) message = FIELD_ERROR.incomplete
-    else if (first) message = FIELD_ERROR[first[1]] ?? ERROR_BY_CODE[first[1]] ?? data?.message ?? 'Los datos no son válidos.'
-    else message = data?.message ?? 'Los datos no son válidos.'
+    else if (first) message = FIELD_ERROR[first[1]] ?? ERROR_BY_CODE[first[1]] ?? readable(data?.message) ?? 'Los datos no son válidos.'
+    else message = readable(data?.message) ?? 'Los datos no son válidos.'
   }
-  return { code, status, message, fields, eventsPinned: data?.eventsPinned ?? null, packageId: data?.packageId ?? null, reauthCancelled: false }
+  const differences = Array.isArray(data?.differences) ? data.differences.filter((d): d is string => typeof d === 'string') : []
+  return { code, status, message, fields, eventsPinned: data?.eventsPinned ?? null, packageId: data?.packageId ?? null, reauthCancelled: false, differences }
 }
 
 /** Options of the preset selector of the preview, from the manifest's tokens when the API sends them. */
