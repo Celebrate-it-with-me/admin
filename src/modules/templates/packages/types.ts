@@ -142,4 +142,6 @@ export interface PackageError {
   eventsPinned: number | null
   packageId: number | null
   reauthCancelled: boolean
+  /** Files that differ from the validated upload (`stage_corrupt`). */
+  differences: string[]
 }

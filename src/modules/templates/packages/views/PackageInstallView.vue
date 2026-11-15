@@ -21,7 +21,7 @@ const requestError = ref('')
 const result = ref<ValidateResult | null>(null)
 const tab = ref<'report' | 'preview'>('report')
 
-const install = ref({ open: false, busy: false, error: '', existingId: null as number | null })
+const install = ref({ open: false, busy: false, error: '', existingId: null as number | null, differences: [] as string[] })
 
 const choose = () => fileInput.value?.click()
 const reset = async (discard = true) => {
@@ -75,6 +75,7 @@ const confirmInstall = async (reason: string) => {
   install.value.busy = true
   install.value.error = ''
   install.value.existingId = null
+  install.value.differences = []
   try {
     const pkg = await installPackage(token, reason)
     result.value = null
@@ -83,6 +84,7 @@ const confirmInstall = async (reason: string) => {
   } catch (e) {
     const x = explainPackageError(e)
     install.value.error = x.message
+    install.value.differences = x.differences
     install.value.existingId = x.code === 'package_exists' ? x.packageId : null
     if (x.code === 'stage_expired' || x.code === 'stage_not_found') { install.value.open = false; await reset(false); requestError.value = x.message }
   } finally { install.value.busy = false }
@@ -174,6 +176,9 @@ onBeforeUnmount(() => {
       :error="install.error"
       @confirm="confirmInstall"
     >
+      <ul v-if="install.differences.length" class="mb-3 text-body-2" data-testid="stage-differences">
+        <li v-for="d in install.differences" :key="d"><code>{{ d }}</code></li>
+      </ul>
       <v-btn v-if="install.existingId" variant="tonal" size="small" class="mb-3" :to="{ name: 'TemplatePackageDetail', params: { id: install.existingId } }">Ver el paquete instalado</v-btn>
     </ReasonDialog>
   </div>

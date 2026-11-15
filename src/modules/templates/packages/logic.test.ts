@@ -140,6 +140,38 @@ describe('explainPackageError', () => {
     expect(explainPackageError(http(422, { errors: { package: ['engine_too_new'] } })).message).toMatch(/motor/)
     expect(explainPackageError(http(422, { errors: { stage_token: ['invalid_report'] } })).fields).toEqual({ stage_token: 'invalid_report' })
   })
+  it('never shows a raw code: every 422/409/403 code of the package endpoints has a Spanish sentence', () => {
+    const raw = /^[a-z0-9_.:-]+$/i
+    const field = (f: string, c: string) => http(422, { message: c, errors: { [f]: [c] } })
+    const cases: Array<[unknown, RegExp]> = [
+      [field('reason', 'required'), /motivo/],
+      [field('stage_token', 'required'), /obligatorio/],
+      [field('checklist', 'incomplete'), /lista de comprobación/],
+      [field('stage_token', 'invalid_report'), /informe/],
+      [field('version', 'version_not_greater'), /versión debe ser mayor/],
+      [http(409, { message: 'draft_exists', code: 'draft_exists' }), /borrador abierto/],
+      [http(409, { message: 'package_managed', code: 'package_managed' }), /gestiona un paquete/],
+      [http(409, { message: 'install_busy', code: 'install_busy' }), /otra instalación/i],
+      [http(410, { message: 'stage_expired', code: 'stage_expired' }), /caducó/],
+      [http(403, { message: 'stage_forbidden', code: 'stage_forbidden' }), /otro administrador/],
+      [http(409, { message: 'stage_corrupt', code: 'stage_corrupt' }), /no coinciden/],
+    ]
+    for (const [e, re] of cases) {
+      const m = explainPackageError(e).message
+      expect(m, m).toMatch(re)
+      expect(m).not.toMatch(raw)
+    }
+  })
+  it('never falls back to a raw server message that is only a code', () => {
+    expect(explainPackageError(http(422, { message: 'weird_code' })).message).toBe('Los datos no son válidos.')
+    expect(explainPackageError(http(422, { message: 'Texto legible del servidor.' })).message).toBe('Texto legible del servidor.')
+    expect(explainPackageError(http(422, { errors: { x: ['unknown_code'] }, message: 'unknown_code' })).message).toBe('Los datos no son válidos.')
+  })
+  it('keeps the list of differences of a corrupt stage', () => {
+    const e = explainPackageError(http(409, { code: 'stage_corrupt', differences: ['assets/a.png', 'template.json'] }))
+    expect(e.differences).toEqual(['assets/a.png', 'template.json'])
+    expect(explainPackageError(http(404, { code: 'package_not_found' })).differences).toEqual([])
+  })
   it('tells apart a cancelled re-authentication', () => {
     expect(explainPackageError({ reauthCancelled: true, response: { status: 403, data: { code: 'reauth_required' } } })).toMatchObject({ reauthCancelled: true })
   })
