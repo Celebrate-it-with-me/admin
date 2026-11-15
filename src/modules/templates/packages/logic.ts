@@ -36,6 +36,20 @@ export function checkZip(file: { name: string; size: number }): string | null {
   return null
 }
 
+/** A zip starts with `PK\x03\x04` (or `PK\x05\x06` when empty). Cheap check before uploading something that only has the name of a zip. */
+export async function hasZipSignature(file: Pick<Blob, 'slice'>): Promise<boolean> {
+  try {
+    const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as ArrayBuffer)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsArrayBuffer(file.slice(0, 4))
+    })
+    const head = new Uint8Array(buffer)
+    return head[0] === 0x50 && head[1] === 0x4b && ((head[2] === 3 && head[3] === 4) || (head[2] === 5 && head[3] === 6))
+  } catch { return false }
+}
+
 // --- Validation report -------------------------------------------------------------------------------------------
 
 /** What each code means and how to fix it (spec §4.8 and the sanitizer spike). The server's own message is shown too. */

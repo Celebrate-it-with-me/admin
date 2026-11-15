@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { coverageDone, coverageMissing, emptyCoverage,
+import { hasZipSignature, coverageDone, coverageMissing, emptyCoverage,
   CHECKLIST, MAX_ZIP_BYTES, checklistPayload, canActivate, canDeactivate, canWithdraw, checkZip, checklistDone, checklistProgress, codeHelp, explainPackageError,
   formatBytes, groupReport, impactMessage, loadChecklist, presetOptions, saveChecklist,
 } from './logic'
@@ -80,6 +80,14 @@ describe('checklist', () => {
     expect(coverageMissing(emptyCoverage())).toEqual(['móvil', 'escritorio', 'Invitación', 'Guarda la fecha', 'Sin foto'])
     expect(coverageDone({ devices: ['mobile', 'desktop'], states: ['invitation', 'save_the_date', 'no_photo'] })).toBe(true)
     expect(coverageMissing({ devices: ['mobile'], states: ['invitation', 'no_photo'] })).toEqual(['escritorio', 'Guarda la fecha'])
+  })
+})
+
+describe('hasZipSignature', () => {
+  it('accepts the zip header and refuses anything else with a .zip name', async () => {
+    expect(await hasZipSignature(new Blob([new Uint8Array([0x50, 0x4b, 3, 4, 9, 9])]))).toBe(true)
+    expect(await hasZipSignature(new Blob(['<html><script>alert(1)</script>']))).toBe(false)
+    expect(await hasZipSignature(new Blob([]))).toBe(false)
   })
 })
 
