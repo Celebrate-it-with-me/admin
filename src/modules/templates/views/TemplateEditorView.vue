@@ -113,6 +113,7 @@ const confirmPublish = async (reason: string) => {
   } catch (e) {
     const x = explainError(e)
     publishError.value = x.message
+    if (x.code === 'package_managed') { publishOpen.value = false; managedByServer.value = true }
     if (x.code === 'version_immutable') { publishOpen.value = false; await load(); saveError.value = x.message }
   } finally { publishing.value = false }
 }
