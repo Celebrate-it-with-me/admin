@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import CreditsTable from './CreditsTable.vue'
 import ThirdPartyMarksBanner from './ThirdPartyMarksBanner.vue'
 import { codeHelp, formatBytes, groupReport, hasMarkWarning, reportCounts } from '../logic'
-import type { ReportItem, ThirdPartyMark, ValidationReport } from '../types'
+import type { ReportItem, ValidationReport } from '../types'
 
 /** The validation report of an uploaded zip: counts, then errors (red) and warnings (amber) grouped by file. */
-const props = defineProps<{ report: ValidationReport; marks?: ThirdPartyMark[] }>()
+const props = defineProps<{ report: ValidationReport }>()
 
 const groups = computed(() => groupReport(props.report))
 const counts = computed(() => reportCounts(props.report))
 const marksWarning = computed(() => props.report.warnings.find(w => w.code === 'third_party_marks_declared') ?? null)
-const showMarks = computed(() => (props.marks?.length ?? 0) > 0 || hasMarkWarning(props.report))
+const marks = computed(() => props.report.manifest?.thirdPartyMarks ?? [])
+const credits = computed(() => props.report.manifest?.assetsCredits ?? [])
+const license = computed(() => props.report.manifest?.license ?? null)
+const showMarks = computed(() => marks.value.length > 0 || hasMarkWarning(props.report))
 
 const budget = (bytes: number, limit: number) => (bytes > limit ? 'over' : '')
 const place = (item: ReportItem) => (item.line ? `línea ${item.line}` : '')
@@ -34,7 +38,13 @@ const place = (item: ReportItem) => (item.line ? `línea ${item.line}` : '')
       <div><dt>Primer pliegue</dt><dd :class="budget(report.stats.firstFoldBytes, 180 * 1024)">{{ formatBytes(report.stats.firstFoldBytes) }} <small>de 180 KB</small></dd></div>
     </dl>
 
-    <ThirdPartyMarksBanner v-if="showMarks" class="mt-4" :marks="marks ?? []" :note="marksWarning?.detail ?? marksWarning?.message" />
+    <ThirdPartyMarksBanner v-if="showMarks" class="mt-4" :marks="marks" :note="marksWarning?.detail ?? marksWarning?.message" />
+
+    <section v-if="report.manifest" class="mt-5" aria-labelledby="rep-credits">
+      <h4 id="rep-credits" class="file-name">Licencia y créditos de los assets</h4>
+      <p v-if="license" class="mb-2"><strong>{{ license.id }}</strong><span class="text-medium-emphasis"> · {{ license.summary }}</span></p>
+      <CreditsTable :credits="credits" />
+    </section>
 
     <p v-if="groups.length === 0" class="empty mt-4"><v-icon icon="mdi-check-all" color="success" /> El paquete no tiene errores ni avisos.</p>
 

@@ -111,7 +111,8 @@ export async function validatePackage(file: File, onProgress?: (fraction: number
       ...clone(WARNINGS).slice(0, 2),
     ],
     stats: { files: 31, uncompressedBytes: 1203412, runtimeBytes: 311220, firstFoldBytes: 140100 },
-    manifest: { slug: marks ? 'habana-vip' : 'botanical', version: marks ? '0.3.0' : '1.1.0', level: 1, visibility: marks ? 'private' : 'public', tier: 'premium', presets: manifestOf('x', false).presets },
+    manifest: { slug: marks ? 'habana-vip' : 'botanical', version: marks ? '0.3.0' : '1.1.0', level: 1, visibility: marks ? 'private' : 'public', tier: 'premium', presets: manifestOf('x', false).presets, eventTypes: marks ? ['wedding'] : ['wedding', 'quinceanera'],
+      thirdPartyMarks: manifestOf('x', marks).thirdPartyMarks, assetsCredits: manifestOf('x', false).assetsCredits, license: manifestOf('x', false).license },
   }
   const valid = !bad
   return { valid, stageToken: valid ? `stg_${file.name.replace(/\W/g, '')}_01HX` : null, expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(), report }

@@ -9,11 +9,11 @@ vi.mock('../packagesApi', () => ({ ...api, useMock: false }))
 const push = vi.hoisted(() => vi.fn())
 vi.mock('vue-router', () => ({ useRouter: () => ({ push }) }))
 
-const stubs = { 'router-link': true, PackagePreviewPane: { template: '<div data-testid="preview" />' } }
+const stubs = { 'router-link': true, PackagePreviewPane: { props: ['eventTypes'], template: '<div data-testid="preview" />' } }
 const stats = { files: 3, uncompressedBytes: 1000, runtimeBytes: 1000, firstFoldBytes: 1000 }
 const okResult = (): ValidateResult => ({
   valid: true, stageToken: 'tok1', expiresAt: '2026-11-16T10:00:00Z',
-  report: { errors: [], warnings: [{ file: 'tokens.json', code: 'contrast_low', message: 'Contraste bajo' }], stats, manifest: { slug: 'botanical', version: '1.1.0', level: 1, visibility: 'public', tier: 'premium' } },
+  report: { errors: [], warnings: [{ file: 'tokens.json', code: 'contrast_low', message: 'Contraste bajo' }], stats, manifest: { slug: 'botanical', version: '1.1.0', level: 1, visibility: 'public', tier: 'premium', eventTypes: ['wedding'] } },
 })
 const badResult = (): ValidateResult => ({
   valid: false, stageToken: null, expiresAt: null,
@@ -56,6 +56,14 @@ describe('PackageInstallView', () => {
     expect(w.text()).toContain('botanical')
     expect(w.text()).toContain('Contraste bajo')
     expect(w.text()).toContain('Instalar como borrador')
+    w.unmount()
+  })
+
+  it('hands the event types of the report manifest to the preview', async () => {
+    api.validatePackage.mockResolvedValue(okResult())
+    const w = mountView()
+    await pick(w, zip())
+    expect(w.findComponent(stubs.PackagePreviewPane).props('eventTypes')).toEqual(['wedding'])
     w.unmount()
   })
 

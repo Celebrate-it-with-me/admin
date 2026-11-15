@@ -66,8 +66,7 @@ const onDrop = (e: DragEvent) => {
 const valid = computed(() => Boolean(result.value?.valid && result.value.stageToken))
 const manifest = computed(() => result.value?.report.manifest ?? null)
 const presets = computed(() => presetOptions(manifest.value?.presets))
-// The summary of the report carries no event types: the preview offers both (the API ignores one it cannot render).
-const eventTypes = computed<EventTypeSlug[]>(() => ['quinceanera', 'wedding'])
+const eventTypes = computed<EventTypeSlug[]>(() => manifest.value?.eventTypes?.length ? manifest.value.eventTypes : ['quinceanera', 'wedding'])
 
 const confirmInstall = async (reason: string) => {
   const token = result.value?.stageToken

@@ -59,7 +59,7 @@ export interface Package extends PackageSummary {
   templates: PackageTemplateRef[]
   contentHash?: string | null
   zipSha256?: string | null
-  installedBy?: { id: number; name: string } | string | null
+  installedBy?: { id: number; name: string } | null
   deactivatedAt?: string | null
   withdrawnAt?: string | null
 }
@@ -80,7 +80,11 @@ export interface ValidationReport {
   stats: ReportStats
   manifest: {
     slug: string; version: string; level: number; visibility: Visibility; tier: string
+    thirdPartyMarks?: ThirdPartyMark[]
+    assetsCredits?: AssetCredit[]
+    license?: { id: string; summary: string; document?: string }
     presets?: Record<string, { label?: Partial<Record<Locale, string>> }>
+    eventTypes?: EventTypeSlug[]
   } | null
 }
 

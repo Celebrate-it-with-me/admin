@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCurrentUserStore } from '@/store/currentUser'
+import CreditsTable from '../components/CreditsTable.vue'
 import ActivateDialog from '../components/ActivateDialog.vue'
 import GrantsPanel from '../components/GrantsPanel.vue'
 import ImpactDialog from '../components/ImpactDialog.vue'
@@ -45,10 +46,7 @@ const marks = computed(() => pkg.value?.manifest.thirdPartyMarks ?? [])
 const credits = computed(() => pkg.value?.manifest.assetsCredits ?? [])
 const presets = computed(() => presetOptions(pkg.value?.manifest.presets))
 const isPrivate = computed(() => pkg.value?.visibility === 'private')
-const installedBy = computed(() => {
-  const by = pkg.value?.installedBy
-  return typeof by === 'string' ? by : by?.name ?? ''
-})
+const installedBy = computed(() => pkg.value?.installedBy?.name ?? '')
 const description = computed(() => pkg.value?.manifest.description?.es ?? '')
 
 // activate
@@ -170,19 +168,7 @@ const versionLabel: Record<string, string> = { draft: 'Borrador', published: 'Pu
         </ul>
 
         <h3 class="h">Créditos y licencias de los assets</h3>
-        <p v-if="credits.length === 0" class="text-medium-emphasis">El paquete no trae assets.</p>
-        <div v-else class="scroll">
-          <table class="tbl">
-            <caption class="visually-hidden">Créditos de los assets</caption>
-            <thead><tr><th scope="col">Archivo</th><th scope="col">Título</th><th scope="col">Autor</th><th scope="col">Licencia</th><th scope="col">Origen</th></tr></thead>
-            <tbody>
-              <tr v-for="c in credits" :key="c.path">
-                <th scope="row"><code>{{ c.path }}</code></th><td>{{ c.title }}</td><td>{{ c.author }}</td><td>{{ c.license }}</td>
-                <td><a v-if="c.url" :href="c.url" target="_blank" rel="noopener noreferrer">{{ c.source }}</a><template v-else>{{ c.source }}</template></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <CreditsTable :credits="credits" />
 
         <v-expansion-panels variant="accordion" class="mt-4">
           <v-expansion-panel :title="`Archivos del paquete (${pkg.files.length})`">

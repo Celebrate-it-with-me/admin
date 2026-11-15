@@ -42,13 +42,18 @@ describe('ValidationReport', () => {
     w.unmount()
   })
 
-  it('shows the third-party marks banner with the table when the marks are known', () => {
-    const w = mountUi(ValidationReport, { props: {
-      report: report({ warnings: [{ file: 'manifest.json', code: 'third_party_marks_declared', message: 'Declara 1 marca' }] }),
-      marks: [{ name: 'Café Habana', owner: 'Habana LLC', usage: 'Logotipo en el cierre' }],
-    } })
+  it('shows the third-party marks banner, the license and the credits table from the report manifest', () => {
+    const manifest = {
+      slug: 'habana-vip', version: '0.3.0', level: 1, visibility: 'private' as const, tier: 'premium',
+      thirdPartyMarks: [{ name: 'Café Habana', owner: 'Habana LLC', usage: 'Logotipo en el cierre' }],
+      license: { id: 'commissioned', summary: 'Por encargo' },
+      assetsCredits: [{ path: 'assets/img/wash-a.webp', title: 'Acuarela A', author: 'Estudio', source: 'original', license: 'commissioned' }],
+    }
+    const w = mountUi(ValidationReport, { props: { report: report({ manifest, warnings: [{ file: 'manifest.json', code: 'third_party_marks_declared', message: 'Declara 1 marca' }] }) } })
     expect(w.find('[data-testid="marks-banner"]').text()).toContain('Café Habana')
     expect(w.find('[data-testid="marks-banner"]').text()).toContain('Habana LLC')
+    expect(w.find('[data-testid="credits"]').text()).toContain('assets/img/wash-a.webp')
+    expect(w.text()).toContain('Por encargo')
     w.unmount()
   })
 
