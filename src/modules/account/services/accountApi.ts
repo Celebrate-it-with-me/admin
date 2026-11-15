@@ -15,7 +15,7 @@ export const changePassword = async (body: { currentPassword: string; newPasswor
 export const startTwoFactor = async (password: string): Promise<TwoFactorSetup> => (await API.post('account/two-factor/setup', { password })).data.data
 export const confirmTwoFactor = async (code: string): Promise<{ recoveryCodes: string[] } & TwoFactorStatus> => (await API.post('account/two-factor/confirm', { code })).data.data
 export const regenerateRecoveryCodes = async (password: string): Promise<{ recoveryCodes: string[] } & TwoFactorStatus> => (await API.post('account/two-factor/recovery-codes', { password })).data.data
-export const disableTwoFactor = async (password: string): Promise<TwoFactorStatus> => (await API.post('account/two-factor/disable', { password })).data.data
+export const disableTwoFactor = async (password: string, code: string): Promise<TwoFactorStatus> => (await API.post('account/two-factor/disable', { password, code })).data.data
 
 export const fetchSessions = async (): Promise<AccountSession[]> => (await API.get('account/sessions')).data.data
 export const closeSession = async (id: number): Promise<void> => { await API.delete(`account/sessions/${id}`) }

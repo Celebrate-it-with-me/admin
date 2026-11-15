@@ -53,6 +53,14 @@ export function parseApiError(e: unknown, fallback = 'No pudimos completar la ac
   return { status: r?.status, code: r?.data?.code, fields, message }
 }
 
+/** The API answers 422 `errors.code[0]` = `required` | `invalid_code`: say it in words. Anything else passes through. */
+export function twoFactorCodeMessage(code: string | undefined): string {
+  if (!code) return ''
+  if (code === 'required') return 'Escribe el código.'
+  if (code === 'invalid_code') return 'Ese código no es correcto. Prueba con uno nuevo de tu app o con un código de recuperación.'
+  return code
+}
+
 /** The codes as a text file: what the person copies or downloads. */
 export function recoveryCodesText(codes: string[], email?: string): string {
   const head = ['Códigos de recuperación de Quinvite (panel de administración)']
