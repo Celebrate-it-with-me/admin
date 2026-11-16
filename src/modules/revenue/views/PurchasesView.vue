@@ -4,7 +4,7 @@ import { useDisplay } from 'vuetify'
 import PurchaseDetail from '../components/PurchaseDetail.vue'
 import { fetchPurchases } from '../services/revenueApi'
 import type { PurchaseFilters, PurchaseRow, Summary } from '../types'
-import { EVENT_STATUS, GATEWAY, STATUS, dateLabel, emptyFilters, extraFilterCount, hasAnyFilter, money } from '../logic'
+import { EVENT_STATUS, GATEWAY, STATUS, dateLabel, disputeLabel, emptyFilters, extraFilterCount, hasAnyFilter, money } from '../logic'
 
 const { smAndDown } = useDisplay()
 
@@ -49,7 +49,7 @@ watch(() => [filters.value.search, filters.value.coupon], () => {
   clearTimeout(timer)
   timer = setTimeout(() => { page.value = 1; load() }, 350)
 })
-watch(() => [filters.value.status, filters.value.gateway, filters.value.founder, filters.value.paidFrom, filters.value.paidTo, filters.value.createdFrom, filters.value.createdTo], () => {
+watch(() => [filters.value.status, filters.value.gateway, filters.value.founder, filters.value.disputed, filters.value.needsReview, filters.value.paidFrom, filters.value.paidTo, filters.value.createdFrom, filters.value.createdTo], () => {
   page.value = 1
   load()
 })
@@ -79,7 +79,7 @@ const open = (id: number) => { selected.value = id }
   <section>
     <header class="mb-6">
       <h2 class="title">Compras</h2>
-      <p class="text-medium-emphasis">Todas las compras de eventos: pagadas, pendientes y reembolsadas. Solo lo ve la persona con rol superadmin.</p>
+      <p class="text-medium-emphasis">Todas las compras de eventos: pagadas, pendientes, reembolsadas y con contracargo. Solo lo ve la persona con rol superadmin.</p>
     </header>
 
     <div class="summary mb-4" aria-label="Resumen de lo filtrado">
@@ -117,6 +117,8 @@ const open = (id: number) => { selected.value = id }
         <v-row v-show="moreOpen" dense class="mt-1">
           <v-col cols="6" md="3"><v-select v-model="filters.founder" :items="founderItems" label="Fundadoras" clearable hide-details /></v-col>
           <v-col cols="6" md="3"><v-text-field v-model="filters.coupon" label="Código" clearable hide-details autocomplete="off" /></v-col>
+          <v-col cols="6" md="3"><v-switch v-model="filters.disputed" label="Solo con disputa" color="primary" hide-details density="compact" /></v-col>
+          <v-col cols="6" md="3"><v-switch v-model="filters.needsReview" label="Necesitan revisión" color="primary" hide-details density="compact" /></v-col>
           <v-col cols="6" md="3"><v-text-field v-model="filters.paidFrom" label="Pagada desde" type="date" hide-details /></v-col>
           <v-col cols="6" md="3"><v-text-field v-model="filters.paidTo" label="Pagada hasta" type="date" hide-details /></v-col>
           <v-col cols="6" md="3"><v-text-field v-model="filters.createdFrom" label="Creada desde" type="date" hide-details /></v-col>
@@ -148,6 +150,8 @@ const open = (id: number) => { selected.value = id }
         <p class="text-body-2 text-medium-emphasis pcard__buyer">{{ p.buyer?.email ?? '—' }}</p>
         <div class="d-flex align-center flex-wrap ga-2 mt-2">
           <v-chip :color="STATUS[p.status].color" variant="tonal" size="small" :prepend-icon="STATUS[p.status].icon">{{ STATUS[p.status].label }}</v-chip>
+          <v-chip v-if="disputeLabel(p.disputeStatus)" :color="disputeLabel(p.disputeStatus)!.color" variant="tonal" size="small" prepend-icon="mdi-gavel">{{ disputeLabel(p.disputeStatus)!.label }}</v-chip>
+          <v-chip v-if="p.needsReview" color="warning" variant="tonal" size="small" prepend-icon="mdi-alert-outline">Revisar</v-chip>
           <v-chip v-if="p.couponCode" size="small" variant="outlined">{{ p.couponCode }}</v-chip>
           <span class="text-body-2 text-medium-emphasis ml-auto">{{ rowDate(p) }}</span>
         </div>
@@ -189,6 +193,8 @@ const open = (id: number) => { selected.value = id }
         <template #item.status="{ item }">
           <v-chip :color="STATUS[item.status].color" variant="tonal" size="small" :prepend-icon="STATUS[item.status].icon">{{ STATUS[item.status].label }}</v-chip>
           <v-chip v-if="item.isFounder" color="primary" variant="tonal" size="x-small" class="ml-1">Fundador</v-chip>
+          <v-chip v-if="disputeLabel(item.disputeStatus)" :color="disputeLabel(item.disputeStatus)!.color" variant="tonal" size="x-small" class="ml-1" prepend-icon="mdi-gavel">{{ disputeLabel(item.disputeStatus)!.label }}</v-chip>
+          <v-chip v-if="item.needsReview" color="warning" variant="tonal" size="x-small" class="ml-1" prepend-icon="mdi-alert-outline">Revisar</v-chip>
         </template>
         <template #item.gateway="{ item }">{{ GATEWAY[item.gateway] ?? item.gateway }}</template>
         <template #item.amount="{ item }">
