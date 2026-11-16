@@ -127,6 +127,12 @@ export const CODE_HELP: Record<string, string> = {
   third_party_marks_declared: 'El paquete declara marcas de terceros: revisa la autorización de uso.',
   css_costly_property: 'Una propiedad o filtro es costoso de pintar en móviles modestos.',
   contrast_low: 'El contraste de algún par de colores es bajo (informativo).',
+  block_container_property: 'Un contenedor de bloque (.inv-q--*, [data-inv-section], [data-q] o su envoltorio) usa una propiedad que lo puede ocultar o recortar (z-index, opacity, overflow, clip-path, filter, position, order...). Quita esa propiedad del contenedor y aplica el efecto a un elemento interno de tu propio markup.',
+  block_container_too_small: 'Un contenedor de bloque tiene width, height o max-* menor de 48 px, y el contenido quedaría aplastado o inalcanzable. Usa al menos 48 px o quita el límite y deja que el bloque tome su tamaño natural.',
+  state_selector_property: ':hover, :focus, :active y similares solo pueden cambiar colores (color, background-color, border-color, outline-color, box-shadow, fill, stroke). Si cambia tamaño, posición, display, opacity o transform, el elemento se mueve o desaparece al tocarlo: deja esa propiedad en el estado normal.',
+  behavior_on_music: 'data-reveal, data-parallax o data-carousel están en <q-music> o en un elemento que lo contiene, y pueden esconder o desplazar el reproductor. Quita el atributo de ese elemento y de sus ancestros; úsalo solo en secciones que no contienen la música.',
+  animation_too_fast: 'Una animación infinite dura menos de 1 s por ciclo, o corre sobre un bloque o un elemento a pantalla completa; eso parpadea y molesta. Alarga cada ciclo a 1 s o más, o aplícala a un adorno pequeño dentro de la sección.',
+  low_contrast_declared: 'El texto y su fondo declarados casi no se distinguen (contraste menor de 1.5), o la opacidad acumulada de sus contenedores es menor de 0.4. Elige colores más separados o sube la opacidad para que el texto se pueda leer.',
 }
 
 export const codeHelp = (code: string) => CODE_HELP[code] ?? null
