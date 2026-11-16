@@ -1,5 +1,4 @@
 import { API } from '@/services/axios'
-import * as mock from './mock'
 import type { MessageFilters, MessagePage, PeriodFilter, TemplateEdit, TestSend, WaMessage, WaStatus, WaSummary, WaTemplate } from '../types'
 import { messageParams, summaryParams, variableNames } from '../logic'
 
@@ -9,55 +8,58 @@ import { messageParams, summaryParams, variableNames } from '../logic'
  * error responses. Writes need a recent re-authentication: the axios interceptor opens the dialog and repeats the
  * request, so nothing here deals with it.
  */
-export const useMock = Boolean(import.meta.env.VITE_WHATSAPP_MOCK) && import.meta.env.VITE_WHATSAPP_MOCK !== 'false'
+export const useMock = import.meta.env.DEV && (Boolean(import.meta.env.VITE_WHATSAPP_MOCK) && import.meta.env.VITE_WHATSAPP_MOCK !== 'false')
+
+/** Dynamic so the production bundle (where useMock is statically false) does not contain the mock. */
+const loadMock = () => import('./mock')
 
 const template = (t: WaTemplate): WaTemplate => ({ ...t, variables: variableNames(t.variables), buttons: t.buttons ?? [] })
 
 export async function getStatus(): Promise<WaStatus> {
-  if (useMock) return mock.getStatus()
+  if (useMock) return (await loadMock()).getStatus()
   return (await API.get('whatsapp/status')).data.data
 }
 
 export async function getSummary(period: PeriodFilter): Promise<WaSummary> {
-  if (useMock) return mock.getSummary(period)
+  if (useMock) return (await loadMock()).getSummary(period)
   return (await API.get('whatsapp/summary', { params: summaryParams(period) })).data.data
 }
 
 export async function listMessages(filters: MessageFilters, period: PeriodFilter, page: number, perPage: number): Promise<MessagePage> {
-  if (useMock) return mock.listMessages(filters, period, page, perPage)
+  if (useMock) return (await loadMock()).listMessages(filters, period, page, perPage)
   const body = (await API.get('whatsapp/messages', { params: messageParams(filters, period, page, perPage) })).data
   return { data: body.data, meta: body.meta }
 }
 
 export async function listTemplates(): Promise<WaTemplate[]> {
-  if (useMock) return (await mock.listTemplates()).map(template)
+  if (useMock) return (await (await loadMock()).listTemplates()).map(template)
   return (await API.get('whatsapp/templates')).data.data.map(template)
 }
 
 export async function updateTemplate(id: number, edit: TemplateEdit): Promise<WaTemplate> {
-  if (useMock) return template(await mock.updateTemplate(id, edit))
+  if (useMock) return template(await (await loadMock()).updateTemplate(id, edit))
   return template((await API.put(`whatsapp/templates/${id}`, edit)).data.data)
 }
 
 export async function submitTemplate(id: number, reason: string): Promise<WaTemplate> {
-  if (useMock) return template(await mock.submitTemplate(id, reason))
+  if (useMock) return template(await (await loadMock()).submitTemplate(id, reason))
   return template((await API.post(`whatsapp/templates/${id}/submit`, { reason })).data.data)
 }
 
 export async function syncTemplates(reason: string): Promise<WaTemplate[]> {
-  if (useMock) return (await mock.syncTemplates(reason)).map(template)
+  if (useMock) return (await (await loadMock()).syncTemplates(reason)).map(template)
   return (await API.post('whatsapp/templates/sync', { reason })).data.data.map(template)
 }
 
 export async function sendTest(test: TestSend): Promise<WaMessage> {
   const body = { to: test.to, template_key: test.templateKey, locale: test.locale, reason: test.reason }
-  if (useMock) return mock.sendTest(body)
+  if (useMock) return (await loadMock()).sendTest(body)
   return (await API.post('whatsapp/test', body)).data.data
 }
 
 /** Events for the filter (id and name only). Mock mode answers from the simulation. */
 export async function searchEvents(search: string): Promise<{ id: number; name: string }[]> {
-  if (useMock) return mock.searchEvents(search)
+  if (useMock) return (await loadMock()).searchEvents(search)
   const res = await API.get('events', { params: { search: search.trim() || undefined, page: 1, perPage: 15 } })
   return (res.data.data as { id: number; name: string }[]).map(e => ({ id: e.id, name: e.name }))
 }

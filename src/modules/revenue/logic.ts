@@ -1,4 +1,4 @@
-import type { Coupon, PurchaseFilters, PurchaseStatus, Gateway } from './types'
+import type { Coupon, PurchaseFilters, PurchaseStatus, Gateway, PurchaseDetail } from './types'
 
 /** $99, $79.50: whole dollars without decimals. */
 export function money(cents: number, currency = 'USD'): string {
@@ -8,7 +8,7 @@ export function money(cents: number, currency = 'USD'): string {
 }
 
 export const emptyFilters = (): PurchaseFilters => ({
-  search: '', status: null, gateway: null, founder: null, coupon: '', paidFrom: '', paidTo: '', createdFrom: '', createdTo: '',
+  search: '', status: null, gateway: null, founder: null, disputed: false, needsReview: false, coupon: '', paidFrom: '', paidTo: '', createdFrom: '', createdTo: '',
 })
 
 /** Query string of the list: only what is filled in. */
@@ -20,6 +20,8 @@ export function buildParams(f: PurchaseFilters, page: number, perPage: number) {
     status: f.status || undefined,
     gateway: f.gateway || undefined,
     founder: f.founder === 'yes' ? 1 : f.founder === 'no' ? 0 : undefined,
+    disputed: f.disputed ? 1 : undefined,
+    needsReview: f.needsReview ? 1 : undefined,
     coupon: f.coupon.trim() || undefined,
     paidFrom: f.paidFrom || undefined,
     paidTo: f.paidTo || undefined,
@@ -30,7 +32,7 @@ export function buildParams(f: PurchaseFilters, page: number, perPage: number) {
 
 /** Filters in use besides the search box and the two main selects (they live in the "Más filtros" panel). */
 export const extraFilterCount = (f: PurchaseFilters): number =>
-  [f.founder, f.coupon.trim(), f.paidFrom, f.paidTo, f.createdFrom, f.createdTo].filter(Boolean).length
+  [f.founder, f.disputed, f.needsReview, f.coupon.trim(), f.paidFrom, f.paidTo, f.createdFrom, f.createdTo].filter(Boolean).length
 
 export const hasAnyFilter = (f: PurchaseFilters): boolean =>
   Boolean(f.search.trim() || f.status || f.gateway) || extraFilterCount(f) > 0
@@ -40,7 +42,30 @@ export const STATUS: Record<PurchaseStatus, { label: string; color: string; icon
   pending: { label: 'Pendiente', color: 'warning', icon: 'mdi-clock-outline' },
   refunded: { label: 'Reembolsada', color: 'secondary', icon: 'mdi-undo-variant' },
   failed: { label: 'Fallida', color: 'error', icon: 'mdi-alert-circle-outline' },
+  chargeback: { label: 'Contracargo', color: 'error', icon: 'mdi-shield-alert-outline' },
 }
+
+/** Dispute states of Stripe in words for the team; an unknown one is shown as sent. */
+export const DISPUTE_STATUS: Record<string, { label: string; color: string }> = {
+  warning_needs_response: { label: 'Alerta temprana: falta responder', color: 'warning' },
+  warning_under_review: { label: 'Alerta temprana en revisión', color: 'warning' },
+  warning_closed: { label: 'Alerta temprana cerrada', color: 'secondary' },
+  needs_response: { label: 'Disputa: falta responder', color: 'error' },
+  under_review: { label: 'Disputa en revisión del banco', color: 'warning' },
+  charge_refunded: { label: 'Disputa cerrada por reembolso', color: 'secondary' },
+  won: { label: 'Disputa ganada', color: 'success' },
+  lost: { label: 'Disputa perdida', color: 'error' },
+}
+
+export const disputeLabel = (status: string | null): { label: string; color: string } | null =>
+  status ? (DISPUTE_STATUS[status] ?? { label: `Disputa: ${status}`, color: 'warning' }) : null
+
+/** A dispute still open: the money is held and the answer to the bank is due in Stripe. */
+export const disputeIsOpen = (status: string | null): boolean =>
+  Boolean(status) && !['won', 'lost', 'charge_refunded', 'warning_closed'].includes(status as string)
+
+/** Reconcile is for Stripe purchases only (a manual or simulated one has nothing to compare with). */
+export const canSync = (p: Pick<PurchaseDetail, 'gateway'>): boolean => p.gateway === 'stripe'
 
 export const GATEWAY: Record<Gateway, string> = { stripe: 'Stripe', manual: 'Manual (Zelle)', fake: 'Simulada (pruebas)' }
 
@@ -62,17 +87,43 @@ export function dollarsToCents(input: string, max = 10000): number | null {
 
 export const centsToInput = (cents: number): string => (cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)
 
+/** What each code of the payments API means, in words for the team. The server's own message is the fallback. */
+export const CODE_HELP: Record<string, string> = {
+  not_paid: 'No se puede reembolsar: esta compra no está pagada (o ya fue reembolsada).',
+  event_published: 'No se puede reembolsar: el evento ya está publicado. El reembolso total solo es posible mientras la invitación no se haya publicado.',
+  gateway_error: 'Stripe no respondió o rechazó la operación. No se hizo ningún cambio: la compra sigue como estaba. Espera un momento e inténtalo de nuevo; si persiste, revisa el pago en Stripe y usa «Conciliar».',
+  not_stripe: 'Esta compra no es de Stripe: no hay nada que conciliar.',
+  not_needs_review: 'Esta compra ya no estaba marcada para revisión.',
+  reauth_required: 'Hace falta confirmar tu contraseña para esta acción.',
+}
+
+export const codeHelp = (code: string | undefined | null): string | null => (code ? (CODE_HELP[code] ?? null) : null)
+
+type ApiError = { reauthCancelled?: boolean; response?: { status?: number; data?: { code?: string; message?: string; errors?: Record<string, string[]> } } }
+
+/**
+ * What the payments API answers when an action fails: 502/`gateway_error` (Stripe), a 422 `errors.purchase[0]` code,
+ * a 403/404/409 `{code}`, or the validation message; otherwise the fallback.
+ */
+export function actionError(e: unknown, fallback: string): string {
+  const err = e as ApiError
+  if (err?.reauthCancelled) return 'No se confirmó tu contraseña, así que no se hizo ningún cambio.'
+  const data = err?.response?.data
+  if (err?.response?.status === 502 || data?.code === 'gateway_error') return CODE_HELP.gateway_error
+  const byCode = codeHelp(data?.errors?.purchase?.[0]) ?? codeHelp(data?.code)
+  return byCode ?? firstError(e, fallback)
+}
+
 /** What the server answers when a refund is not possible, in words for the team. */
 export function refundError(codes: string[] | undefined, fallback: string): string {
-  if (codes?.includes('event_published')) return 'No se puede reembolsar: el evento ya está publicado. El reembolso total solo es posible mientras la invitación no se haya publicado.'
-  if (codes?.includes('not_paid')) return 'No se puede reembolsar: esta compra no está pagada (o ya fue reembolsada).'
+  for (const code of ['event_published', 'not_paid', 'gateway_error']) if (codes?.includes(code)) return CODE_HELP[code]
   return fallback
 }
 
 /** Why a paid purchase cannot be refunded now, or null when it can. */
 export function refundBlockReason(p: { status: PurchaseStatus; canRefund: boolean }): string | null {
   if (p.status !== 'paid') return null
-  return p.canRefund ? null : 'No se puede reembolsar: el evento ya está publicado. El reembolso total solo es posible mientras la invitación no se haya publicado.'
+  return p.canRefund ? null : CODE_HELP.event_published
 }
 
 export function couponValue(c: Pick<Coupon, 'kind' | 'value'>, currency = 'USD'): string {

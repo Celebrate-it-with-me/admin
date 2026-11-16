@@ -2,12 +2,41 @@ import { API } from '@/services/axios'
 import type { Coupon, NewCoupon, Pricing, PurchaseDetail, PurchaseFilters, PurchasePage } from '../types'
 import { buildParams } from '../logic'
 
-export const fetchPurchases = async (f: PurchaseFilters, page: number, perPage: number): Promise<PurchasePage> =>
-  (await API.get('revenue/purchases', { params: buildParams(f, page, perPage) })).data
+/**
+ * VITE_REVENUE_MOCK=true simulates the Stripe states of the contract (chargeback, disputes, needs-review, 502) in memory
+ * while the API is not ready. Dev only: `import.meta.env.DEV` is statically false in the production build and the
+ * dynamic import keeps ./mock out of the bundle.
+ */
+export const useMock = import.meta.env.DEV && import.meta.env.VITE_REVENUE_MOCK === 'true'
+const loadMock = () => import('./mock')
 
-export const fetchPurchase = async (id: number): Promise<PurchaseDetail> => (await API.get(`revenue/purchases/${id}`)).data.data
+export const fetchPurchases = async (f: PurchaseFilters, page: number, perPage: number): Promise<PurchasePage> => {
+  if (useMock) return (await loadMock()).fetchPurchases(f, page, perPage)
+  return (await API.get('revenue/purchases', { params: buildParams(f, page, perPage) })).data
+}
 
-export const refundPurchase = async (id: number, reason: string) => (await API.post(`payments/${id}/refund`, { reason })).data.data
+export const fetchPurchase = async (id: number): Promise<PurchaseDetail> => {
+  if (useMock) return (await loadMock()).fetchPurchase(id)
+  return (await API.get(`revenue/purchases/${id}`)).data.data
+}
+
+/** Real refund on Stripe; a gateway failure is a 502 `gateway_error` and the purchase stays paid. */
+export const refundPurchase = async (id: number, reason: string) => {
+  if (useMock) return (await loadMock()).refundPurchase(id)
+  return (await API.post(`payments/${id}/refund`, { reason })).data.data
+}
+
+/** Reconciles with Stripe (session, payment, refund, dispute). `admin.purchases.manage` + reauth (the interceptor asks). */
+export const syncPurchase = async (id: number, reason: string) => {
+  if (useMock) return (await loadMock()).syncPurchase(id)
+  return (await API.post(`payments/${id}/sync`, { reason })).data.data
+}
+
+/** Clears `needsReview`. `admin.purchases.manage`. */
+export const resolveReview = async (id: number, reason: string) => {
+  if (useMock) return (await loadMock()).resolveReview(id)
+  return (await API.post(`payments/${id}/resolve-review`, { reason })).data.data
+}
 
 export const fetchPricing = async (): Promise<Pricing> => (await API.get('revenue/pricing')).data.data
 

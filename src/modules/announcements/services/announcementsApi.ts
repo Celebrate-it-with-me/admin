@@ -1,5 +1,4 @@
 import { API } from '@/services/axios'
-import * as mock from './mock'
 import type { Announcement, AnnouncementBody, AnnouncementList, AudienceQuery, ListParams } from '../types'
 
 /**
@@ -8,10 +7,13 @@ import type { Announcement, AnnouncementBody, AnnouncementList, AudienceQuery, L
  * errors. Writes need a recent re-authentication: the axios interceptor opens the dialog and repeats the request, so
  * nothing here deals with it. Bodies and query are snake_case; answers come in camelCase.
  */
-export const useMock = import.meta.env.VITE_ANNOUNCEMENTS_MOCK === 'true'
+export const useMock = import.meta.env.DEV && import.meta.env.VITE_ANNOUNCEMENTS_MOCK === 'true'
+
+/** Dynamic so the production bundle (where useMock is statically false) does not contain the mock. */
+const loadMock = () => import('./mock')
 
 export async function listAnnouncements(params: ListParams = {}): Promise<AnnouncementList> {
-  if (useMock) return mock.listAnnouncements(params)
+  if (useMock) return (await loadMock()).listAnnouncements(params)
   const query: Record<string, string | number> = {}
   if (params.status) query.status = params.status
   if (params.page) query.page = params.page
@@ -21,22 +23,22 @@ export async function listAnnouncements(params: ListParams = {}): Promise<Announ
 }
 
 export async function createAnnouncement(body: AnnouncementBody, reason: string): Promise<Announcement> {
-  if (useMock) return mock.createAnnouncement(body, reason)
+  if (useMock) return (await loadMock()).createAnnouncement(body, reason)
   return (await API.post('announcements', { ...body, reason })).data.data
 }
 
 export async function updateAnnouncement(id: number, body: AnnouncementBody, reason: string): Promise<Announcement> {
-  if (useMock) return mock.updateAnnouncement(id, body, reason)
+  if (useMock) return (await loadMock()).updateAnnouncement(id, body, reason)
   return (await API.put(`announcements/${id}`, { ...body, reason })).data.data
 }
 
 export async function deleteAnnouncement(id: number, reason: string): Promise<void> {
-  if (useMock) return mock.deleteAnnouncement(id, reason)
+  if (useMock) return (await loadMock()).deleteAnnouncement(id, reason)
   await API.delete(`announcements/${id}`, { data: { reason } })
 }
 
 /** How many organizers would see an announcement with this audience today. */
 export async function previewAudience(query: AudienceQuery): Promise<number> {
-  if (useMock) return mock.previewAudience(query)
+  if (useMock) return (await loadMock()).previewAudience(query)
   return (await API.post('announcements/audience-preview', query)).data.data.count
 }
