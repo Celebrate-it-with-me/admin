@@ -6,6 +6,12 @@ describe('actionLabel', () => {
   it('names a known action', () => {
     expect(actionLabel('payment.refund').label).toBe('Hizo un reembolso')
   })
+  it('labels every template action the API logs, including package_validated', () => {
+    for (const a of ['version_created', 'version_updated', 'version_published', 'version_archived', 'package_validated', 'package_rejected', 'package_installed', 'package_activated', 'package_deactivated', 'package_withdrawn']) {
+      expect(actionLabel(`template.${a}`).label, a).not.toBe(`template.${a}`)
+    }
+    expect(actionLabel('template.package_validated').label).toBe('Validó un paquete de plantilla')
+  })
   it('shows the raw action when it has no label, so nothing is hidden', () => {
     expect(actionLabel('brand.new')).toEqual({ label: 'brand.new', icon: 'mdi-circle-small', tone: 'secondary' })
   })

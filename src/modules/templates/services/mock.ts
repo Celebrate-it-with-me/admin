@@ -50,6 +50,7 @@ interface Tpl { id: number; slug: string; name: string; eventTypeId: number; tie
 const tpls: Tpl[] = [
   { id: 1, slug: 'classic-quinceanera', name: 'Clásica · Quinceañera', eventTypeId: 1, tier: 'free', isActive: true, currentVersionId: 2 },
   { id: 2, slug: 'classic-wedding', name: 'Clásica · Boda', eventTypeId: 2, tier: 'free', isActive: true, currentVersionId: 4 },
+  { id: 3, slug: 'botanical-wedding', name: 'Botánica · Boda', eventTypeId: 2, tier: 'premium', isActive: false, currentVersionId: null },
 ]
 const v = (id: number, templateId: number, version: number, status: TemplateVersion['status'], eventsCount: number, notes: string | null, sections: Section[], createdAt: string, publishedAt: string | null): Row => ({
   id, templateId, version, status, schemaVersion: 1, sections, theme: theme(), notes, createdAt, publishedAt, eventsCount,
@@ -59,8 +60,10 @@ const versions: Row[] = [
   v(2, 1, 2, 'published', 17, 'Textos de la portada más cálidos.', quinceSections(), '2026-11-04T15:00:00Z', '2026-11-05T12:00:00Z'),
   v(3, 1, 3, 'draft', 0, 'Probando paleta salvia.', quinceSections(), '2026-11-12T18:20:00Z', null),
   v(4, 2, 1, 'published', 6, null, weddingSections(), '2026-10-02T15:00:00Z', '2026-10-02T15:30:00Z'),
+  // Installed from the package with id 2 of ./packages/mock.ts: the package manages it, so the editor stays closed.
+  { ...v(5, 3, 1, 'draft', 0, 'Instalada desde el paquete botanical 1.0.0.', weddingSections(), '2026-11-15T09:05:00Z', null), schemaVersion: 2, packageId: 2 },
 ]
-let nextId = 5
+let nextId = 6
 
 const summary = (t: Tpl): TemplateSummary => {
   const cur = versions.find(x => x.id === t.currentVersionId)
@@ -81,7 +84,7 @@ export async function getTemplate(id: number): Promise<TemplateDetail> {
   await wait()
   const t = tpls.find(x => x.id === id) ?? fail(404, { message: 'Not found' })
   const rows: VersionRow[] = versions.filter(x => x.templateId === id).sort((a, b) => b.version - a.version)
-    .map(x => ({ id: x.id, version: x.version, status: x.status, notes: x.notes, createdAt: x.createdAt ?? null, publishedAt: x.publishedAt ?? null, eventsCount: x.eventsCount }))
+    .map(x => ({ id: x.id, version: x.version, status: x.status, notes: x.notes, createdAt: x.createdAt ?? null, publishedAt: x.publishedAt ?? null, eventsCount: x.eventsCount, packageId: x.packageId ?? null }))
   return { ...summary(t), versions: rows }
 }
 
@@ -122,6 +125,7 @@ function validate(body: DraftBody): Record<string, string[]> {
 export async function saveDraft(id: number, body: DraftBody): Promise<TemplateVersion> {
   await wait()
   const row = find(id)
+  if (row.packageId) fail(409, { code: 'package_managed', message: 'Managed by a package' })
   if (row.status !== 'draft') fail(409, { code: 'version_immutable', message: 'Immutable' })
   const errors = validate(body)
   if (Object.keys(errors).length) fail(422, { message: 'Invalid', errors })
