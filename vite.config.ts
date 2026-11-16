@@ -1,7 +1,6 @@
 // Plugins
 import vue from '@vitejs/plugin-vue'
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
-import ViteFonts from 'unplugin-fonts/vite'
 
 // Utilities
 import { defineConfig } from 'vitest/config'
@@ -16,14 +15,6 @@ export default defineConfig({
     // https://github.com/vuetifyjs/vuetify-loader/tree/master/packages/vite-plugin#readme
     vuetify({
       autoImport: true,
-    }),
-    ViteFonts({
-      google: {
-        families: [
-          { name: 'Figtree', styles: 'wght@300..900' },
-          { name: 'Fraunces', styles: 'opsz,wght@9..144,300..700' },
-        ],
-      },
     }),
   ],
   define: { 'process.env': {} },
