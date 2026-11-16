@@ -3,10 +3,10 @@ import { computed, ref, watch } from 'vue'
 import { useDisplay } from 'vuetify'
 import ReasonDialog from '@/components/ReasonDialog.vue'
 import { useCurrentUserStore } from '@/store/currentUser'
-import { fetchPurchase, refundPurchase } from '../services/revenueApi'
+import { fetchPurchase, refundPurchase, resolveReview, syncPurchase } from '../services/revenueApi'
 import type { PurchaseDetail } from '../types'
 import { STATUS as INVOICE_STATUS } from '@/modules/invoices/logic'
-import { EVENT_STATUS, GATEWAY, STATUS, dateTimeLabel, firstError, money, refundBlockReason, refundError, validationCodes } from '../logic'
+import { EVENT_STATUS, GATEWAY, STATUS, actionError, canSync, dateTimeLabel, disputeIsOpen, disputeLabel, money, refundBlockReason } from '../logic'
 
 const props = defineProps<{ purchaseId: number | null }>()
 const emit = defineEmits<{ close: []; changed: [] }>()
@@ -21,11 +21,24 @@ const refundOpen = ref(false)
 const refunding = ref(false)
 const refundFailure = ref('')
 const done = ref('')
+const syncOpen = ref(false)
+const syncing = ref(false)
+const syncFailure = ref('')
+const reviewOpen = ref(false)
+const resolving = ref(false)
+const reviewFailure = ref('')
 
 const open = computed(() => props.purchaseId !== null)
 const drawerWidth = computed(() => (smAndDown.value ? width.value : 460))
 const blocked = computed(() => (detail.value ? refundBlockReason(detail.value) : null))
 const canRefund = computed(() => detail.value?.status === 'paid' && detail.value.canRefund && user.can('admin.refunds'))
+const canManage = computed(() => user.can('admin.purchases.manage'))
+const showSync = computed(() => Boolean(detail.value && canSync(detail.value) && canManage.value))
+const showResolve = computed(() => Boolean(detail.value?.needsReview && canManage.value))
+const dispute = computed(() => disputeLabel(detail.value?.disputeStatus ?? null))
+const disputeOpen = computed(() => disputeIsOpen(detail.value?.disputeStatus ?? null))
+// A failure of Stripe or of a sync can leave an alert that is no longer true once the purchase reloads.
+const anyFailure = computed(() => [refundFailure.value, syncFailure.value, reviewFailure.value].find(Boolean) ?? '')
 
 let latest = 0
 const load = async () => {
@@ -47,6 +60,8 @@ watch(() => props.purchaseId, id => {
   detail.value = null
   done.value = ''
   refundFailure.value = ''
+  syncFailure.value = ''
+  reviewFailure.value = ''
   if (id !== null) load()
 }, { immediate: true })
 
@@ -61,7 +76,7 @@ const confirmRefund = async (reason: string) => {
     emit('changed')
     await load()
   } catch (e) {
-    refundFailure.value = refundError(validationCodes(e, 'purchase'), firstError(e, 'No pudimos reembolsar. Intenta de nuevo.'))
+    refundFailure.value = actionError(e, 'No pudimos reembolsar. Intenta de nuevo.')
     // The list may be out of date (the event was published meanwhile): show the real state.
     await load()
   } finally {
@@ -69,8 +84,42 @@ const confirmRefund = async (reason: string) => {
   }
 }
 
-const STEP_LABEL = { created: 'Compra creada', paid: 'Pago confirmado', refunded: 'Reembolsada' } as const
-const STEP_COLOR = { created: 'secondary', paid: 'success', refunded: 'warning' } as const
+const confirmSync = async (reason: string) => {
+  if (!detail.value) return
+  syncing.value = true
+  syncFailure.value = ''
+  try {
+    await syncPurchase(detail.value.id, reason)
+    syncOpen.value = false
+    done.value = 'Compra conciliada con Stripe.'
+    emit('changed')
+    await load()
+  } catch (e) {
+    syncFailure.value = actionError(e, 'No pudimos conciliar con Stripe. Intenta de nuevo.')
+  } finally {
+    syncing.value = false
+  }
+}
+
+const confirmResolve = async (reason: string) => {
+  if (!detail.value) return
+  resolving.value = true
+  reviewFailure.value = ''
+  try {
+    await resolveReview(detail.value.id, reason)
+    reviewOpen.value = false
+    done.value = 'Marcada como revisada.'
+    emit('changed')
+    await load()
+  } catch (e) {
+    reviewFailure.value = actionError(e, 'No pudimos marcarla como revisada. Intenta de nuevo.')
+  } finally {
+    resolving.value = false
+  }
+}
+
+const STEP_LABEL: Record<string, string> = { created: 'Compra creada', paid: 'Pago confirmado', refunded: 'Reembolsada', disputed: 'Disputa abierta', chargeback: 'Contracargo' }
+const STEP_COLOR: Record<string, string> = { created: 'secondary', paid: 'success', refunded: 'warning', disputed: 'warning', chargeback: 'error' }
 </script>
 
 <template>
@@ -108,7 +157,24 @@ const STEP_COLOR = { created: 'secondary', paid: 'success', refunded: 'warning' 
         </p>
 
         <v-alert v-if="done" type="success" variant="tonal" density="compact" class="mt-4" :text="done" role="status" />
-        <v-alert v-if="refundFailure && !refundOpen" type="error" variant="tonal" density="compact" class="mt-4" :text="refundFailure" role="alert" />
+        <v-alert v-if="anyFailure && !refundOpen && !syncOpen && !reviewOpen" type="error" variant="tonal" density="compact" class="mt-4" :text="anyFailure" role="alert" />
+
+        <v-alert v-if="detail.needsReview" type="warning" variant="tonal" density="compact" class="mt-4" title="Necesita revisión" role="status">
+          Algo de esta compra no cuadra con Stripe (por ejemplo, un reembolso o una disputa con la invitación ya publicada). Revisa el pago en Stripe y, cuando esté resuelto, márcala como revisada.
+        </v-alert>
+        <v-alert
+          v-if="dispute"
+          :type="disputeOpen ? 'warning' : detail.status === 'chargeback' ? 'error' : 'info'"
+          variant="tonal"
+          density="compact"
+          class="mt-4"
+          :title="dispute.label"
+          role="status"
+        >
+          <template v-if="detail.disputedAt">Abierta el {{ dateTimeLabel(detail.disputedAt) }}. </template>
+          <template v-if="disputeOpen">El plan sigue activo durante la disputa. La evidencia se envía a mano desde el panel de Stripe.</template>
+          <template v-else-if="detail.status === 'chargeback'">El banco resolvió a favor de la compradora y el dinero ya salió.</template>
+        </v-alert>
 
         <dl class="kv mt-5">
           <dt>Evento</dt>
@@ -124,6 +190,21 @@ const STEP_COLOR = { created: 'secondary', paid: 'success', refunded: 'warning' 
           </dd>
           <dt>Plan</dt><dd>{{ detail.plan?.name ?? '—' }}</dd>
           <dt>Pasarela</dt><dd>{{ GATEWAY[detail.gateway] ?? detail.gateway }}<span v-if="detail.gatewayRef" class="text-medium-emphasis"> · ref. {{ detail.gatewayRef }}</span></dd>
+          <template v-if="detail.gatewayPaymentId">
+            <dt>Pago</dt><dd class="mono">{{ detail.gatewayPaymentId }}</dd>
+          </template>
+          <template v-if="detail.gatewayRefundId">
+            <dt>Reembolso</dt><dd class="mono">{{ detail.gatewayRefundId }}</dd>
+          </template>
+          <template v-if="detail.disputeId">
+            <dt>Disputa</dt><dd class="mono">{{ detail.disputeId }}</dd>
+          </template>
+          <template v-if="detail.failureCode">
+            <dt>Fallo</dt><dd class="mono">{{ detail.failureCode }}</dd>
+          </template>
+          <template v-if="detail.taxCents > 0">
+            <dt>Impuestos</dt><dd>{{ money(detail.taxCents, detail.currency) }}</dd>
+          </template>
           <dt>Código</dt><dd>{{ detail.coupon?.code ?? '—' }}</dd>
           <template v-if="detail.registeredBy">
             <dt>Registró el pago</dt><dd>{{ detail.registeredBy.name }}</dd>
@@ -164,10 +245,38 @@ const STEP_COLOR = { created: 'secondary', paid: 'success', refunded: 'warning' 
           </li>
         </ul>
 
+        <v-btn
+          v-if="detail.stripeUrl"
+          class="mt-5 touch"
+          variant="outlined"
+          block
+          :href="detail.stripeUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          prepend-icon="mdi-open-in-new"
+        >Ver en Stripe</v-btn>
+        <v-btn
+          v-if="showSync"
+          class="mt-3 touch"
+          variant="tonal"
+          block
+          prepend-icon="mdi-sync"
+          @click="syncFailure = ''; syncOpen = true"
+        >Conciliar con Stripe</v-btn>
+        <v-btn
+          v-if="showResolve"
+          class="mt-3 touch"
+          color="warning"
+          variant="tonal"
+          block
+          prepend-icon="mdi-check-decagram-outline"
+          @click="reviewFailure = ''; reviewOpen = true"
+        >Marcar revisado</v-btn>
+
         <v-alert v-if="blocked" type="info" variant="tonal" density="compact" class="mt-4" :text="blocked" />
         <v-btn
           v-if="canRefund"
-          class="mt-5 touch"
+          class="mt-3 touch"
           color="error"
           variant="tonal"
           block
@@ -187,6 +296,26 @@ const STEP_COLOR = { created: 'secondary', paid: 'success', refunded: 'warning' 
       danger
       @confirm="confirmRefund"
     />
+
+    <ReasonDialog
+      v-model="syncOpen"
+      title="Conciliar con Stripe"
+      message="Se compara esta compra con Stripe (sesión, pago, reembolso y disputa) y se aplica lo que falte. No cobra ni reembolsa nada."
+      confirm-label="Conciliar"
+      :loading="syncing"
+      :error="syncFailure"
+      @confirm="confirmSync"
+    />
+
+    <ReasonDialog
+      v-model="reviewOpen"
+      title="Marcar como revisada"
+      message="Confirma que ya revisaste esta compra en Stripe. Solo quita la marca de revisión; no cambia el pago ni el plan del evento."
+      confirm-label="Marcar revisado"
+      :loading="resolving"
+      :error="reviewFailure"
+      @confirm="confirmResolve"
+    />
   </v-navigation-drawer>
 </template>
 
@@ -201,6 +330,7 @@ const STEP_COLOR = { created: 'secondary', paid: 'success', refunded: 'warning' 
 .kv dt { color: var(--ink-500); font-size: 0.875rem; }
 .kv dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
 .kv dd .text-medium-emphasis { font-weight: 400; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8125rem; }
 .notes { font-weight: 400 !important; white-space: pre-wrap; }
 .detail__h { font-size: 0.75rem; font-weight: 700; color: var(--ink-500); text-transform: uppercase; letter-spacing: 0.04em; }
 .timeline { margin-left: -16px; }

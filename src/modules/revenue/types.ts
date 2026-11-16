@@ -1,5 +1,10 @@
-export type PurchaseStatus = 'pending' | 'paid' | 'refunded' | 'failed'
+export type PurchaseStatus = 'pending' | 'paid' | 'refunded' | 'failed' | 'chargeback'
 export type Gateway = 'fake' | 'stripe' | 'manual'
+
+/** Stripe dispute states; the API may send others, so the label lookup has a fallback. */
+export type DisputeStatus =
+  | 'warning_needs_response' | 'warning_under_review' | 'warning_closed'
+  | 'needs_response' | 'under_review' | 'charge_refunded' | 'won' | 'lost'
 
 export interface Person { id: number; name: string; email: string }
 
@@ -18,6 +23,8 @@ export interface PurchaseRow {
   refundedAt: string | null
   createdAt: string | null
   canRefund: boolean
+  disputeStatus: DisputeStatus | string | null
+  needsReview: boolean
 }
 
 export interface TimelineStep { type: 'created' | 'paid' | 'refunded'; at: string | null; by: Person | null }
@@ -34,6 +41,14 @@ export interface PurchaseDetail extends PurchaseRow {
   notes: string | null
   receiptUrl: string | null
   gatewayRef: string | null
+  gatewayPaymentId: string | null
+  gatewayRefundId: string | null
+  failureCode: string | null
+  disputeId: string | null
+  disputedAt: string | null
+  taxCents: number
+  /** Link to the payment in the Stripe dashboard; only when gateway is stripe. */
+  stripeUrl: string | null
   timeline: TimelineStep[]
   invoices: PurchaseInvoice[]
 }
@@ -51,6 +66,8 @@ export interface PurchaseFilters {
   status: PurchaseStatus | null
   gateway: Gateway | null
   founder: 'yes' | 'no' | null
+  disputed: boolean
+  needsReview: boolean
   coupon: string
   paidFrom: string
   paidTo: string
