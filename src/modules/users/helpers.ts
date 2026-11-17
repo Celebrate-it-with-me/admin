@@ -55,3 +55,12 @@ export function dateLabel(iso: string | null, withTime = false): string {
     ? { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }
     : { day: 'numeric', month: 'short', year: 'numeric' })
 }
+
+export const SIGN_IN_LABELS: Record<string, string> = { password: 'Contraseña', google: 'Google', facebook: 'Facebook' }
+
+/** Readable sign-in methods; unknown values are shown as-is, missing/empty gives []. */
+export const signInMethodList = (methods?: string[] | null): { key: string; label: string }[] =>
+  (Array.isArray(methods) ? methods : []).map(key => ({ key, label: SIGN_IN_LABELS[key] ?? key }))
+
+export const socialOnly = (methods?: string[] | null): boolean =>
+  Array.isArray(methods) && methods.length > 0 && !methods.includes('password')
