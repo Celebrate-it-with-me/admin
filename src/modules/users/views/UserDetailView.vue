@@ -8,7 +8,7 @@ import { formatMoney } from '@/composables/useMoney'
 import ReasonDialog from '@/components/ReasonDialog.vue'
 import DeleteUserDialog from '../components/DeleteUserDialog.vue'
 import ImpersonateButton from '@/modules/impersonation/components/ImpersonateButton.vue'
-import { EVENT_STATUS, ROLE_IN_EVENT, dateLabel, explainError, filenameFrom, initials } from '../helpers'
+import { EVENT_STATUS, ROLE_IN_EVENT, dateLabel, explainError, filenameFrom, initials, signInMethodList, socialOnly } from '../helpers'
 import type { UserProfile } from '../types'
 
 const route = useRoute()
@@ -30,6 +30,8 @@ onMounted(load)
 watch(id, load)
 
 const isStaff = computed(() => !!user.value?.staffRoles.length)
+const signIn = computed(() => signInMethodList(user.value?.signInMethods))
+const noPassword = computed(() => socialOnly(user.value?.signInMethods))
 const deleted = computed(() => !!user.value?.anonymizedAt)
 const notice = ref<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
 
@@ -114,6 +116,11 @@ const onDeleted = async (archived: number[]) => {
             <v-chip v-for="r in user.staffRoles" :key="r" color="primary" variant="tonal" size="small">{{ ROLE_LABELS[r] }}</v-chip>
             <v-chip v-if="!deleted" :color="user.emailVerified ? 'success' : 'warning'" variant="outlined" size="small">{{ user.emailVerified ? 'Correo verificado' : 'Correo sin verificar' }}</v-chip>
           </div>
+          <div v-if="signIn.length && !deleted" class="chips signin" data-test="signin">
+            <span class="text-caption text-medium-emphasis">Entra con:</span>
+            <v-chip v-for="m in signIn" :key="m.key" variant="tonal" size="small" data-test="signin-chip">{{ m.label }}</v-chip>
+          </div>
+          <p v-if="noPassword && !deleted" class="text-caption text-medium-emphasis signin__hint" data-test="signin-hint">No tiene contraseña: para entrar con correo debe usar «Olvidé mi contraseña»</p>
         </div>
       </header>
 
@@ -219,6 +226,8 @@ const onDeleted = async (archived: number[]) => {
 .title { font-size: 2rem; margin: 0 0 2px; overflow-wrap: anywhere; }
 .mail { margin: 0 0 8px; color: var(--ink-500); overflow-wrap: anywhere; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.signin { align-items: center; margin-top: 8px; }
+.signin__hint { margin: 6px 0 0; }
 .h3 { font-size: 1.25rem; margin-bottom: 12px; }
 .kv { display: grid; grid-template-columns: max-content 1fr; gap: 8px 20px; margin: 0; }
 .kv dt { color: var(--ink-500); }
