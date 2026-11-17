@@ -14,12 +14,13 @@ import team, { publicRoutes } from './team/routes'
 import whatsapp from './whatsapp/routes'
 import announcements from './announcements/routes'
 import messages from './messages/routes'
+import systemVersion from './system-version/routes'
 
 /**
  * The Operation modules, one folder each (src/modules/<name>/): routes.ts, views/, components/, services/.
  * A module owns its folder; shared things (layout, navigation, types) are edited only when the module really needs it.
  */
-export const moduleRoutes: RouteRecordRaw[] = [...events, ...users, ...support, ...moderation, ...revenue, ...health, ...catalog, ...templates, ...account, ...invoices, ...security, ...team, ...whatsapp, ...announcements, ...messages]
+export const moduleRoutes: RouteRecordRaw[] = [...events, ...users, ...support, ...moderation, ...revenue, ...health, ...catalog, ...templates, ...account, ...invoices, ...security, ...team, ...whatsapp, ...announcements, ...messages, ...systemVersion]
 
 /** Pages that need no session (they sign her in): the invitation link opens one. */
 export { publicRoutes }

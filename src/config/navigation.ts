@@ -97,6 +97,8 @@ export const NAV: NavGroup[] = [
         about: 'Registro de todo lo que hace el personal: quién, a quién, cuándo y por qué.' },
       { key: 'Health', title: 'Salud del sistema', icon: 'mdi-heart-pulse', path: 'health', permission: 'admin.system.health', brief: 'A10',
         about: 'Trabajos fallidos, colas, errores recientes, banderas de funciones y modo mantenimiento.' },
+      { key: 'Versions', title: 'Versiones', icon: 'mdi-tag-outline', path: 'versions', permission: 'admin.system.health', brief: 'A10',
+        about: 'Versión, commit, fecha de build y entorno de la API, la app y el admin.' },
     ],
   },
 ]
