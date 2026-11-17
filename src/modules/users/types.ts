@@ -39,6 +39,7 @@ export interface UserProfile {
   phone: string | null
   avatarUrl: string | null
   emailVerified: boolean
+  signInMethods?: string[] | null
   staffRoles: StaffRoleKey[]
   createdAt: string | null
   anonymizedAt: string | null
