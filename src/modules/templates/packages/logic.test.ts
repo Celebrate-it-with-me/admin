@@ -53,6 +53,7 @@ describe('codeHelp', () => {
     for (const c of ['block_container_property', 'block_container_too_small', 'state_selector_property', 'behavior_on_music', 'animation_too_fast', 'low_contrast_declared', 'module_block_missing', 'section_without_block']) {
       expect(codeHelp(c)?.length).toBeGreaterThan(40)
     }
+    expect(codeHelp('section_without_block')).not.toMatch(/detalle/)
   })
 })
 
