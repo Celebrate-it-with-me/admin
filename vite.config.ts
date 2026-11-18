@@ -69,8 +69,36 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.ts'],
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // v8 instrumentation slows every test; with the default 5 s a loaded machine times out. Only widened when measuring coverage.
+    ...(process.argv.includes('--coverage') ? { testTimeout: 30000, hookTimeout: 30000 } : {}),
     restoreMocks: true,
     // Vuetify ships ESM that imports CSS; let Vite process it.
     server: { deps: { inline: ['vuetify'] } },
+    coverage: {
+      // `npm run test:coverage`. Report-only by default; COVERAGE_ENFORCE=1 makes thresholds fail the run.
+      provider: 'v8',
+      reporter: ['text-summary', 'html', 'json-summary'],
+      reportsDirectory: './coverage', // git-ignored
+      reportOnFailure: true, // still write the report if a test fails
+      // Count every source file, even those no test imports, so the baseline is honest.
+      include: ['src/**/*.{ts,vue}'],
+      exclude: [
+        'src/**/*.{test,spec}.ts', // the tests themselves
+        'src/test/**', // test helpers (setup.ts, mount.ts)
+        'src/**/__mocks__/**', // manual mocks
+        'src/**/*.d.ts', // type declarations, no runtime code
+        'src/main.ts', // app entry: bootstraps Vue, nothing to unit-test
+        'src/plugins/**', // Vuetify/plugin registration (config only)
+        'src/assets/**', // static files (images, svg)
+        'src/styles/**', // CSS
+      ],
+      // Target 95 (owner policy). Override with COVERAGE_THRESHOLD; enforced only with COVERAGE_ENFORCE=1.
+      ...(process.env.COVERAGE_ENFORCE === '1'
+        ? (() => {
+            const t = Number(process.env.COVERAGE_THRESHOLD ?? 95)
+            return { thresholds: { lines: t, branches: t, functions: t, statements: t } }
+          })()
+        : {}),
+    },
   },
 })
