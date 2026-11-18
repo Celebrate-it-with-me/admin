@@ -134,7 +134,7 @@ export const CODE_HELP: Record<string, string> = {
   animation_too_fast: 'Una animación infinite dura menos de 1 s por ciclo, o corre sobre un bloque o un elemento a pantalla completa; eso parpadea y molesta. Alarga cada ciclo a 1 s o más, o aplícala a un adorno pequeño dentro de la sección.',
   low_contrast_declared: 'El texto y su fondo declarados casi no se distinguen (contraste menor de 1.5), o la opacidad acumulada de sus contenedores es menor de 0.4. Elige colores más separados o sube la opacidad para que el texto se pueda leer.',
   module_block_missing: 'El paquete no incluye el bloque de un módulo (comentarios o mesas): si la organizadora activa ese módulo no se verá con este diseño. Se puede instalar igual.',
-  section_without_block: 'La sección existe en el paquete pero sin su bloque, así que no mostrará contenido. Añade el bloque del sistema que le corresponde (el nombre aparece en el detalle).',
+  section_without_block: 'La sección existe en el paquete pero sin su bloque, así que no mostrará contenido. Añade al paquete el bloque del sistema que corresponde a esa sección.',
 }
 
 export const codeHelp = (code: string) => CODE_HELP[code] ?? null
