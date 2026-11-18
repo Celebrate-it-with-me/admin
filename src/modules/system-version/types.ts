@@ -3,8 +3,9 @@ export type Environment = 'local' | 'staging' | 'production'
 /** GET /api/v1/admin/system/version (staff only). */
 export interface ApiVersion {
   version: string
-  commit: string
-  builtAt: string
+  /** null when the deploy does not set GIT_COMMIT / BUILT_AT. */
+  commit: string | null
+  builtAt: string | null
   environment: Environment | string
   php: string
   laravel: string
