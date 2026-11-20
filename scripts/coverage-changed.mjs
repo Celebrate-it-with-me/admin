@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global process, console */
 // Coverage of the NEW or MODIFIED lines of the current branch (owner policy: >= 95 %).
 // Reads coverage/coverage-final.json (written by `npm run test:coverage`) and
 // `git diff --unified=0 <base>...HEAD`. No dependencies.
