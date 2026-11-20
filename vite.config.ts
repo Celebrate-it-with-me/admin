@@ -77,7 +77,7 @@ export default defineConfig({
     coverage: {
       // `npm run test:coverage`. Report-only by default; COVERAGE_ENFORCE=1 makes thresholds fail the run.
       provider: 'v8',
-      reporter: ['text-summary', 'html', 'json-summary'],
+      reporter: ['text-summary', 'json-summary', 'json', 'lcov'], // `json` writes coverage-final.json, read by scripts/coverage-changed.mjs
       reportsDirectory: './coverage', // git-ignored
       reportOnFailure: true, // still write the report if a test fails
       // Count every source file, even those no test imports, so the baseline is honest.
