@@ -6,7 +6,7 @@ import { useCurrentUserStore } from '@/store/currentUser'
 import { fetchPurchase, refundPurchase, resolveReview, syncPurchase } from '../services/revenueApi'
 import type { PurchaseDetail } from '../types'
 import { STATUS as INVOICE_STATUS } from '@/modules/invoices/logic'
-import { EVENT_STATUS, GATEWAY, STATUS, actionError, canSync, dateTimeLabel, disputeIsOpen, disputeLabel, money, refundBlockReason } from '../logic'
+import { EVENT_STATUS, safeStripeUrl, GATEWAY, STATUS, actionError, canSync, dateTimeLabel, disputeIsOpen, disputeLabel, money, refundBlockReason } from '../logic'
 
 const props = defineProps<{ purchaseId: number | null }>()
 const emit = defineEmits<{ close: []; changed: [] }>()
@@ -15,6 +15,8 @@ const { smAndDown, width } = useDisplay()
 const user = useCurrentUserStore()
 
 const detail = ref<PurchaseDetail | null>(null)
+// The link comes from the API: only a plain public https URL becomes a clickable link (nothing is shown otherwise).
+const stripeLink = computed(() => safeStripeUrl(detail.value?.stripeUrl))
 const loading = ref(false)
 const failed = ref(false)
 const refundOpen = ref(false)
@@ -246,11 +248,11 @@ const STEP_COLOR: Record<string, string> = { created: 'secondary', paid: 'succes
         </ul>
 
         <v-btn
-          v-if="detail.stripeUrl"
+          v-if="stripeLink"
           class="mt-5 touch"
           variant="outlined"
           block
-          :href="detail.stripeUrl"
+          :href="stripeLink"
           target="_blank"
           rel="noopener noreferrer"
           prepend-icon="mdi-open-in-new"
