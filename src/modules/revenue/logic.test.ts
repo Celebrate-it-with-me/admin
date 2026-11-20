@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CODE_HELP, STATUS, actionError, buildParams, canSync, disputeIsOpen, disputeLabel, emptyFilters, extraFilterCount, hasAnyFilter, refundBlockReason, refundError } from './logic'
+import { CODE_HELP, STATUS, actionError, buildParams, canSync, disputeIsOpen, disputeLabel, emptyFilters, extraFilterCount, hasAnyFilter, refundBlockReason, refundError, safeStripeUrl } from './logic'
 
 describe('filters', () => {
   it('sends disputed and needsReview only when on', () => {
@@ -75,5 +75,15 @@ describe('errors', () => {
     expect(refundBlockReason({ status: 'paid', canRefund: false })).toBe(CODE_HELP.event_published)
     expect(refundBlockReason({ status: 'paid', canRefund: true })).toBeNull()
     expect(refundBlockReason({ status: 'chargeback', canRefund: false })).toBeNull()
+  })
+})
+
+describe('safeStripeUrl', () => {
+  it('keeps a Stripe dashboard https URL', () => {
+    expect(safeStripeUrl('https://dashboard.stripe.com/test/payments/pi_123')).toBe('https://dashboard.stripe.com/test/payments/pi_123')
+  })
+
+  it.each(['javascript:alert(1)', 'http://dashboard.stripe.com/payments/pi_1', 'https://user:pw@dashboard.stripe.com/x', 'https://203.0.113.9/payments', '', '   ', null, undefined])('refuses %j', raw => {
+    expect(safeStripeUrl(raw)).toBeNull()
   })
 })

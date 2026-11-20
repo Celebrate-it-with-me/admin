@@ -1,3 +1,4 @@
+import { safeExternalUrl } from '@/modules/templates/packages/logic'
 import type { Coupon, PurchaseFilters, PurchaseStatus, Gateway, PurchaseDetail } from './types'
 
 /** $99, $79.50: whole dollars without decimals. */
@@ -152,3 +153,6 @@ export function firstError(e: unknown, fallback: string): string {
 export function validationCodes(e: unknown, field: string): string[] | undefined {
   return (e as { response?: { data?: { errors?: Record<string, string[]> } } })?.response?.data?.errors?.[field]
 }
+
+/** The gateway link from the API, or null when it is not a plain public https URL (never rendered as a link then). */
+export const safeStripeUrl = (raw: unknown): string | null => safeExternalUrl(raw)
