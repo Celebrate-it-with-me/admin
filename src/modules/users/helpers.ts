@@ -23,6 +23,7 @@ const MESSAGES: Record<string, string> = {
 
 /** The first validation code of a 422 turned into a sentence for the team; anything else gets a generic text. */
 export function explainError(e: unknown, fallback = 'No pudimos hacerlo. Inténtalo de nuevo.'): string {
+  if ((e as { reauthCancelled?: boolean })?.reauthCancelled) return 'No se confirmó tu contraseña, así que no se hizo ningún cambio.'
   const body = (e as { response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> } } })?.response
   const errors = body?.data?.errors ?? {}
   for (const [field, codes] of Object.entries(errors)) {

@@ -37,13 +37,17 @@ const notice = ref<{ type: 'success' | 'error' | 'info'; text: string } | null>(
 
 // ── password reset ──
 const resetting = ref(false)
-const reset = async () => {
+const resetOpen = ref(false)
+const resetError = ref('')
+const reset = async (reason: string) => {
   resetting.value = true
+  resetError.value = ''
   notice.value = null
   try {
-    await API.post(`users/${id.value}/password-reset`)
+    await API.post(`users/${id.value}/password-reset`, { reason })
+    resetOpen.value = false
     notice.value = { type: 'success', text: `Enviamos el correo para restablecer la contraseña a ${user.value?.email}.` }
-  } catch (e) { notice.value = { type: 'error', text: explainError(e) } } finally { resetting.value = false }
+  } catch (e) { resetError.value = explainError(e) } finally { resetting.value = false }
 }
 
 // ── suspend / unsuspend ──
@@ -65,12 +69,16 @@ const doSuspend = async (reason: string) => {
 
 // ── export ──
 const exporting = ref(false)
-const exportData = async () => {
+const exportOpen = ref(false)
+const exportError = ref('')
+const exportData = async (reason: string) => {
   exporting.value = true
+  exportError.value = ''
   notice.value = null
   try {
-    const res = await API.get(`users/${id.value}/export`, { responseType: 'blob' })
-    const url = URL.createObjectURL(res.data as Blob)
+    // Plain JSON (not a blob): a 403 `reauth_required` must stay readable so the interceptor can ask for the password and retry.
+    const res = await API.get(`users/${id.value}/export`, { params: { reason } })
+    const url = URL.createObjectURL(new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' }))
     const a = document.createElement('a')
     a.href = url
     a.download = filenameFrom(res.headers['content-disposition'], `user-${id.value}-export.json`)
@@ -78,7 +86,8 @@ const exportData = async () => {
     a.click()
     a.remove()
     URL.revokeObjectURL(url)
-  } catch (e) { notice.value = { type: 'error', text: explainError(e, 'No pudimos exportar los datos.') } } finally { exporting.value = false }
+    exportOpen.value = false
+  } catch (e) { exportError.value = explainError(e, 'No pudimos exportar los datos.') } finally { exporting.value = false }
 }
 
 // ── delete ──
@@ -189,12 +198,12 @@ const onDeleted = async (archived: number[]) => {
             <h3 class="h3">Acciones</h3>
             <div class="actions">
               <ImpersonateButton v-if="!deleted && !isStaff && !user.suspension" :user="user" />
-              <v-btn v-if="me.can('admin.users.reset_password')" variant="outlined" prepend-icon="mdi-lock-reset" :loading="resetting" :disabled="deleted" @click="reset">Restablecer contraseña</v-btn>
+              <v-btn v-if="me.can('admin.users.reset_password')" variant="outlined" prepend-icon="mdi-lock-reset" :loading="resetting" :disabled="deleted" @click="resetError = ''; resetOpen = true">Restablecer contraseña</v-btn>
               <template v-if="!deleted">
                 <v-btn v-if="me.can('admin.users.suspend') && !user.suspension && !isStaff" variant="outlined" color="warning" prepend-icon="mdi-cancel" @click="askSuspend('suspend')">Suspender</v-btn>
                 <v-btn v-if="me.can('admin.users.suspend') && user.suspension" variant="outlined" color="success" prepend-icon="mdi-account-check-outline" @click="askSuspend('unsuspend')">Reactivar</v-btn>
               </template>
-              <v-btn v-if="me.can('admin.users.export')" variant="outlined" prepend-icon="mdi-download-outline" :loading="exporting" @click="exportData">Exportar datos (JSON)</v-btn>
+              <v-btn v-if="me.can('admin.users.export')" variant="outlined" prepend-icon="mdi-download-outline" :loading="exporting" @click="exportError = ''; exportOpen = true">Exportar datos (JSON)</v-btn>
               <v-btn v-if="me.can('admin.users.delete') && !deleted && !isStaff" variant="flat" color="error" prepend-icon="mdi-account-remove-outline" @click="deleteOpen = true">Borrar cuenta</v-btn>
             </div>
             <p v-if="isStaff" class="text-caption text-medium-emphasis mt-3 mb-0">Es una cuenta del equipo: no se suspende ni se borra desde aquí. Quítale el acceso en "Equipo y roles".</p>
@@ -212,6 +221,22 @@ const onDeleted = async (archived: number[]) => {
         :danger="suspendMode === 'suspend'"
         :loading="suspendLoading" :error="suspendError"
         @update:model-value="suspendMode = null" @confirm="doSuspend"
+      />
+      <ReasonDialog
+        :model-value="resetOpen"
+        title="Restablecer la contraseña"
+        :message="`Enviaremos a ${user.email} un correo para elegir una contraseña nueva.`"
+        confirm-label="Enviar correo"
+        :loading="resetting" :error="resetError"
+        @update:model-value="resetOpen = false" @confirm="reset"
+      />
+      <ReasonDialog
+        :model-value="exportOpen"
+        title="Exportar los datos de la cuenta"
+        message="Descargarás un archivo con datos personales de la cuenta y de sus eventos. Úsalo solo para atender una solicitud."
+        confirm-label="Exportar"
+        :loading="exporting" :error="exportError"
+        @update:model-value="exportOpen = false" @confirm="exportData"
       />
       <DeleteUserDialog v-model="deleteOpen" :user="user" @deleted="onDeleted" />
     </template>
