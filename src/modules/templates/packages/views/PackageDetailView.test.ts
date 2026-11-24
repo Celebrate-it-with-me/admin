@@ -63,6 +63,7 @@ beforeEach(() => {
   Object.values(api).forEach(fn => fn.mockReset())
   push.mockReset()
   window.localStorage.clear()
+  window.sessionStorage.clear()
   views = ALL_VIEWS
   api.getImpact.mockResolvedValue({ eventsPinned: 12, eventsUnpublished: 5, templates: [] })
   api.listGrants.mockResolvedValue([])
@@ -116,6 +117,62 @@ describe('PackageDetailView', () => {
     expect(w.find('[data-testid="preview-gate"]').text()).toContain('Sin foto')
     expect(w.find('[data-testid="preview-gate"]').text()).not.toContain('móvil')
     expect(w.find('[data-testid="activate"]').attributes('disabled')).toBeDefined()
+    w.unmount()
+  })
+
+  it('tells next to Activar what is missing, and points the disabled button at it', async () => {
+    views = [['mobile', 'invitation'], ['mobile', 'save_the_date']]
+    const w = await mountView(pkg())
+    expect(w.find('[data-testid="activation-summary"]').text()).toContain('vista de móvil')
+    await openReview(w)
+    const hint = w.find('[data-testid="activation-summary"]')
+    expect(hint.text()).toBe('Falta: vista de escritorio · estado «Sin foto» · 0 de 6 comprobaciones')
+    const btn = w.find('[data-testid="activate"]')
+    expect(btn.attributes('aria-describedby')).toBe('activation-hint')
+    expect(w.find('#activation-hint').exists()).toBe(true)
+    expect(btn.attributes('title')).toContain('Aún no se puede activar')
+    expect(hint.attributes('aria-live')).toBe('polite')
+    expect(w.findAll('[data-testid="activation-progress"] li').map(li => li.attributes('data-done'))).toEqual(['true', 'false', 'true', 'true', 'false', 'false'])
+    expect(w.find('[data-testid="activation-progress"]').text()).toContain('Pendiente: Vista de escritorio')
+    w.unmount()
+  })
+
+  it('counts the checks in the hint and says all is ready at the end', async () => {
+    const w = await mountView(pkg())
+    await openReview(w)
+    await w.find('[data-item="contrast"] input').setValue(true)
+    expect(w.find('[data-testid="activation-summary"]').text()).toBe('Falta: 1 de 6 comprobaciones')
+    for (const item of CHECKLIST) await w.find(`[data-item="${item.id}"] input`).setValue(true)
+    expect(w.find('[data-testid="activation-summary"]').text()).toBe('Todo listo para activar.')
+    expect(w.find('[data-testid="activate"]').attributes('aria-describedby')).toBeUndefined()
+    w.unmount()
+  })
+
+  it('restores in this tab what was opened in the preview, per version, and saves it as it grows', async () => {
+    views = [['mobile', 'invitation']]
+    const first = await mountView(pkg())
+    await openReview(first)
+    expect(window.sessionStorage.getItem('qv.admin.pkg-coverage.5.1.0.0')).toContain('"invitation"')
+    first.unmount()
+    views = []
+    const back = await mountView(pkg())
+    await openReview(back)
+    expect(back.find('[data-testid="activation-summary"]').text()).toContain('vista de escritorio')
+    expect(back.find('[data-testid="activation-summary"]').text()).not.toContain('vista de móvil')
+    expect(back.find('[data-testid="activation-summary"]').text()).not.toContain('«Invitación»')
+    back.unmount()
+    const other = await mountView(pkg({ semver: '1.1.0' }))
+    await openReview(other)
+    expect(other.find('[data-testid="activation-summary"]').text()).toContain('vista de móvil')
+    other.unmount()
+  })
+
+  it('shows why the preview cannot be completed next to the button', async () => {
+    views = []
+    const w = await mountView(pkg())
+    await openReview(w)
+    await w.findComponent(PreviewStub).vm.$emit('problem', 'La app no respondió a tiempo.')
+    expect(w.find('[data-testid="activation-problem"]').text()).toContain('La app no respondió a tiempo.')
     w.unmount()
   })
 

@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { hasZipSignature, coverageDone, coverageMissing, emptyCoverage,
   CHECKLIST, MAX_ZIP_BYTES, checklistPayload, canActivate, canDeactivate, canWithdraw, checkZip, checklistDone, checklistProgress, codeHelp, explainPackageError,
-  formatBytes, groupReport, impactMessage, loadChecklist, presetOptions, saveChecklist,
+  activationMissing, loadCoverage, saveCoverage, formatBytes, groupReport, impactMessage, loadChecklist, presetOptions, saveChecklist,
 } from './logic'
 import type { ReportItem } from './types'
 
@@ -84,6 +84,29 @@ describe('checklist', () => {
     expect(coverageMissing(emptyCoverage())).toEqual(['móvil', 'escritorio', 'Invitación', 'Guarda la fecha', 'Sin foto'])
     expect(coverageDone({ devices: ['mobile', 'desktop'], states: ['invitation', 'save_the_date', 'no_photo'] })).toBe(true)
     expect(coverageMissing({ devices: ['mobile'], states: ['invitation', 'no_photo'] })).toEqual(['escritorio', 'Guarda la fecha'])
+  })
+  it('says what is missing to activate, in order, and nothing when all is done', () => {
+    expect(activationMissing({ devices: ['mobile'], states: ['invitation', 'save_the_date'] }, 4).map(m => m.label)).toEqual(['vista de escritorio', 'estado «Sin foto»', '4 de 6 comprobaciones'])
+    expect(activationMissing({ devices: ['mobile', 'desktop'], states: ['invitation', 'save_the_date', 'no_photo'] }, 6)).toEqual([])
+    expect(activationMissing(emptyCoverage(), 0)).toHaveLength(6)
+  })
+  it('stores the preview coverage per package and version, and only believes known values', () => {
+    saveCoverage(5, '1.0.0', { devices: ['mobile'], states: ['no_photo'] })
+    expect(loadCoverage(5, '1.0.0')).toEqual({ devices: ['mobile'], states: ['no_photo'] })
+    expect(loadCoverage(5, '1.0.1')).toEqual(emptyCoverage())
+    window.sessionStorage.setItem('qv.admin.pkg-coverage.5.2.0.0', JSON.stringify({ devices: ['mobile', 'tv'], states: 'x' }))
+    expect(loadCoverage(5, '2.0.0')).toEqual({ devices: ['mobile'], states: [] })
+    window.sessionStorage.setItem('qv.admin.pkg-coverage.5.3.0.0', '{bad')
+    expect(loadCoverage(5, '3.0.0')).toEqual(emptyCoverage())
+    window.sessionStorage.setItem('qv.admin.pkg-coverage.5.4.0.0', '5')
+    expect(loadCoverage(5, '4.0.0')).toEqual(emptyCoverage())
+  })
+  it('survives blocked sessionStorage', () => {
+    const get = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked') })
+    const set = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked') })
+    expect(loadCoverage(5, '1.0.0')).toEqual(emptyCoverage())
+    expect(() => saveCoverage(5, '1.0.0', emptyCoverage())).not.toThrow()
+    get.mockRestore(); set.mockRestore()
   })
 })
 
