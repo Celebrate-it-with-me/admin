@@ -245,6 +245,37 @@ export function coverageMissing(c: PreviewCoverage): string[] {
 }
 export const coverageDone = (c: PreviewCoverage) => coverageMissing(c).length === 0
 
+const coverageKey = (packageId: number, semver: string) => `qv.admin.pkg-coverage.${packageId}.${semver}`
+
+/** Remembers, for this tab only, which devices and states the reviewer opened in the preview (UI help; the server checks nothing of it). */
+export function saveCoverage(packageId: number, semver: string, c: PreviewCoverage): void {
+  try { window.sessionStorage.setItem(coverageKey(packageId, semver), JSON.stringify({ devices: c.devices, states: c.states })) } catch { /* blocked storage: it just does not persist */ }
+}
+
+/** What comes back from storage is untrusted: only known devices and states survive. */
+export function loadCoverage(packageId: number, semver: string): PreviewCoverage {
+  try {
+    const raw = window.sessionStorage.getItem(coverageKey(packageId, semver))
+    const parsed = (raw ? JSON.parse(raw) : null) as { devices?: unknown; states?: unknown } | null
+    if (!parsed || typeof parsed !== 'object') return emptyCoverage()
+    const devices = Array.isArray(parsed.devices) ? PREVIEW_DEVICES.map(d => d.value).filter(v => (parsed.devices as unknown[]).includes(v)) : []
+    const states = Array.isArray(parsed.states) ? PREVIEW_STATES.map(s => s.value).filter(v => (parsed.states as unknown[]).includes(v)) : []
+    return { devices, states }
+  } catch { return emptyCoverage() }
+}
+
+export interface ActivationMissing { label: string; kind: 'device' | 'state' | 'checks' }
+
+/** Everything that still blocks "Activar", in the order the reviewer does it: devices, states, then the checks. */
+export function activationMissing(c: PreviewCoverage, checksDone: number): ActivationMissing[] {
+  const total = CHECKLIST.length
+  return [
+    ...PREVIEW_DEVICES.filter(d => !c.devices.includes(d.value)).map(d => ({ kind: 'device' as const, label: `vista de ${d.label}` })),
+    ...PREVIEW_STATES.filter(s => !c.states.includes(s.value)).map(s => ({ kind: 'state' as const, label: `estado «${s.label}»` })),
+    ...(checksDone < total ? [{ kind: 'checks' as const, label: `${checksDone} de ${total} comprobaciones` }] : []),
+  ]
+}
+
 // --- Links that come from the package (W6-01) ---------------------------------------------------------------------
 
 const BLOCKED_SUFFIXES = ['.localhost', '.local', '.internal', '.lan', '.home', '.corp', '.intranet']
