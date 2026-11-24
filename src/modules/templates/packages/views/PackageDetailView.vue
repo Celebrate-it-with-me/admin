@@ -213,7 +213,7 @@ const versionLabel: Record<string, string> = { draft: 'Borrador', published: 'Pu
         <PackagePreviewPane v-if="tab === 'review'" :package-id="pkg.id" :event-types="pkg.eventTypes" :presets="presets" :visible="tab === 'review'" @viewed="onViewed" @problem="previewProblem = $event" />
         <div>
           <QualityChecklist v-model="checklist" :reviewer="reviewer" :readonly="pkg.status === 'withdrawn'" :pending="pending" />
-          <p class="text-caption text-medium-emphasis mt-2">Los puntos marcados (solo cuáles y cuándo) se recuerdan en este navegador, pero la vista previa hay que abrirla en cada visita. Al activar, la lista completa se envía al servidor, que registra en la auditoría quién y cuándo, junto con el motivo.</p>
+          <p class="text-caption text-medium-emphasis mt-2">Los puntos marcados (solo cuáles y cuándo) se recuerdan en este navegador, y lo abierto en la vista previa se recuerda solo en esta pestaña del navegador (por paquete y versión). Al activar, la lista completa se envía al servidor, que registra en la auditoría quién y cuándo, junto con el motivo.</p>
         </div>
       </div>
 
