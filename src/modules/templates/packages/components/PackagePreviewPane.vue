@@ -20,7 +20,7 @@ const props = defineProps<{
   visible?: boolean
 }>()
 /** `viewed`: the sample invitation of this device and state was drawn in the iframe (the checklist opens after all of them). */
-const emit = defineEmits<{ viewed: [device: PreviewDevice, state: PreviewState] }>()
+const emit = defineEmits<{ viewed: [device: PreviewDevice, state: PreviewState]; /** Why the preview cannot be completed ('' when it can). */ problem: [message: string] }>()
 
 const DEBOUNCE_MS = 250
 const READY_TIMEOUT_MS = 10000
@@ -134,6 +134,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   window.removeEventListener('message', onMessage)
+  emit('problem', '')
   clearTimeout(timer)
   clearTimeout(readyTimer)
   observer?.disconnect()
@@ -148,8 +149,9 @@ const showError = computed(() => Boolean(error.value) || frameFailed.value || mi
 const errorText = computed(() => {
   if (misconfigured.value) return 'Falta configurar VITE_APP_URL (la dirección de la app) para ver la vista previa.'
   if (error.value) return error.value
-  return 'La app no respondió. Comprueba que esté en marcha y que permita mostrarse dentro del admin.'
+  return 'La app no respondió a tiempo. Qué hacer: comprueba que cwm_app esté en marcha, que VITE_APP_URL apunte a su dirección y que la app permita mostrarse dentro del admin; luego pulsa «Reintentar».'
 })
+watch(() => (showError.value ? errorText.value : ''), v => emit('problem', v), { immediate: true })
 const typeLabel = (t: EventTypeSlug) => (t === 'wedding' ? 'Boda' : 'Quinceañera')
 </script>
 

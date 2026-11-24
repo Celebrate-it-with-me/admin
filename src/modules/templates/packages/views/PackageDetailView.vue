@@ -8,11 +8,12 @@ import GrantsPanel from '../components/GrantsPanel.vue'
 import ImpactDialog from '../components/ImpactDialog.vue'
 import PackagePreviewPane from '../components/PackagePreviewPane.vue'
 import PackageStatusChip from '../components/PackageStatusChip.vue'
+import ActivationProgress from '../components/ActivationProgress.vue'
 import QualityChecklist from '../components/QualityChecklist.vue'
 import ThirdPartyMarksBanner from '../components/ThirdPartyMarksBanner.vue'
 import {
   TIER_LABEL, VISIBILITY_LABEL, canActivate, canDeactivate, canWithdraw, checklistDone, checklistPayload, eventTypesLabel, eventsPinnedLabel, explainPackageError,
-  coverageDone, coverageMissing, emptyCoverage, formatBytes, formatDateTime, loadChecklist, presetOptions, safeExternalUrl, saveChecklist, type ChecklistState,
+  coverageDone, coverageMissing, emptyCoverage, formatBytes, formatDateTime, loadChecklist, loadCoverage, presetOptions, safeExternalUrl, saveChecklist, saveCoverage, checklistProgress, type ChecklistState,
 } from '../logic'
 import type { PreviewDevice } from '../logic'
 import { activatePackage, deactivatePackage, getPackage, withdrawPackage } from '../packagesApi'
@@ -34,15 +35,29 @@ const tab = ref<'summary' | 'review' | 'grants'>(route.query.installed ? 'review
 const load = async () => {
   loading.value = true
   failed.value = false
-  try { pkg.value = await getPackage(props.id) } catch (e) { failed.value = true; failedMessage.value = explainPackageError(e).message } finally { loading.value = false }
+  try { pkg.value = await getPackage(props.id); restoreCoverage() } catch (e) { failed.value = true; failedMessage.value = explainPackageError(e).message } finally { loading.value = false }
 }
 onMounted(load)
 
 const reviewer = computed(() => user.user?.name || user.user?.email || 'Revisor')
 const checklist = ref<ChecklistState>(loadChecklist(props.id, reviewer.value))
 watch(checklist, v => saveChecklist(props.id, v), { deep: true })
-// W6-09: what the reviewer has really opened in the preview during this visit (never stored). Without it the checklist stays closed.
+// W6-09: what the reviewer has really opened in the preview. Without it the checklist stays closed. Kept per package+version in this tab only
+// (sessionStorage), so leaving and coming back does not start over; the server never trusts it.
 const coverage = ref(emptyCoverage())
+const restoredKey = ref('')
+const restoreCoverage = () => {
+  if (!pkg.value) return
+  const key = `${pkg.value.id}@${pkg.value.semver}`
+  if (restoredKey.value === key) return
+  restoredKey.value = key
+  const saved = loadCoverage(pkg.value.id, pkg.value.semver)
+  coverage.value = { devices: [...new Set([...coverage.value.devices, ...saved.devices])], states: [...new Set([...coverage.value.states, ...saved.states])] }
+}
+watch(coverage, v => { if (pkg.value && restoredKey.value) saveCoverage(pkg.value.id, pkg.value.semver, v) }, { deep: true })
+const previewProblem = ref('')
+const checksDone = computed(() => checklistProgress(checklist.value))
+const missingHint = computed(() => (reviewed.value ? undefined : 'activation-hint'))
 const onViewed = (device: PreviewDevice, state: PreviewState) => {
   if (!coverage.value.devices.includes(device)) coverage.value.devices.push(device)
   if (!coverage.value.states.includes(state)) coverage.value.states.push(state)
@@ -133,12 +148,12 @@ const versionLabel: Record<string, string> = { draft: 'Borrador', published: 'Pu
           </div>
         </div>
         <div class="actions">
-          <v-btn v-if="canActivate(pkg)" color="primary" variant="flat" prepend-icon="mdi-check-decagram-outline" class="tap" :disabled="!reviewed" data-testid="activate" @click="activate.open = true; activate.error = ''">Activar</v-btn>
+          <v-btn v-if="canActivate(pkg)" color="primary" variant="flat" prepend-icon="mdi-check-decagram-outline" class="tap" :disabled="!reviewed" :aria-describedby="missingHint" :title="reviewed ? undefined : 'Aún no se puede activar: mira lo que falta debajo'" data-testid="activate" @click="activate.open = true; activate.error = ''">Activar</v-btn>
           <v-btn v-if="canDeactivate(pkg)" variant="tonal" prepend-icon="mdi-pause-circle-outline" class="tap" data-testid="deactivate" @click="openImpact('deactivate')">Desactivar</v-btn>
           <v-btn v-if="canWithdraw(pkg)" variant="text" color="error" prepend-icon="mdi-archive-arrow-down-outline" class="tap" data-testid="withdraw" @click="openImpact('withdraw')">Retirar</v-btn>
         </div>
       </div>
-      <p v-if="canActivate(pkg) && !reviewed" class="text-caption text-medium-emphasis mt-n2 mb-3">Para activar, revisa la vista previa (móvil, escritorio y cada estado) y completa la lista de comprobación en la pestaña Revisión.</p>
+      <ActivationProgress v-if="canActivate(pkg)" id="activation-hint" class="mb-3" :coverage="coverage" :checks-done="checksDone" :problem="previewProblem" />
 
       <v-alert v-if="notice" type="success" variant="tonal" density="compact" closable class="mb-3" aria-live="polite" @click:close="notice = ''">{{ notice }}</v-alert>
       <v-alert v-if="actionError" type="error" variant="tonal" density="compact" closable class="mb-3" role="alert" @click:close="actionError = ''">{{ actionError }}</v-alert>
@@ -195,10 +210,10 @@ const versionLabel: Record<string, string> = { draft: 'Borrador', published: 'Pu
 
       <!-- Review: preview + checklist -->
       <div v-show="tab === 'review'" class="review">
-        <PackagePreviewPane v-if="tab === 'review'" :package-id="pkg.id" :event-types="pkg.eventTypes" :presets="presets" :visible="tab === 'review'" @viewed="onViewed" />
+        <PackagePreviewPane v-if="tab === 'review'" :package-id="pkg.id" :event-types="pkg.eventTypes" :presets="presets" :visible="tab === 'review'" @viewed="onViewed" @problem="previewProblem = $event" />
         <div>
           <QualityChecklist v-model="checklist" :reviewer="reviewer" :readonly="pkg.status === 'withdrawn'" :pending="pending" />
-          <p class="text-caption text-medium-emphasis mt-2">Los puntos marcados (solo cuáles y cuándo) se recuerdan en este navegador, pero la vista previa hay que abrirla en cada visita. Al activar, la lista completa se envía al servidor, que registra en la auditoría quién y cuándo, junto con el motivo.</p>
+          <p class="text-caption text-medium-emphasis mt-2">Los puntos marcados (solo cuáles y cuándo) se recuerdan en este navegador, y lo abierto en la vista previa se recuerda solo en esta pestaña del navegador (por paquete y versión). Al activar, la lista completa se envía al servidor, que registra en la auditoría quién y cuándo, junto con el motivo.</p>
         </div>
       </div>
 

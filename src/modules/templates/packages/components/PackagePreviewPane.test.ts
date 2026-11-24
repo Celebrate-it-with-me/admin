@@ -21,6 +21,29 @@ const fromApp = (source: unknown, data: unknown, origin = 'https://app.example')
 beforeEach(() => { api.previewPackage.mockReset(); api.previewPackage.mockResolvedValue({ sections: [] }) })
 afterEach(() => { document.body.innerHTML = '' })
 
+describe('PackagePreviewPane when the app does not answer', () => {
+  afterEach(() => { vi.useRealTimers() })
+
+  it('after the wait, explains what to check and lets the reviewer retry with a fresh frame', async () => {
+    vi.useFakeTimers()
+    const { w, iframe } = await mountPane()
+    expect(w.find('[role="alert"]').exists()).toBe(false)
+    await vi.advanceTimersByTimeAsync(10000)
+    const alert = w.find('[role="alert"]')
+    expect(alert.text()).toContain('VITE_APP_URL')
+    expect(alert.text()).toContain('cwm_app')
+    expect(w.emitted('problem')?.at(-1)?.[0]).toContain('VITE_APP_URL')
+    await alert.find('button').trigger('click')
+    await flushPromises()
+    expect(w.find('iframe').element).not.toBe(iframe)
+    fromApp((w.find('iframe').element as HTMLIFrameElement).contentWindow, { type: 'qv-preview-ready' })
+    await flushPromises()
+    expect(w.find('[role="alert"]').exists()).toBe(false)
+    expect(w.emitted('problem')?.at(-1)).toEqual([''])
+    w.unmount()
+  })
+})
+
 describe('PackagePreviewPane message contract', () => {
   it('targets the iframe at the exact origin of the app, with no referrer', async () => {
     const { w, iframe, posted } = await mountPane()
