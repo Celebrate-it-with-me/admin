@@ -182,7 +182,7 @@ const toggleMessage = computed(() => {
 .offer__stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 0; }
 .offer__stats dt { font-size: 0.875rem; font-weight: 600; color: var(--ink-500); }
 .offer__stats dd { font-family: var(--font-heading); font-size: 1.75rem; line-height: 1.2; margin: 0; }
-.soldout { color: rgb(var(--v-theme-warning)); }
+.soldout { color: color-mix(in srgb, rgb(var(--v-theme-warning)) 65%, black); }
 .is-loading { opacity: 0.55; transition: opacity 0.15s ease-out; }
 .touch { min-height: 44px; }
 @media (min-width: 960px) { .offer__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
