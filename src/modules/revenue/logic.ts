@@ -159,14 +159,14 @@ export const safeStripeUrl = (raw: unknown): string | null => safeExternalUrl(ra
 
 // ---- Launch offer ($79, first slots) ----
 
-export type OfferState = { key: 'active' | 'soldout' | 'inactive' | 'closed'; label: string; color: string; icon: string }
+export type OfferState = { key: 'active' | 'soldout' | 'inactive'; label: string; color: string; icon: string }
 
-/** Active = open now; soldout = switched on but no slots left; inactive = switched off. */
+/** Active = open now; soldout = switched on but no slots left; anything else (switched off, or not open for another reason) = inactive. */
 export function offerState(o: Pick<LaunchOffer, 'isActive' | 'active' | 'slotsLeft'>): OfferState {
   if (!o.isActive) return { key: 'inactive', label: 'Inactiva', color: 'secondary', icon: 'mdi-pause-circle-outline' }
   if (o.active) return { key: 'active', label: 'Activa', color: 'success', icon: 'mdi-check-circle-outline' }
   if (o.slotsLeft <= 0) return { key: 'soldout', label: 'Agotada', color: 'warning', icon: 'mdi-alert-circle-outline' }
-  return { key: 'closed', label: 'Cerrada', color: 'warning', icon: 'mdi-alert-circle-outline' }
+  return { key: 'inactive', label: 'Inactiva', color: 'secondary', icon: 'mdi-pause-circle-outline' }
 }
 
 export interface OfferForm { price: string; totalSlots: string; slotsUsed: string; allowBelowUsed: boolean }

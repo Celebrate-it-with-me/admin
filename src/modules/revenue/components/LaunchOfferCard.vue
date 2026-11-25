@@ -94,7 +94,7 @@ const toggleMessage = computed(() => {
   if (!o) return ''
   return o.isActive
     ? `Las compras nuevas dejan de recibir ${money(o.priceCents, cur.value)}. Los pagos que ahora están abiertos con ese precio se cierran.`
-    : `Las compras nuevas pagarán ${money(o.priceCents, cur.value)} hasta agotar ${o.slotsLeft} ${o.slotsLeft === 1 ? 'cupo' : 'cupos'}. El tope se comparte con el código LANZAMIENTO79.`
+    : `Vas a activar un precio real: desde ahora, cualquier persona que compre un evento pagará ${money(o.priceCents, cur.value)} en lugar de ${money(o.listPriceCents, cur.value)}, hasta agotar ${o.slotsLeft} ${o.slotsLeft === 1 ? 'cupo' : 'cupos'}. El tope se comparte con el código LANZAMIENTO79.`
 })
 </script>
 
@@ -102,9 +102,12 @@ const toggleMessage = computed(() => {
   <v-card class="pa-5 mb-6 offer" :class="{ 'is-loading': loading && offer }" data-testid="launch-offer" :aria-busy="loading">
     <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-1">
       <h3 class="subtitle">Oferta de lanzamiento</h3>
-      <v-chip v-if="state" :color="state.color" variant="tonal" size="small" :prepend-icon="state.icon" data-testid="offer-state">{{ state.label }}</v-chip>
+      <v-chip v-if="state" :color="state.color" variant="tonal" size="small" :prepend-icon="state.icon" :class="`offer-chip offer-chip--${state.key}`" data-testid="offer-state">{{ state.label }}</v-chip>
     </div>
-    <p class="text-body-2 text-medium-emphasis mb-4">Los primeros eventos pagan un precio especial. El tope de cupos se comparte entre la oferta pública y el código LANZAMIENTO79. Cada cambio queda en la auditoría con su motivo.</p>
+    <p class="text-body-2 text-medium-emphasis mb-4">Los primeros eventos pagan un precio especial. Cada cambio queda en la auditoría con su motivo.</p>
+    <v-alert v-if="offer" type="info" variant="tonal" density="compact" class="mb-4" data-testid="offer-shared">
+      Los cupos se comparten entre la oferta pública y el código LANZAMIENTO79: las ventas con el código también cuentan en «Usados» de aquí. El contador «Usos» de ese código, en la lista de abajo, solo cuenta sus propios usos y puede mostrar menos.
+    </v-alert>
 
     <v-skeleton-loader v-if="loading && !offer && !loadError" type="heading, text" />
 
@@ -126,7 +129,7 @@ const toggleMessage = computed(() => {
         </div>
         <div class="offer__actions">
           <v-btn variant="tonal" prepend-icon="mdi-pencil-outline" class="touch" @click="openEdit">Ajustar</v-btn>
-          <v-btn variant="flat" :color="offer.isActive ? 'error' : 'success'" :prepend-icon="offer.isActive ? 'mdi-pause' : 'mdi-play'" class="touch" @click="askToggle">{{ offer.isActive ? 'Desactivar' : 'Activar' }}</v-btn>
+          <v-btn :variant="offer.isActive ? 'flat' : 'tonal'" :color="offer.isActive ? 'error' : 'success'" :prepend-icon="offer.isActive ? 'mdi-pause' : 'mdi-play'" class="touch" @click="askToggle">{{ offer.isActive ? 'Desactivar' : 'Activar' }}</v-btn>
         </div>
       </div>
 
@@ -182,6 +185,10 @@ const toggleMessage = computed(() => {
 .offer__stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 0; }
 .offer__stats dt { font-size: 0.875rem; font-weight: 600; color: var(--ink-500); }
 .offer__stats dd { font-family: var(--font-heading); font-size: 1.75rem; line-height: 1.2; margin: 0; }
+.offer-chip--inactive { color: #4a413c !important; --v-activated-opacity: 0; }
+.offer-chip--inactive :deep(.v-chip__underlay) { background: #ece6df; opacity: 1; }
+.offer-chip--soldout { color: #7a4a00 !important; }
+.offer-chip--soldout :deep(.v-chip__underlay) { background: #fbecd0; opacity: 1; }
 .soldout { color: color-mix(in srgb, rgb(var(--v-theme-warning)) 65%, black); }
 .is-loading { opacity: 0.55; transition: opacity 0.15s ease-out; }
 .touch { min-height: 44px; }

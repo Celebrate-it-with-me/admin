@@ -37,6 +37,8 @@ describe('LaunchOfferCard', () => {
     expect(w.get('[data-testid="slots-held"]').text()).toBe('3')
     expect(w.get('[data-testid="slots-left"]').text()).toBe('67')
     expect(w.text()).toContain('+2 ajuste')
+    expect(w.get('[data-testid="offer-shared"]').text()).toContain('LANZAMIENTO79')
+    expect(w.get('[data-testid="offer-state"]').classes()).toContain('offer-chip--active')
   })
 
   it('shows sold out and inactive states', async () => {
@@ -46,6 +48,7 @@ describe('LaunchOfferCard', () => {
     w.unmount()
     w = await mountCard(offer({ isActive: false, active: false }))
     expect(w.get('[data-testid="offer-state"]').text()).toContain('Inactiva')
+    expect(w.get('[data-testid="offer-state"]').classes()).toContain('offer-chip--inactive')
   })
 
   it('offers to create when there is no offer, and sends price and total', async () => {
@@ -87,7 +90,9 @@ describe('LaunchOfferCard', () => {
     const w = await mountCard(offer({ isActive: false, active: false }))
     await w.findAll('button').find(b => b.text() === 'Activar')!.trigger('click')
     await flushPromises()
-    expect(bodyText()).toContain('LANZAMIENTO79')
+    expect(bodyText()).toContain('Vas a activar un precio real')
+    expect(bodyText()).toContain('en lugar de $99')
+    expect(w.findAll('button').find(b => b.text() === 'Activar')!.classes()).toContain('v-btn--variant-tonal')
     await reason('Lanzamiento')
     api.updateLaunchOffer.mockResolvedValue(result())
     await button('Activar').click()

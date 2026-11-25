@@ -8,11 +8,11 @@ const offer = (over: Partial<LaunchOffer> = {}): LaunchOffer => ({
 })
 
 describe('offerState', () => {
-  it('tells active, sold out, inactive and closed', () => {
+  it('tells active, sold out and inactive (never a made-up fourth state)', () => {
     expect(offerState(offer()).key).toBe('active')
     expect(offerState(offer({ active: false, slotsLeft: 0 })).label).toBe('Agotada')
     expect(offerState(offer({ isActive: false, active: false })).key).toBe('inactive')
-    expect(offerState(offer({ active: false, slotsLeft: 5 })).key).toBe('closed')
+    expect(offerState(offer({ active: false, slotsLeft: 5 })).label).toBe('Inactiva')
   })
 })
 
