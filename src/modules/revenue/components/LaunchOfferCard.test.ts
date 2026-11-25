@@ -175,7 +175,7 @@ describe('LaunchOfferCard chip styles', () => {
     expect(css).toMatch(/\.offer-chip :deep\(\.v-chip__underlay\) \{ display: none; \}/)
   })
 
-  it.each(['inactive', 'soldout'])('%s chip paints its own background with at least 4.5:1 contrast', key => {
+  it.each(['active', 'inactive', 'soldout'])('%s chip paints its own background with at least 4.5:1 contrast', key => {
     const rule = css.match(new RegExp(`\\.offer-chip--${key} \\{([^}]*)\\}`))![1]
     const bg = rule.match(/background: (#[0-9a-f]{6})/i)![1]
     const fg = rule.match(/[^-]color: (#[0-9a-f]{6})/i)![1]

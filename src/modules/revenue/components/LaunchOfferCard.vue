@@ -186,6 +186,7 @@ const toggleMessage = computed(() => {
 .offer__stats dt { font-size: 0.875rem; font-weight: 600; color: var(--ink-500); }
 .offer__stats dd { font-family: var(--font-heading); font-size: 1.75rem; line-height: 1.2; margin: 0; }
 .offer-chip :deep(.v-chip__underlay) { display: none; }
+.offer-chip--active { background: #e3f0e8 !important; color: #2f6446 !important; }
 .offer-chip--inactive { background: #ece6df !important; color: #4a413c !important; }
 .offer-chip--soldout { background: #fbecd0 !important; color: #7a4a00 !important; }
 .soldout { color: color-mix(in srgb, rgb(var(--v-theme-warning)) 65%, black); }
