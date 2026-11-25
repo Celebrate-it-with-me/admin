@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useDisplay } from 'vuetify'
 import ReasonDialog from '@/components/ReasonDialog.vue'
+import LaunchOfferCard from '../components/LaunchOfferCard.vue'
 import { createCoupon, fetchCoupons, fetchPricing, updateCoupon, updatePrice } from '../services/revenueApi'
 import type { Coupon, Pricing } from '../types'
 import { centsToInput, couponState, couponValue, dateLabel, dollarsToCents, firstError, money, usesLabel } from '../logic'
@@ -203,6 +204,8 @@ const headers = [
       </div>
       <v-btn color="primary" variant="flat" prepend-icon="mdi-pencil-outline" class="touch" :disabled="!pricing" @click="openPrice">Cambiar precio</v-btn>
     </v-card>
+
+    <LaunchOfferCard v-if="pricing" :list-price-cents="pricing.plan.priceCents" :currency="pricing.plan.currency" @notice="notice = $event" />
 
     <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-3">
       <h3 class="subtitle">Códigos</h3>

@@ -42,3 +42,17 @@ describe('revenueApi', () => {
     await expect(api.refundPurchase(1, 'motivo')).rejects.toBe(err)
   })
 })
+
+describe('launch offer', () => {
+  it('reads the offer, which may not exist yet', async () => {
+    http.get.mockResolvedValue({ data: { data: null } })
+    expect(await api.fetchLaunchOffer()).toBeNull()
+    expect(http.get).toHaveBeenCalledWith('payments/launch-offer')
+  })
+
+  it('updates with the reason', async () => {
+    http.put.mockResolvedValue({ data: { data: { id: 1, sessionsClosed: 0 } } })
+    await api.updateLaunchOffer({ isActive: false }, 'pausa')
+    expect(http.put).toHaveBeenCalledWith('payments/launch-offer', { isActive: false, reason: 'pausa' })
+  })
+})
