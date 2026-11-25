@@ -106,7 +106,7 @@ const toggleMessage = computed(() => {
     </div>
     <p class="text-body-2 text-medium-emphasis mb-4">Los primeros eventos pagan un precio especial. Cada cambio queda en la auditoría con su motivo.</p>
     <v-alert v-if="offer" type="info" variant="tonal" density="compact" class="mb-4" data-testid="offer-shared">
-      Los cupos se comparten entre la oferta pública y el código LANZAMIENTO79: las ventas con el código también cuentan en «Usados» de aquí. El contador «Usos» de ese código, en la lista de abajo, solo cuenta sus propios usos y puede mostrar menos.
+      Los cupos se comparten con el código LANZAMIENTO79: sus ventas también cuentan en «Usados».
     </v-alert>
 
     <v-skeleton-loader v-if="loading && !offer && !loadError" type="heading, text" />

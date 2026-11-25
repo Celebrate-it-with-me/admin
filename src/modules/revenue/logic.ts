@@ -140,8 +140,11 @@ export function couponState(c: Coupon, now = new Date()): CouponState {
   return { label: 'Activo', color: 'success' }
 }
 
-export const usesLabel = (c: Pick<Coupon, 'times_used' | 'max_uses'>): string =>
-  c.max_uses === null ? `${c.times_used} (sin tope)` : `${c.times_used} de ${c.max_uses}`
+export const usesLabel = (c: Pick<Coupon, 'times_used' | 'max_uses'> & Partial<Pick<Coupon, 'sharesOfferSlots' | 'offerSlotsUsed' | 'offerSlotsTotal'>>): string => {
+  // A code tied to the launch offer spends the offer's slots: its own counter would say "0 de 100" while 62 are gone.
+  if (c.sharesOfferSlots && typeof c.offerSlotsUsed === 'number' && typeof c.offerSlotsTotal === 'number') return `${c.offerSlotsUsed} de ${c.offerSlotsTotal} cupos compartidos con la oferta`
+  return c.max_uses === null ? `${c.times_used} (sin tope)` : `${c.times_used} de ${c.max_uses}`
+}
 
 /** First validation message of a Laravel 422, or the fallback. */
 export function firstError(e: unknown, fallback: string): string {
@@ -178,12 +181,16 @@ export const offerForm = (o: LaunchOffer | null): OfferForm => ({
   allowBelowUsed: false,
 })
 
-/** A whole number of slots (0 to 100000), or null. */
+export const MAX_SLOTS = 10000
+/** The most the admin can add on top of the paid purchases (sales made outside the platform). */
+export const MAX_ADJUSTMENT = 1000
+
+/** A whole number of slots (0 to 10000, the API limit), or null. */
 export function parseSlots(input: string): number | null {
   const t = input.trim()
   if (!/^\d{1,6}$/.test(t)) return null
   const n = Number(t)
-  return n <= 100000 ? n : null
+  return n <= MAX_SLOTS ? n : null
 }
 
 /** The cheapest an offer may be: half of the list price, and never under Stripe's 50 cents (same rule as the API). */
@@ -200,11 +207,12 @@ export function offerErrors(form: OfferForm, offer: LaunchOffer | null, listPric
   else if (cents >= listPriceCents) out.price = `Debe ser menor que el precio normal (${money(listPriceCents, currency)}).`
   else if (cents < min) out.price = `No puede ser menor que ${money(min, currency)} (la mitad del precio normal).`
   const total = parseSlots(form.totalSlots)
-  if (total === null) out.totalSlots = 'Un número entero de 0 a 100,000.'
+  if (total === null) out.totalSlots = 'Un número entero de 0 a 10,000.'
   if (offer) {
     const used = parseSlots(form.slotsUsed)
-    if (used === null) out.slotsUsed = 'Un número entero de 0 a 100,000.'
+    if (used === null) out.slotsUsed = 'Un número entero de 0 a 10,000.'
     else if (used < offer.slotsPaid) out.slotsUsed = `No puede ser menor que las compras pagadas (${offer.slotsPaid}).`
+    else if (used - offer.slotsPaid > MAX_ADJUSTMENT) out.slotsUsed = `Solo puedes sumar hasta ${MAX_ADJUSTMENT} cupos por encima de las compras pagadas.`
   }
   return out
 }
@@ -237,6 +245,7 @@ export function offerChanges(form: OfferForm, offer: LaunchOffer | null): Launch
 export const OFFER_CODE_HELP: Record<string, string> = {
   required_to_create_offer: 'Para crear la oferta hace falta el precio y el tope de cupos.',
   below_paid_purchases: 'Los cupos usados no pueden ser menos que las compras ya pagadas.',
+  adjustment_too_large: 'El ajuste es demasiado grande: solo puedes sumar hasta 1,000 cupos por encima de las compras pagadas.',
   below_used_slots: 'El tope no puede quedar por debajo de los cupos usados. Si es a propósito, marca la casilla de permitirlo.',
   launch_offer_conflict: 'Otra persona acaba de crear la oferta. Recarga y vuelve a intentarlo.',
 }

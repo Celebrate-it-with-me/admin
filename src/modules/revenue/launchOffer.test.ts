@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { OFFER_CODE_HELP, offerChanges, offerError, offerErrors, offerForm, offerHasErrors, offerMinCents, offerNotice, offerState, parseSlots, totalBelowUsed } from './logic'
+import { OFFER_CODE_HELP, usesLabel, offerChanges, offerError, offerErrors, offerForm, offerHasErrors, offerMinCents, offerNotice, offerState, parseSlots, totalBelowUsed } from './logic'
 import type { LaunchOffer, LaunchOfferResult } from './types'
 
 const offer = (over: Partial<LaunchOffer> = {}): LaunchOffer => ({
@@ -19,8 +19,8 @@ describe('offerState', () => {
 describe('slots and form', () => {
   it('parses whole slot counts only', () => {
     expect(parseSlots(' 100 ')).toBe(100)
-    expect(parseSlots('100000')).toBe(100000)
-    expect(parseSlots('100001')).toBeNull()
+    expect(parseSlots('10000')).toBe(10000)
+    expect(parseSlots('10001')).toBeNull()
     expect(parseSlots('1.5')).toBeNull()
     expect(parseSlots('')).toBeNull()
   })
@@ -50,6 +50,10 @@ describe('offerErrors', () => {
     expect(offerErrors({ ...ok, totalSlots: '-1' }, offer(), 9900).totalSlots).toContain('entero')
     expect(offerErrors({ ...ok, slotsUsed: '27' }, offer(), 9900).slotsUsed).toContain('28')
     expect(offerErrors({ ...ok, slotsUsed: 'a' }, offer(), 9900).slotsUsed).toContain('entero')
+  })
+  it('rejects an adjustment above the API limit', () => {
+    expect(offerErrors({ ...ok, slotsUsed: '1029' }, offer(), 9900).slotsUsed).toContain('1000')
+    expect(offerErrors({ ...ok, slotsUsed: '1028' }, offer(), 9900).slotsUsed).toBe('')
   })
   it('does not check used slots when creating', () => {
     expect(offerErrors({ price: '79', totalSlots: '100', slotsUsed: '', allowBelowUsed: false }, null, 9900).slotsUsed).toBe('')
@@ -89,6 +93,7 @@ describe('offerError', () => {
     expect(offerError(http(422, { errors: { slotsUsed: ['below_paid_purchases'] } }), 'x')).toBe(OFFER_CODE_HELP.below_paid_purchases)
     expect(offerError(http(422, { errors: { totalSlots: ['below_used_slots'] } }), 'x')).toBe(OFFER_CODE_HELP.below_used_slots)
     expect(offerError(http(422, { errors: { priceCents: ['required_to_create_offer'] } }), 'x')).toBe(OFFER_CODE_HELP.required_to_create_offer)
+    expect(offerError(http(422, { errors: { slotsUsed: ['adjustment_too_large'] } }), 'x')).toBe(OFFER_CODE_HELP.adjustment_too_large)
     expect(offerError(http(409, { code: 'launch_offer_conflict' }), 'x')).toBe(OFFER_CODE_HELP.launch_offer_conflict)
   })
   it('falls back to the validation message, then the fallback', () => {
@@ -109,5 +114,18 @@ describe('offerNotice', () => {
     expect(offerNotice(result({ sessionsClosed: 2, sessionsStillOpen: 1 }), 'update')).toContain('2 pagos en curso')
     expect(offerNotice(result({ sessionsStillOpen: 1 }), 'update')).toContain('1 pago no se pudo cerrar y sigue abierto')
     expect(offerNotice(result({ sessionsStillOpen: 2 }), 'update')).toContain('2 pagos no se pudieron cerrar y siguen abiertos')
+  })
+})
+
+describe('usesLabel for codes tied to the offer', () => {
+  const base = { times_used: 0, max_uses: 100 }
+  it('shows the shared slots instead of the code own counter', () => {
+    expect(usesLabel({ ...base, sharesOfferSlots: true, offerSlotsUsed: 62, offerSlotsTotal: 100 })).toBe('62 de 100 cupos compartidos con la oferta')
+  })
+  it('falls back to the own counter on an older API or a normal code', () => {
+    expect(usesLabel(base)).toBe('0 de 100')
+    expect(usesLabel({ times_used: 3, max_uses: null })).toBe('3 (sin tope)')
+    expect(usesLabel({ ...base, sharesOfferSlots: false, offerSlotsUsed: null, offerSlotsTotal: null })).toBe('0 de 100')
+    expect(usesLabel({ ...base, sharesOfferSlots: true })).toBe('0 de 100')
   })
 })

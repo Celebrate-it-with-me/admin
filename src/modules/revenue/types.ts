@@ -93,6 +93,10 @@ export interface Coupon {
   expires_at: string | null
   is_active: boolean
   notes: string | null
+  /** True when the code is tied to the launch offer and so shares its slots. Absent on an older API. */
+  sharesOfferSlots?: boolean
+  offerSlotsUsed?: number | null
+  offerSlotsTotal?: number | null
 }
 
 export interface NewCoupon {
