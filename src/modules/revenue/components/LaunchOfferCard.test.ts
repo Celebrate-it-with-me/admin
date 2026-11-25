@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { bodyText, mountUi } from '@/test/mount'
@@ -156,5 +158,27 @@ describe('LaunchOfferCard', () => {
     w = await mountCard(Object.assign(new Error('403'), { response: { status: 403, data: {} } }))
     expect(w.get('[data-testid="offer-error"]').text()).toContain('No tienes permiso')
     expect(w.text()).not.toContain('Reintentar')
+  })
+})
+
+// jsdom does not lay out or paint, so `text()` can pass while a chip hides its own label behind an overlay.
+// These checks read the scoped CSS: the Vuetify underlay must be gone and the chip must paint its own readable colours.
+describe('LaunchOfferCard chip styles', () => {
+  const css = readFileSync(resolve(process.cwd(), 'src/modules/revenue/components/LaunchOfferCard.vue'), 'utf8').split('<style scoped>')[1]
+  const luminance = (hex: string) => {
+    const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+  }
+  const ratio = (a: string, b: string) => { const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x); return (hi + 0.05) / (lo + 0.05) }
+
+  it('removes the underlay that covered the label', () => {
+    expect(css).toMatch(/\.offer-chip :deep\(\.v-chip__underlay\) \{ display: none; \}/)
+  })
+
+  it.each(['inactive', 'soldout'])('%s chip paints its own background with at least 4.5:1 contrast', key => {
+    const rule = css.match(new RegExp(`\\.offer-chip--${key} \\{([^}]*)\\}`))![1]
+    const bg = rule.match(/background: (#[0-9a-f]{6})/i)![1]
+    const fg = rule.match(/[^-]color: (#[0-9a-f]{6})/i)![1]
+    expect(ratio(fg, bg)).toBeGreaterThanOrEqual(4.5)
   })
 })

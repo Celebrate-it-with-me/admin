@@ -185,10 +185,9 @@ const toggleMessage = computed(() => {
 .offer__stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 0; }
 .offer__stats dt { font-size: 0.875rem; font-weight: 600; color: var(--ink-500); }
 .offer__stats dd { font-family: var(--font-heading); font-size: 1.75rem; line-height: 1.2; margin: 0; }
-.offer-chip--inactive { color: #4a413c !important; --v-activated-opacity: 0; }
-.offer-chip--inactive :deep(.v-chip__underlay) { background: #ece6df; opacity: 1; }
-.offer-chip--soldout { color: #7a4a00 !important; }
-.offer-chip--soldout :deep(.v-chip__underlay) { background: #fbecd0; opacity: 1; }
+.offer-chip :deep(.v-chip__underlay) { display: none; }
+.offer-chip--inactive { background: #ece6df !important; color: #4a413c !important; }
+.offer-chip--soldout { background: #fbecd0 !important; color: #7a4a00 !important; }
 .soldout { color: color-mix(in srgb, rgb(var(--v-theme-warning)) 65%, black); }
 .is-loading { opacity: 0.55; transition: opacity 0.15s ease-out; }
 .touch { min-height: 44px; }
