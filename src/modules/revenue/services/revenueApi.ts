@@ -1,5 +1,5 @@
 import { API } from '@/services/axios'
-import type { Coupon, NewCoupon, Pricing, PurchaseDetail, PurchaseFilters, PurchasePage } from '../types'
+import type { Coupon, LaunchOffer, LaunchOfferChanges, LaunchOfferResult, NewCoupon, Pricing, PurchaseDetail, PurchaseFilters, PurchasePage } from '../types'
 import { buildParams } from '../logic'
 
 /**
@@ -50,3 +50,10 @@ export const createCoupon = async (c: NewCoupon, reason: string): Promise<Coupon
 /** An absent key leaves the field alone; an explicit null removes the cap or the expiry. */
 export const updateCoupon = async (id: number, changes: { isActive?: boolean; maxUses?: number | null; expiresAt?: string | null }, reason: string): Promise<Coupon> =>
   (await API.patch(`payments/coupons/${id}`, { ...changes, reason })).data.data
+
+/** `admin.pricing.manage`. `null` until the offer exists (the first PUT creates it). */
+export const fetchLaunchOffer = async (): Promise<LaunchOffer | null> => (await API.get('payments/launch-offer')).data.data
+
+/** `admin.pricing.manage` + reauth (the interceptor asks) + reason. Turning it off or changing the price closes the open checkouts. */
+export const updateLaunchOffer = async (changes: LaunchOfferChanges, reason: string): Promise<LaunchOfferResult> =>
+  (await API.put('payments/launch-offer', { ...changes, reason })).data.data

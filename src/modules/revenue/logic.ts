@@ -1,5 +1,5 @@
 import { safeExternalUrl } from '@/modules/templates/packages/logic'
-import type { Coupon, PurchaseFilters, PurchaseStatus, Gateway, PurchaseDetail } from './types'
+import type { Coupon, LaunchOffer, LaunchOfferChanges, LaunchOfferResult, PurchaseFilters, PurchaseStatus, Gateway, PurchaseDetail } from './types'
 
 /** $99, $79.50: whole dollars without decimals. */
 export function money(cents: number, currency = 'USD'): string {
@@ -156,3 +156,108 @@ export function validationCodes(e: unknown, field: string): string[] | undefined
 
 /** The gateway link from the API, or null when it is not a plain public https URL (never rendered as a link then). */
 export const safeStripeUrl = (raw: unknown): string | null => safeExternalUrl(raw)
+
+// ---- Launch offer ($79, first slots) ----
+
+export type OfferState = { key: 'active' | 'soldout' | 'inactive' | 'closed'; label: string; color: string; icon: string }
+
+/** Active = open now; soldout = switched on but no slots left; inactive = switched off. */
+export function offerState(o: Pick<LaunchOffer, 'isActive' | 'active' | 'slotsLeft'>): OfferState {
+  if (!o.isActive) return { key: 'inactive', label: 'Inactiva', color: 'secondary', icon: 'mdi-pause-circle-outline' }
+  if (o.active) return { key: 'active', label: 'Activa', color: 'success', icon: 'mdi-check-circle-outline' }
+  if (o.slotsLeft <= 0) return { key: 'soldout', label: 'Agotada', color: 'warning', icon: 'mdi-alert-circle-outline' }
+  return { key: 'closed', label: 'Cerrada', color: 'warning', icon: 'mdi-alert-circle-outline' }
+}
+
+export interface OfferForm { price: string; totalSlots: string; slotsUsed: string; allowBelowUsed: boolean }
+
+export const offerForm = (o: LaunchOffer | null): OfferForm => ({
+  price: o ? centsToInput(o.priceCents) : '',
+  totalSlots: o ? String(o.totalSlots) : '',
+  slotsUsed: o ? String(o.slotsUsed) : '',
+  allowBelowUsed: false,
+})
+
+/** A whole number of slots (0 to 100000), or null. */
+export function parseSlots(input: string): number | null {
+  const t = input.trim()
+  if (!/^\d{1,6}$/.test(t)) return null
+  const n = Number(t)
+  return n <= 100000 ? n : null
+}
+
+/** The cheapest an offer may be: half of the list price, and never under Stripe's 50 cents (same rule as the API). */
+export const offerMinCents = (listPriceCents: number): number => Math.max(50, Math.ceil(listPriceCents / 2))
+
+export type OfferErrors = { price: string; totalSlots: string; slotsUsed: string }
+
+/** Client-side mirror of the API rules, so the obvious mistakes are told before the reauth. The server stays the judge. */
+export function offerErrors(form: OfferForm, offer: LaunchOffer | null, listPriceCents: number, currency = 'USD'): OfferErrors {
+  const out: OfferErrors = { price: '', totalSlots: '', slotsUsed: '' }
+  const cents = dollarsToCents(form.price)
+  const min = offerMinCents(listPriceCents)
+  if (cents === null) out.price = 'Escribe un importe en dólares, por ejemplo 79.'
+  else if (cents >= listPriceCents) out.price = `Debe ser menor que el precio normal (${money(listPriceCents, currency)}).`
+  else if (cents < min) out.price = `No puede ser menor que ${money(min, currency)} (la mitad del precio normal).`
+  const total = parseSlots(form.totalSlots)
+  if (total === null) out.totalSlots = 'Un número entero de 0 a 100,000.'
+  if (offer) {
+    const used = parseSlots(form.slotsUsed)
+    if (used === null) out.slotsUsed = 'Un número entero de 0 a 100,000.'
+    else if (used < offer.slotsPaid) out.slotsUsed = `No puede ser menor que las compras pagadas (${offer.slotsPaid}).`
+  }
+  return out
+}
+
+export const offerHasErrors = (e: OfferErrors): boolean => Object.values(e).some(Boolean)
+
+/** True when the total typed is under the slots used: the API needs `allowBelowUsed` said on purpose. */
+export function totalBelowUsed(form: OfferForm, offer: LaunchOffer | null): boolean {
+  const total = parseSlots(form.totalSlots)
+  const used = offer ? parseSlots(form.slotsUsed) : 0
+  return total !== null && used !== null && total < used
+}
+
+/** Only what changed (the first PUT, with no offer yet, sends price and total). Empty object when nothing changed. */
+export function offerChanges(form: OfferForm, offer: LaunchOffer | null): LaunchOfferChanges {
+  const out: LaunchOfferChanges = {}
+  const cents = dollarsToCents(form.price)
+  const total = parseSlots(form.totalSlots)
+  if (cents !== null && cents !== offer?.priceCents) out.priceCents = cents
+  if (total !== null && total !== offer?.totalSlots) out.totalSlots = total
+  if (offer) {
+    const used = parseSlots(form.slotsUsed)
+    if (used !== null && used !== offer.slotsUsed) out.slotsUsed = used
+  }
+  if (Object.keys(out).length && form.allowBelowUsed) out.allowBelowUsed = true
+  return out
+}
+
+/** What each code of the launch-offer endpoint means. */
+export const OFFER_CODE_HELP: Record<string, string> = {
+  required_to_create_offer: 'Para crear la oferta hace falta el precio y el tope de cupos.',
+  below_paid_purchases: 'Los cupos usados no pueden ser menos que las compras ya pagadas.',
+  below_used_slots: 'El tope no puede quedar por debajo de los cupos usados. Si es a propósito, marca la casilla de permitirlo.',
+  launch_offer_conflict: 'Otra persona acaba de crear la oferta. Recarga y vuelve a intentarlo.',
+}
+
+/** Words for a failed launch-offer call: cancelled reauth, 403, 409, a 422 code, the validation message, or the fallback. */
+export function offerError(e: unknown, fallback: string): string {
+  const err = e as ApiError
+  if (err?.reauthCancelled) return 'No se confirmó tu contraseña, así que no se hizo ningún cambio.'
+  const status = err?.response?.status
+  const data = err?.response?.data
+  if (status === 403) return data?.code === 'reauth_required' ? CODE_HELP.reauth_required : 'No tienes permiso para gestionar la oferta de lanzamiento.'
+  const code = Object.values(data?.errors ?? {})[0]?.[0] ?? data?.code
+  if (code && OFFER_CODE_HELP[code]) return OFFER_CODE_HELP[code]
+  return firstError(e, fallback)
+}
+
+/** The line shown after a save, including checkouts closed or left open when it was switched off or repriced. */
+export function offerNotice(r: LaunchOfferResult, what: 'activate' | 'deactivate' | 'update' | 'create'): string {
+  const head = { activate: 'Oferta activada.', deactivate: 'Oferta desactivada.', update: 'Oferta actualizada.', create: 'Oferta creada.' }[what]
+  const parts = [head]
+  if (r.sessionsClosed > 0) parts.push(`Se cerraron ${r.sessionsClosed} ${r.sessionsClosed === 1 ? 'pago en curso' : 'pagos en curso'}.`)
+  if (r.sessionsStillOpen > 0) parts.push(`${r.sessionsStillOpen} ${r.sessionsStillOpen === 1 ? 'pago no se pudo cerrar y sigue abierto' : 'pagos no se pudieron cerrar y siguen abiertos'}: revísalos en Compras.`)
+  return parts.join(' ')
+}

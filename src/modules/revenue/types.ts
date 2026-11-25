@@ -104,3 +104,35 @@ export interface NewCoupon {
   expiresAt: string | null
   notes: string | null
 }
+
+/** `GET/PUT payments/launch-offer` (`data` is null until the offer exists). Exactly what `offerPayload` returns. */
+export interface LaunchOffer {
+  id: number
+  /** The switch the admin controls. */
+  isActive: boolean
+  /** Open right now: switched on, with slots left. */
+  active: boolean
+  priceCents: number
+  listPriceCents: number
+  currency: string
+  totalSlots: number
+  /** Paid purchases plus the manual adjustment. */
+  slotsUsed: number
+  slotsPaid: number
+  slotsAdjustment: number
+  /** Held for 60 minutes by checkouts in progress. */
+  slotsHeld: number
+  slotsLeft: number
+}
+
+/** What the PUT sends; an absent key leaves the field alone. `reason` is added by the client. */
+export interface LaunchOfferChanges {
+  isActive?: boolean
+  priceCents?: number
+  totalSlots?: number
+  slotsUsed?: number
+  allowBelowUsed?: boolean
+}
+
+/** The PUT answer: the offer plus what happened to the checkouts open at the old price. */
+export interface LaunchOfferResult extends LaunchOffer { sessionsClosed: number; sessionsStillOpen: number }
